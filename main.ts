@@ -72,11 +72,14 @@ const html = `<!DOCTYPE html>
       display: flex;
       flex-direction: column;
       align-items: center;
+      width: 100%;
     }
     .fretboard-row {
       display: flex;
       align-items: center;
       gap: 1rem;
+      width: 100%;
+      justify-content: center;
     }
     .string-toggles {
       display: flex;
@@ -103,7 +106,8 @@ const html = `<!DOCTYPE html>
     }
     .fretboard-container {
       position: relative;
-      width: 98%;
+      flex: 1;
+      min-width: 0;
       max-width: 1200px;
     }
     .fretboard {

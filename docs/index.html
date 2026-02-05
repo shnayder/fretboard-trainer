@@ -1,0 +1,2421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fretboard Trainer</title>
+  <style>
+    * { -webkit-tap-highlight-color: transparent; }
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      max-width: 900px;
+      margin: 2rem auto;
+      padding: 0 1rem;
+    }
+    h1 {
+      text-align: center;
+    }
+    .fretboard-wrapper {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .fretboard-row {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+    .string-toggles {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .string-toggle {
+      width: 28px;
+      height: 28px;
+      border: 1px solid #999;
+      border-radius: 4px;
+      background: #f5f5f5;
+      color: #999;
+      font-size: 0.85rem;
+      font-weight: 500;
+      cursor: pointer;
+      padding: 0;
+      margin: 0;
+    }
+    .string-toggle.active {
+      background: #4CAF50;
+      color: white;
+      border-color: #4CAF50;
+    }
+    .fretboard-container {
+      position: relative;
+      width: 100%;
+      max-width: 600px;
+    }
+    .fretboard {
+      width: 100%;
+      height: auto;
+      display: block;
+      background: #fff;
+      touch-action: manipulation;
+    }
+    .fret-numbers {
+      position: relative;
+      height: 1.5rem;
+      width: 100%;
+    }
+    .fret-number {
+      position: absolute;
+      transform: translateX(-50%);
+      font-size: 0.9rem;
+      color: #666;
+    }
+    .quiz-controls {
+      text-align: center;
+      margin: 1rem 0;
+    }
+    button {
+      padding: 0.5rem 1.5rem;
+      font-size: 1rem;
+      cursor: pointer;
+      margin: 0 0.5rem;
+    }
+    .quiz-area {
+      display: none;
+      text-align: center;
+      margin: 1rem 0;
+    }
+    .quiz-area.active {
+      display: block;
+    }
+    .countdown-container {
+      width: 200px;
+      height: 8px;
+      background: #eee;
+      margin: 1rem auto;
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    .countdown-bar {
+      height: 100%;
+      background: #4CAF50;
+      transition: width 0.1s linear;
+    }
+    .countdown-bar.expired {
+      background: #f44336;
+    }
+    .note-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-start;
+      gap: 0.4rem;
+      margin: 0.5rem auto;
+      max-width: 500px;
+    }
+    .note-btn {
+      min-width: 40px;
+      height: 44px;
+      font-size: 1.1rem;
+      font-weight: 500;
+      border: 2px solid #666;
+      border-radius: 8px;
+      background: #fff;
+      cursor: pointer;
+      padding: 0 0.5rem;
+    }
+    .note-btn.accidental {
+      background: #e8e8e8;
+    }
+    .note-btn:active {
+      background: #d0d0d0;
+    }
+    .note-btn:disabled {
+      opacity: 0.5;
+      cursor: default;
+    }
+    .note-btn.hidden {
+      display: none;
+    }
+    .feedback {
+      font-size: 1.5rem;
+      margin: 1rem 0;
+      min-height: 2rem;
+    }
+    .correct {
+      color: green;
+    }
+    .incorrect {
+      color: red;
+    }
+    .time-display {
+      color: #666;
+      font-size: 0.9rem;
+      margin-top: 0.5rem;
+    }
+    .hint {
+      color: #666;
+      font-size: 1rem;
+      margin-top: 1rem;
+    }
+    .stats {
+      margin-top: 1rem;
+      font-size: 0.9rem;
+      color: #666;
+    }
+    .setting-group {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.3rem;
+      margin-bottom: 0.5rem;
+      font-size: 0.9rem;
+      color: #666;
+      cursor: pointer;
+    }
+
+    /* Mobile layout */
+    @media (max-width: 599px) {
+      body {
+        margin: 0.5rem auto;
+        padding: 0 0.5rem;
+      }
+
+      .fretboard-row {
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+
+      .fretboard-container { order: 1; }
+      .fret-numbers { order: 2; }
+
+      .string-toggles {
+        order: 3;
+        flex-direction: row;
+        padding: 0.5rem 0;
+      }
+
+      /* Prevent iOS zoom on input focus */
+      input, button { font-size: 16px; }
+    }
+  </style>
+</head>
+<body>
+  <h1>Fretboard Trainer</h1>
+
+  <div class="fretboard-wrapper">
+    <div class="fretboard-row">
+      <div class="string-toggles" id="string-toggles">
+        <button class="string-toggle" data-string="0">e</button>
+        <button class="string-toggle" data-string="1">B</button>
+        <button class="string-toggle" data-string="2">G</button>
+        <button class="string-toggle" data-string="3">D</button>
+        <button class="string-toggle" data-string="4">A</button>
+        <button class="string-toggle active" data-string="5">E</button>
+      </div>
+      <div class="fretboard-container">
+        <svg class="fretboard" id="fretboard" viewBox="0 0 600 240">
+          <!-- Nut (thick line at fret 0) -->
+          <line x1="65" y1="0" x2="65" y2="240" stroke="#333" stroke-width="4"/>
+          <!-- Frets (vertical lines) -->
+          <line x1="65" y1="0" x2="65" y2="240" stroke="#333" stroke-width="1"/>
+      <line x1="126" y1="0" x2="126" y2="240" stroke="#333" stroke-width="1"/>
+      <line x1="183" y1="0" x2="183" y2="240" stroke="#333" stroke-width="1"/>
+      <line x1="237" y1="0" x2="237" y2="240" stroke="#333" stroke-width="1"/>
+      <line x1="288" y1="0" x2="288" y2="240" stroke="#333" stroke-width="1"/>
+      <line x1="336" y1="0" x2="336" y2="240" stroke="#333" stroke-width="1"/>
+      <line x1="381" y1="0" x2="381" y2="240" stroke="#333" stroke-width="1"/>
+      <line x1="423" y1="0" x2="423" y2="240" stroke="#333" stroke-width="1"/>
+      <line x1="463" y1="0" x2="463" y2="240" stroke="#333" stroke-width="1"/>
+      <line x1="500" y1="0" x2="500" y2="240" stroke="#333" stroke-width="1"/>
+      <line x1="535" y1="0" x2="535" y2="240" stroke="#333" stroke-width="1"/>
+      <line x1="568" y1="0" x2="568" y2="240" stroke="#333" stroke-width="1"/>
+      <line x1="600" y1="0" x2="600" y2="240" stroke="#333" stroke-width="1"/>
+          <!-- Strings (horizontal lines) -->
+          <line x1="0" y1="20" x2="600" y2="20" stroke="#333" stroke-width="1"/>
+      <line x1="0" y1="60" x2="600" y2="60" stroke="#333" stroke-width="1.5"/>
+      <line x1="0" y1="100" x2="600" y2="100" stroke="#333" stroke-width="2"/>
+      <line x1="0" y1="140" x2="600" y2="140" stroke="#333" stroke-width="2.5"/>
+      <line x1="0" y1="180" x2="600" y2="180" stroke="#333" stroke-width="3"/>
+      <line x1="0" y1="220" x2="600" y2="220" stroke="#333" stroke-width="3.5"/>
+          <!-- Note circles -->
+          <circle
+      class="note-circle"
+      data-string="0"
+      data-fret="0"
+      cx="32.5"
+      cy="20"
+      r="14"
+      fill="white"
+      stroke="#333"
+      stroke-width="1"
+    /><text
+      class="note-text"
+      data-string="0"
+      data-fret="0"
+      x="32.5"
+      y="20"
+      text-anchor="middle"
+      dominant-baseline="central"
+      font-size="11"
+      fill="#333"
+    ></text>
+      <circle
+      class="note-circle"
+      data-string="0"
+      data-fret="1"
+      cx="95.5"
+      cy="20"
+      r="14"
+      fill="white"
+      stroke="#333"
+      stroke-width="1"
+    /><text
+      class="note-text"
+      data-string="0"
+      data-fret="1"
+      x="95.5"
+      y="20"
+      text-anchor="middle"
+      dominant-baseline="central"
+      font-size="11"
+      fill="#333"
+    ></text>
+      <circle
+      class="note-circle"
+      data-string="0"
+      data-fret="2"
+      cx="154.5"
+      cy="20"
+      r="14"
+      fill="white"
+      stroke="#333"
+      stroke-width="1"
+    /><text
+      class="note-text"
+      data-string="0"
+      data-fret="2"
+      x="154.5"
+      y="20"
+      text-anchor="middle"
+      dominant-baseline="central"
+      font-size="11"
+      fill="#333"
+    ></text>
+      <circle
+      class="note-circle"
+      data-string="0"
+      data-fret="3"
+      cx="210"
+      cy="20"
+      r="14"
+      fill="white"
+      stroke="#333"
+      stroke-width="1"
+    /><text
+      class="note-text"
+      data-string="0"
+      data-fret="3"
+      x="210"
+      y="20"
+      text-anchor="middle"
+      dominant-baseline="central"
+      font-size="11"
+      fill="#333"
+    ></text>
+      <circle
+      class="note-circle"
+      data-string="0"
+      data-fret="4"
+      cx="262.5"
+      cy="20"
+      r="14"
+      fill="white"
+      stroke="#333"
+      stroke-width="1"
+    /><text
+      class="note-text"
+      data-string="0"
+      data-fret="4"
+      x="262.5"
+      y="20"
+      text-anchor="middle"
+      dominant-baseline="central"
+      font-size="11"
+      fill="#333"
+    ></text>
+      <circle
+      class="note-circle"
+      data-string="0"
+      data-fret="5"
+      cx="312"
+      cy="20"
+      r="14"
+      fill="white"
+      stroke="#333"
+      stroke-width="1"
+    /><text
+      class="note-text"
+      data-string="0"
+      data-fret="5"
+      x="312"
+      y="20"
+      text-anchor="middle"
+      dominant-baseline="central"
+      font-size="11"
+      fill="#333"
+    ></text>
+      <circle
+      class="note-circle"
+      data-string="0"
+      data-fret="6"
+      cx="358.5"
+      cy="20"
+      r="14"
+      fill="white"
+      stroke="#333"
+      stroke-width="1"
+    /><text
+      class="note-text"
+      data-string="0"
+      data-fret="6"
+      x="358.5"
+      y="20"
+      text-anchor="middle"
+      dominant-baseline="central"
+      font-size="11"
+      fill="#333"
+    ></text>
+      <circle
+      class="note-circle"
+      data-string="0"
+      data-fret="7"
+      cx="402"
+      cy="20"
+      r="14"
+      fill="white"
+      stroke="#333"
+      stroke-width="1"
+    /><text
+      class="note-text"
+      data-string="0"
+      data-fret="7"
+      x="402"
+      y="20"
+      text-anchor="middle"
+      dominant-baseline="central"
+      font-size="11"
+      fill="#333"
+    ></text>
+      <circle
+      class="note-circle"
+      data-string="0"
+      data-fret="8"
+      cx="443"
+      cy="20"
+      r="14"
+      fill="white"
+      stroke="#333"
+      stroke-width="1"
+    /><text
+      class="note-text"
+      data-string="0"
+      data-fret="8"
+      x="443"
+      y="20"
+      text-anchor="middle"
+      dominant-baseline="central"
+      font-size="11"
+      fill="#333"
+    ></text>
+      <circle
+      class="note-circle"
+      data-string="0"
+      data-fret="9"
+      cx="481.5"
+      cy="20"
+      r="14"
+      fill="white"
+      stroke="#333"
+      stroke-width="1"
+    /><text
+      class="note-text"
+      data-string="0"
+      data-fret="9"
+      x="481.5"
+      y="20"
+      text-anchor="middle"
+      dominant-baseline="central"
+      font-size="11"
+      fill="#333"
+    ></text>
+      <circle
+      class="note-circle"
+      data-string="0"
+      data-fret="10"
+      cx="517.5"
+      cy="20"
+      r="14"
+      fill="white"
+      stroke="#333"
+      stroke-width="1"
+    /><text
+      class="note-text"
+      data-string="0"
+      data-fret="10"
+      x="517.5"
+      y="20"
+      text-anchor="middle"
+      dominant-baseline="central"
+      font-size="11"
+      fill="#333"
+    ></text>
+      <circle
+      class="note-circle"
+      data-string="0"
+      data-fret="11"
+      cx="551.5"
+      cy="20"
+      r="14"
+      fill="white"
+      stroke="#333"
+      stroke-width="1"
+    /><text
+      class="note-text"
+      data-string="0"
+      data-fret="11"
+      x="551.5"
+      y="20"
+      text-anchor="middle"
+      dominant-baseline="central"
+      font-size="11"
+      fill="#333"
+    ></text>
+      <circle
+      class="note-circle"
+      data-string="0"
+      data-fret="12"
+      cx="584"
+      cy="20"
+      r="14"
+      fill="white"
+      stroke="#333"
+      stroke-width="1"
+    /><text
+      class="note-text"
+      data-string="0"
+      data-fret="12"
+      x="584"
+      y="20"
+      text-anchor="middle"
+      dominant-baseline="central"
+      font-size="11"
+      fill="#333"
+    ></text>
+      <circle
+      class="note-circle"
+      data-string="1"
+      data-fret="0"
+      cx="32.5"
+      cy="60"
+      r="14"
+      fill="white"
+      stroke="#333"
+      stroke-width="1"
+    /><text
+      class="note-text"
+      data-string="1"
+      data-fret="0"
+      x="32.5"
+      y="60"
+      text-anchor="middle"
+      dominant-baseline="central"
+      font-size="11"
+      fill="#333"
+    ></text>
+      <circle
+      class="note-circle"
+      data-string="1"
+      data-fret="1"
+      cx="95.5"
+      cy="60"
+      r="14"
+      fill="white"
+      stroke="#333"
+      stroke-width="1"
+    /><text
+      class="note-text"
+      data-string="1"
+      data-fret="1"
+      x="95.5"
+      y="60"
+      text-anchor="middle"
+      dominant-baseline="central"
+      font-size="11"
+      fill="#333"
+    ></text>
+      <circle
+      class="note-circle"
+      data-string="1"
+      data-fret="2"
+      cx="154.5"
+      cy="60"
+      r="14"
+      fill="white"
+      stroke="#333"
+      stroke-width="1"
+    /><text
+      class="note-text"
+      data-string="1"
+      data-fret="2"
+      x="154.5"
+      y="60"
+      text-anchor="middle"
+      dominant-baseline="central"
+      font-size="11"
+      fill="#333"
+    ></text>
+      <circle
+      class="note-circle"
+      data-string="1"
+      data-fret="3"
+      cx="210"
+      cy="60"
+      r="14"
+      fill="white"
+      stroke="#333"
+      stroke-width="1"
+    /><text
+      class="note-text"
+      data-string="1"
+      data-fret="3"
+      x="210"
+      y="60"
+      text-anchor="middle"
+      dominant-baseline="central"
+      font-size="11"
+      fill="#333"
+    ></text>
+      <circle
+      class="note-circle"
+      data-string="1"
+      data-fret="4"
+      cx="262.5"
+      cy="60"
+      r="14"
+      fill="white"
+      stroke="#333"
+      stroke-width="1"
+    /><text
+      class="note-text"
+      data-string="1"
+      data-fret="4"
+      x="262.5"
+      y="60"
+      text-anchor="middle"
+      dominant-baseline="central"
+      font-size="11"
+      fill="#333"
+    ></text>
+      <circle
+      class="note-circle"
+      data-string="1"
+      data-fret="5"
+      cx="312"
+      cy="60"
+      r="14"
+      fill="white"
+      stroke="#333"
+      stroke-width="1"
+    /><text
+      class="note-text"
+      data-string="1"
+      data-fret="5"
+      x="312"
+      y="60"
+      text-anchor="middle"
+      dominant-baseline="central"
+      font-size="11"
+      fill="#333"
+    ></text>
+      <circle
+      class="note-circle"
+      data-string="1"
+      data-fret="6"
+      cx="358.5"
+      cy="60"
+      r="14"
+      fill="white"
+      stroke="#333"
+      stroke-width="1"
+    /><text
+      class="note-text"
+      data-string="1"
+      data-fret="6"
+      x="358.5"
+      y="60"
+      text-anchor="middle"
+      dominant-baseline="central"
+      font-size="11"
+      fill="#333"
+    ></text>
+      <circle
+      class="note-circle"
+      data-string="1"
+      data-fret="7"
+      cx="402"
+      cy="60"
+      r="14"
+      fill="white"
+      stroke="#333"
+      stroke-width="1"
+    /><text
+      class="note-text"
+      data-string="1"
+      data-fret="7"
+      x="402"
+      y="60"
+      text-anchor="middle"
+      dominant-baseline="central"
+      font-size="11"
+      fill="#333"
+    ></text>
+      <circle
+      class="note-circle"
+      data-string="1"
+      data-fret="8"
+      cx="443"
+      cy="60"
+      r="14"
+      fill="white"
+      stroke="#333"
+      stroke-width="1"
+    /><text
+      class="note-text"
+      data-string="1"
+      data-fret="8"
+      x="443"
+      y="60"
+      text-anchor="middle"
+      dominant-baseline="central"
+      font-size="11"
+      fill="#333"
+    ></text>
+      <circle
+      class="note-circle"
+      data-string="1"
+      data-fret="9"
+      cx="481.5"
+      cy="60"
+      r="14"
+      fill="white"
+      stroke="#333"
+      stroke-width="1"
+    /><text
+      class="note-text"
+      data-string="1"
+      data-fret="9"
+      x="481.5"
+      y="60"
+      text-anchor="middle"
+      dominant-baseline="central"
+      font-size="11"
+      fill="#333"
+    ></text>
+      <circle
+      class="note-circle"
+      data-string="1"
+      data-fret="10"
+      cx="517.5"
+      cy="60"
+      r="14"
+      fill="white"
+      stroke="#333"
+      stroke-width="1"
+    /><text
+      class="note-text"
+      data-string="1"
+      data-fret="10"
+      x="517.5"
+      y="60"
+      text-anchor="middle"
+      dominant-baseline="central"
+      font-size="11"
+      fill="#333"
+    ></text>
+      <circle
+      class="note-circle"
+      data-string="1"
+      data-fret="11"
+      cx="551.5"
+      cy="60"
+      r="14"
+      fill="white"
+      stroke="#333"
+      stroke-width="1"
+    /><text
+      class="note-text"
+      data-string="1"
+      data-fret="11"
+      x="551.5"
+      y="60"
+      text-anchor="middle"
+      dominant-baseline="central"
+      font-size="11"
+      fill="#333"
+    ></text>
+      <circle
+      class="note-circle"
+      data-string="1"
+      data-fret="12"
+      cx="584"
+      cy="60"
+      r="14"
+      fill="white"
+      stroke="#333"
+      stroke-width="1"
+    /><text
+      class="note-text"
+      data-string="1"
+      data-fret="12"
+      x="584"
+      y="60"
+      text-anchor="middle"
+      dominant-baseline="central"
+      font-size="11"
+      fill="#333"
+    ></text>
+      <circle
+      class="note-circle"
+      data-string="2"
+      data-fret="0"
+      cx="32.5"
+      cy="100"
+      r="14"
+      fill="white"
+      stroke="#333"
+      stroke-width="1"
+    /><text
+      class="note-text"
+      data-string="2"
+      data-fret="0"
+      x="32.5"
+      y="100"
+      text-anchor="middle"
+      dominant-baseline="central"
+      font-size="11"
+      fill="#333"
+    ></text>
+      <circle
+      class="note-circle"
+      data-string="2"
+      data-fret="1"
+      cx="95.5"
+      cy="100"
+      r="14"
+      fill="white"
+      stroke="#333"
+      stroke-width="1"
+    /><text
+      class="note-text"
+      data-string="2"
+      data-fret="1"
+      x="95.5"
+      y="100"
+      text-anchor="middle"
+      dominant-baseline="central"
+      font-size="11"
+      fill="#333"
+    ></text>
+      <circle
+      class="note-circle"
+      data-string="2"
+      data-fret="2"
+      cx="154.5"
+      cy="100"
+      r="14"
+      fill="white"
+      stroke="#333"
+      stroke-width="1"
+    /><text
+      class="note-text"
+      data-string="2"
+      data-fret="2"
+      x="154.5"
+      y="100"
+      text-anchor="middle"
+      dominant-baseline="central"
+      font-size="11"
+      fill="#333"
+    ></text>
+      <circle
+      class="note-circle"
+      data-string="2"
+      data-fret="3"
+      cx="210"
+      cy="100"
+      r="14"
+      fill="white"
+      stroke="#333"
+      stroke-width="1"
+    /><text
+      class="note-text"
+      data-string="2"
+      data-fret="3"
+      x="210"
+      y="100"
+      text-anchor="middle"
+      dominant-baseline="central"
+      font-size="11"
+      fill="#333"
+    ></text>
+      <circle
+      class="note-circle"
+      data-string="2"
+      data-fret="4"
+      cx="262.5"
+      cy="100"
+      r="14"
+      fill="white"
+      stroke="#333"
+      stroke-width="1"
+    /><text
+      class="note-text"
+      data-string="2"
+      data-fret="4"
+      x="262.5"
+      y="100"
+      text-anchor="middle"
+      dominant-baseline="central"
+      font-size="11"
+      fill="#333"
+    ></text>
+      <circle
+      class="note-circle"
+      data-string="2"
+      data-fret="5"
+      cx="312"
+      cy="100"
+      r="14"
+      fill="white"
+      stroke="#333"
+      stroke-width="1"
+    /><text
+      class="note-text"
+      data-string="2"
+      data-fret="5"
+      x="312"
+      y="100"
+      text-anchor="middle"
+      dominant-baseline="central"
+      font-size="11"
+      fill="#333"
+    ></text>
+      <circle
+      class="note-circle"
+      data-string="2"
+      data-fret="6"
+      cx="358.5"
+      cy="100"
+      r="14"
+      fill="white"
+      stroke="#333"
+      stroke-width="1"
+    /><text
+      class="note-text"
+      data-string="2"
+      data-fret="6"
+      x="358.5"
+      y="100"
+      text-anchor="middle"
+      dominant-baseline="central"
+      font-size="11"
+      fill="#333"
+    ></text>
+      <circle
+      class="note-circle"
+      data-string="2"
+      data-fret="7"
+      cx="402"
+      cy="100"
+      r="14"
+      fill="white"
+      stroke="#333"
+      stroke-width="1"
+    /><text
+      class="note-text"
+      data-string="2"
+      data-fret="7"
+      x="402"
+      y="100"
+      text-anchor="middle"
+      dominant-baseline="central"
+      font-size="11"
+      fill="#333"
+    ></text>
+      <circle
+      class="note-circle"
+      data-string="2"
+      data-fret="8"
+      cx="443"
+      cy="100"
+      r="14"
+      fill="white"
+      stroke="#333"
+      stroke-width="1"
+    /><text
+      class="note-text"
+      data-string="2"
+      data-fret="8"
+      x="443"
+      y="100"
+      text-anchor="middle"
+      dominant-baseline="central"
+      font-size="11"
+      fill="#333"
+    ></text>
+      <circle
+      class="note-circle"
+      data-string="2"
+      data-fret="9"
+      cx="481.5"
+      cy="100"
+      r="14"
+      fill="white"
+      stroke="#333"
+      stroke-width="1"
+    /><text
+      class="note-text"
+      data-string="2"
+      data-fret="9"
+      x="481.5"
+      y="100"
+      text-anchor="middle"
+      dominant-baseline="central"
+      font-size="11"
+      fill="#333"
+    ></text>
+      <circle
+      class="note-circle"
+      data-string="2"
+      data-fret="10"
+      cx="517.5"
+      cy="100"
+      r="14"
+      fill="white"
+      stroke="#333"
+      stroke-width="1"
+    /><text
+      class="note-text"
+      data-string="2"
+      data-fret="10"
+      x="517.5"
+      y="100"
+      text-anchor="middle"
+      dominant-baseline="central"
+      font-size="11"
+      fill="#333"
+    ></text>
+      <circle
+      class="note-circle"
+      data-string="2"
+      data-fret="11"
+      cx="551.5"
+      cy="100"
+      r="14"
+      fill="white"
+      stroke="#333"
+      stroke-width="1"
+    /><text
+      class="note-text"
+      data-string="2"
+      data-fret="11"
+      x="551.5"
+      y="100"
+      text-anchor="middle"
+      dominant-baseline="central"
+      font-size="11"
+      fill="#333"
+    ></text>
+      <circle
+      class="note-circle"
+      data-string="2"
+      data-fret="12"
+      cx="584"
+      cy="100"
+      r="14"
+      fill="white"
+      stroke="#333"
+      stroke-width="1"
+    /><text
+      class="note-text"
+      data-string="2"
+      data-fret="12"
+      x="584"
+      y="100"
+      text-anchor="middle"
+      dominant-baseline="central"
+      font-size="11"
+      fill="#333"
+    ></text>
+      <circle
+      class="note-circle"
+      data-string="3"
+      data-fret="0"
+      cx="32.5"
+      cy="140"
+      r="14"
+      fill="white"
+      stroke="#333"
+      stroke-width="1"
+    /><text
+      class="note-text"
+      data-string="3"
+      data-fret="0"
+      x="32.5"
+      y="140"
+      text-anchor="middle"
+      dominant-baseline="central"
+      font-size="11"
+      fill="#333"
+    ></text>
+      <circle
+      class="note-circle"
+      data-string="3"
+      data-fret="1"
+      cx="95.5"
+      cy="140"
+      r="14"
+      fill="white"
+      stroke="#333"
+      stroke-width="1"
+    /><text
+      class="note-text"
+      data-string="3"
+      data-fret="1"
+      x="95.5"
+      y="140"
+      text-anchor="middle"
+      dominant-baseline="central"
+      font-size="11"
+      fill="#333"
+    ></text>
+      <circle
+      class="note-circle"
+      data-string="3"
+      data-fret="2"
+      cx="154.5"
+      cy="140"
+      r="14"
+      fill="white"
+      stroke="#333"
+      stroke-width="1"
+    /><text
+      class="note-text"
+      data-string="3"
+      data-fret="2"
+      x="154.5"
+      y="140"
+      text-anchor="middle"
+      dominant-baseline="central"
+      font-size="11"
+      fill="#333"
+    ></text>
+      <circle
+      class="note-circle"
+      data-string="3"
+      data-fret="3"
+      cx="210"
+      cy="140"
+      r="14"
+      fill="white"
+      stroke="#333"
+      stroke-width="1"
+    /><text
+      class="note-text"
+      data-string="3"
+      data-fret="3"
+      x="210"
+      y="140"
+      text-anchor="middle"
+      dominant-baseline="central"
+      font-size="11"
+      fill="#333"
+    ></text>
+      <circle
+      class="note-circle"
+      data-string="3"
+      data-fret="4"
+      cx="262.5"
+      cy="140"
+      r="14"
+      fill="white"
+      stroke="#333"
+      stroke-width="1"
+    /><text
+      class="note-text"
+      data-string="3"
+      data-fret="4"
+      x="262.5"
+      y="140"
+      text-anchor="middle"
+      dominant-baseline="central"
+      font-size="11"
+      fill="#333"
+    ></text>
+      <circle
+      class="note-circle"
+      data-string="3"
+      data-fret="5"
+      cx="312"
+      cy="140"
+      r="14"
+      fill="white"
+      stroke="#333"
+      stroke-width="1"
+    /><text
+      class="note-text"
+      data-string="3"
+      data-fret="5"
+      x="312"
+      y="140"
+      text-anchor="middle"
+      dominant-baseline="central"
+      font-size="11"
+      fill="#333"
+    ></text>
+      <circle
+      class="note-circle"
+      data-string="3"
+      data-fret="6"
+      cx="358.5"
+      cy="140"
+      r="14"
+      fill="white"
+      stroke="#333"
+      stroke-width="1"
+    /><text
+      class="note-text"
+      data-string="3"
+      data-fret="6"
+      x="358.5"
+      y="140"
+      text-anchor="middle"
+      dominant-baseline="central"
+      font-size="11"
+      fill="#333"
+    ></text>
+      <circle
+      class="note-circle"
+      data-string="3"
+      data-fret="7"
+      cx="402"
+      cy="140"
+      r="14"
+      fill="white"
+      stroke="#333"
+      stroke-width="1"
+    /><text
+      class="note-text"
+      data-string="3"
+      data-fret="7"
+      x="402"
+      y="140"
+      text-anchor="middle"
+      dominant-baseline="central"
+      font-size="11"
+      fill="#333"
+    ></text>
+      <circle
+      class="note-circle"
+      data-string="3"
+      data-fret="8"
+      cx="443"
+      cy="140"
+      r="14"
+      fill="white"
+      stroke="#333"
+      stroke-width="1"
+    /><text
+      class="note-text"
+      data-string="3"
+      data-fret="8"
+      x="443"
+      y="140"
+      text-anchor="middle"
+      dominant-baseline="central"
+      font-size="11"
+      fill="#333"
+    ></text>
+      <circle
+      class="note-circle"
+      data-string="3"
+      data-fret="9"
+      cx="481.5"
+      cy="140"
+      r="14"
+      fill="white"
+      stroke="#333"
+      stroke-width="1"
+    /><text
+      class="note-text"
+      data-string="3"
+      data-fret="9"
+      x="481.5"
+      y="140"
+      text-anchor="middle"
+      dominant-baseline="central"
+      font-size="11"
+      fill="#333"
+    ></text>
+      <circle
+      class="note-circle"
+      data-string="3"
+      data-fret="10"
+      cx="517.5"
+      cy="140"
+      r="14"
+      fill="white"
+      stroke="#333"
+      stroke-width="1"
+    /><text
+      class="note-text"
+      data-string="3"
+      data-fret="10"
+      x="517.5"
+      y="140"
+      text-anchor="middle"
+      dominant-baseline="central"
+      font-size="11"
+      fill="#333"
+    ></text>
+      <circle
+      class="note-circle"
+      data-string="3"
+      data-fret="11"
+      cx="551.5"
+      cy="140"
+      r="14"
+      fill="white"
+      stroke="#333"
+      stroke-width="1"
+    /><text
+      class="note-text"
+      data-string="3"
+      data-fret="11"
+      x="551.5"
+      y="140"
+      text-anchor="middle"
+      dominant-baseline="central"
+      font-size="11"
+      fill="#333"
+    ></text>
+      <circle
+      class="note-circle"
+      data-string="3"
+      data-fret="12"
+      cx="584"
+      cy="140"
+      r="14"
+      fill="white"
+      stroke="#333"
+      stroke-width="1"
+    /><text
+      class="note-text"
+      data-string="3"
+      data-fret="12"
+      x="584"
+      y="140"
+      text-anchor="middle"
+      dominant-baseline="central"
+      font-size="11"
+      fill="#333"
+    ></text>
+      <circle
+      class="note-circle"
+      data-string="4"
+      data-fret="0"
+      cx="32.5"
+      cy="180"
+      r="14"
+      fill="white"
+      stroke="#333"
+      stroke-width="1"
+    /><text
+      class="note-text"
+      data-string="4"
+      data-fret="0"
+      x="32.5"
+      y="180"
+      text-anchor="middle"
+      dominant-baseline="central"
+      font-size="11"
+      fill="#333"
+    ></text>
+      <circle
+      class="note-circle"
+      data-string="4"
+      data-fret="1"
+      cx="95.5"
+      cy="180"
+      r="14"
+      fill="white"
+      stroke="#333"
+      stroke-width="1"
+    /><text
+      class="note-text"
+      data-string="4"
+      data-fret="1"
+      x="95.5"
+      y="180"
+      text-anchor="middle"
+      dominant-baseline="central"
+      font-size="11"
+      fill="#333"
+    ></text>
+      <circle
+      class="note-circle"
+      data-string="4"
+      data-fret="2"
+      cx="154.5"
+      cy="180"
+      r="14"
+      fill="white"
+      stroke="#333"
+      stroke-width="1"
+    /><text
+      class="note-text"
+      data-string="4"
+      data-fret="2"
+      x="154.5"
+      y="180"
+      text-anchor="middle"
+      dominant-baseline="central"
+      font-size="11"
+      fill="#333"
+    ></text>
+      <circle
+      class="note-circle"
+      data-string="4"
+      data-fret="3"
+      cx="210"
+      cy="180"
+      r="14"
+      fill="white"
+      stroke="#333"
+      stroke-width="1"
+    /><text
+      class="note-text"
+      data-string="4"
+      data-fret="3"
+      x="210"
+      y="180"
+      text-anchor="middle"
+      dominant-baseline="central"
+      font-size="11"
+      fill="#333"
+    ></text>
+      <circle
+      class="note-circle"
+      data-string="4"
+      data-fret="4"
+      cx="262.5"
+      cy="180"
+      r="14"
+      fill="white"
+      stroke="#333"
+      stroke-width="1"
+    /><text
+      class="note-text"
+      data-string="4"
+      data-fret="4"
+      x="262.5"
+      y="180"
+      text-anchor="middle"
+      dominant-baseline="central"
+      font-size="11"
+      fill="#333"
+    ></text>
+      <circle
+      class="note-circle"
+      data-string="4"
+      data-fret="5"
+      cx="312"
+      cy="180"
+      r="14"
+      fill="white"
+      stroke="#333"
+      stroke-width="1"
+    /><text
+      class="note-text"
+      data-string="4"
+      data-fret="5"
+      x="312"
+      y="180"
+      text-anchor="middle"
+      dominant-baseline="central"
+      font-size="11"
+      fill="#333"
+    ></text>
+      <circle
+      class="note-circle"
+      data-string="4"
+      data-fret="6"
+      cx="358.5"
+      cy="180"
+      r="14"
+      fill="white"
+      stroke="#333"
+      stroke-width="1"
+    /><text
+      class="note-text"
+      data-string="4"
+      data-fret="6"
+      x="358.5"
+      y="180"
+      text-anchor="middle"
+      dominant-baseline="central"
+      font-size="11"
+      fill="#333"
+    ></text>
+      <circle
+      class="note-circle"
+      data-string="4"
+      data-fret="7"
+      cx="402"
+      cy="180"
+      r="14"
+      fill="white"
+      stroke="#333"
+      stroke-width="1"
+    /><text
+      class="note-text"
+      data-string="4"
+      data-fret="7"
+      x="402"
+      y="180"
+      text-anchor="middle"
+      dominant-baseline="central"
+      font-size="11"
+      fill="#333"
+    ></text>
+      <circle
+      class="note-circle"
+      data-string="4"
+      data-fret="8"
+      cx="443"
+      cy="180"
+      r="14"
+      fill="white"
+      stroke="#333"
+      stroke-width="1"
+    /><text
+      class="note-text"
+      data-string="4"
+      data-fret="8"
+      x="443"
+      y="180"
+      text-anchor="middle"
+      dominant-baseline="central"
+      font-size="11"
+      fill="#333"
+    ></text>
+      <circle
+      class="note-circle"
+      data-string="4"
+      data-fret="9"
+      cx="481.5"
+      cy="180"
+      r="14"
+      fill="white"
+      stroke="#333"
+      stroke-width="1"
+    /><text
+      class="note-text"
+      data-string="4"
+      data-fret="9"
+      x="481.5"
+      y="180"
+      text-anchor="middle"
+      dominant-baseline="central"
+      font-size="11"
+      fill="#333"
+    ></text>
+      <circle
+      class="note-circle"
+      data-string="4"
+      data-fret="10"
+      cx="517.5"
+      cy="180"
+      r="14"
+      fill="white"
+      stroke="#333"
+      stroke-width="1"
+    /><text
+      class="note-text"
+      data-string="4"
+      data-fret="10"
+      x="517.5"
+      y="180"
+      text-anchor="middle"
+      dominant-baseline="central"
+      font-size="11"
+      fill="#333"
+    ></text>
+      <circle
+      class="note-circle"
+      data-string="4"
+      data-fret="11"
+      cx="551.5"
+      cy="180"
+      r="14"
+      fill="white"
+      stroke="#333"
+      stroke-width="1"
+    /><text
+      class="note-text"
+      data-string="4"
+      data-fret="11"
+      x="551.5"
+      y="180"
+      text-anchor="middle"
+      dominant-baseline="central"
+      font-size="11"
+      fill="#333"
+    ></text>
+      <circle
+      class="note-circle"
+      data-string="4"
+      data-fret="12"
+      cx="584"
+      cy="180"
+      r="14"
+      fill="white"
+      stroke="#333"
+      stroke-width="1"
+    /><text
+      class="note-text"
+      data-string="4"
+      data-fret="12"
+      x="584"
+      y="180"
+      text-anchor="middle"
+      dominant-baseline="central"
+      font-size="11"
+      fill="#333"
+    ></text>
+      <circle
+      class="note-circle"
+      data-string="5"
+      data-fret="0"
+      cx="32.5"
+      cy="220"
+      r="14"
+      fill="white"
+      stroke="#333"
+      stroke-width="1"
+    /><text
+      class="note-text"
+      data-string="5"
+      data-fret="0"
+      x="32.5"
+      y="220"
+      text-anchor="middle"
+      dominant-baseline="central"
+      font-size="11"
+      fill="#333"
+    ></text>
+      <circle
+      class="note-circle"
+      data-string="5"
+      data-fret="1"
+      cx="95.5"
+      cy="220"
+      r="14"
+      fill="white"
+      stroke="#333"
+      stroke-width="1"
+    /><text
+      class="note-text"
+      data-string="5"
+      data-fret="1"
+      x="95.5"
+      y="220"
+      text-anchor="middle"
+      dominant-baseline="central"
+      font-size="11"
+      fill="#333"
+    ></text>
+      <circle
+      class="note-circle"
+      data-string="5"
+      data-fret="2"
+      cx="154.5"
+      cy="220"
+      r="14"
+      fill="white"
+      stroke="#333"
+      stroke-width="1"
+    /><text
+      class="note-text"
+      data-string="5"
+      data-fret="2"
+      x="154.5"
+      y="220"
+      text-anchor="middle"
+      dominant-baseline="central"
+      font-size="11"
+      fill="#333"
+    ></text>
+      <circle
+      class="note-circle"
+      data-string="5"
+      data-fret="3"
+      cx="210"
+      cy="220"
+      r="14"
+      fill="white"
+      stroke="#333"
+      stroke-width="1"
+    /><text
+      class="note-text"
+      data-string="5"
+      data-fret="3"
+      x="210"
+      y="220"
+      text-anchor="middle"
+      dominant-baseline="central"
+      font-size="11"
+      fill="#333"
+    ></text>
+      <circle
+      class="note-circle"
+      data-string="5"
+      data-fret="4"
+      cx="262.5"
+      cy="220"
+      r="14"
+      fill="white"
+      stroke="#333"
+      stroke-width="1"
+    /><text
+      class="note-text"
+      data-string="5"
+      data-fret="4"
+      x="262.5"
+      y="220"
+      text-anchor="middle"
+      dominant-baseline="central"
+      font-size="11"
+      fill="#333"
+    ></text>
+      <circle
+      class="note-circle"
+      data-string="5"
+      data-fret="5"
+      cx="312"
+      cy="220"
+      r="14"
+      fill="white"
+      stroke="#333"
+      stroke-width="1"
+    /><text
+      class="note-text"
+      data-string="5"
+      data-fret="5"
+      x="312"
+      y="220"
+      text-anchor="middle"
+      dominant-baseline="central"
+      font-size="11"
+      fill="#333"
+    ></text>
+      <circle
+      class="note-circle"
+      data-string="5"
+      data-fret="6"
+      cx="358.5"
+      cy="220"
+      r="14"
+      fill="white"
+      stroke="#333"
+      stroke-width="1"
+    /><text
+      class="note-text"
+      data-string="5"
+      data-fret="6"
+      x="358.5"
+      y="220"
+      text-anchor="middle"
+      dominant-baseline="central"
+      font-size="11"
+      fill="#333"
+    ></text>
+      <circle
+      class="note-circle"
+      data-string="5"
+      data-fret="7"
+      cx="402"
+      cy="220"
+      r="14"
+      fill="white"
+      stroke="#333"
+      stroke-width="1"
+    /><text
+      class="note-text"
+      data-string="5"
+      data-fret="7"
+      x="402"
+      y="220"
+      text-anchor="middle"
+      dominant-baseline="central"
+      font-size="11"
+      fill="#333"
+    ></text>
+      <circle
+      class="note-circle"
+      data-string="5"
+      data-fret="8"
+      cx="443"
+      cy="220"
+      r="14"
+      fill="white"
+      stroke="#333"
+      stroke-width="1"
+    /><text
+      class="note-text"
+      data-string="5"
+      data-fret="8"
+      x="443"
+      y="220"
+      text-anchor="middle"
+      dominant-baseline="central"
+      font-size="11"
+      fill="#333"
+    ></text>
+      <circle
+      class="note-circle"
+      data-string="5"
+      data-fret="9"
+      cx="481.5"
+      cy="220"
+      r="14"
+      fill="white"
+      stroke="#333"
+      stroke-width="1"
+    /><text
+      class="note-text"
+      data-string="5"
+      data-fret="9"
+      x="481.5"
+      y="220"
+      text-anchor="middle"
+      dominant-baseline="central"
+      font-size="11"
+      fill="#333"
+    ></text>
+      <circle
+      class="note-circle"
+      data-string="5"
+      data-fret="10"
+      cx="517.5"
+      cy="220"
+      r="14"
+      fill="white"
+      stroke="#333"
+      stroke-width="1"
+    /><text
+      class="note-text"
+      data-string="5"
+      data-fret="10"
+      x="517.5"
+      y="220"
+      text-anchor="middle"
+      dominant-baseline="central"
+      font-size="11"
+      fill="#333"
+    ></text>
+      <circle
+      class="note-circle"
+      data-string="5"
+      data-fret="11"
+      cx="551.5"
+      cy="220"
+      r="14"
+      fill="white"
+      stroke="#333"
+      stroke-width="1"
+    /><text
+      class="note-text"
+      data-string="5"
+      data-fret="11"
+      x="551.5"
+      y="220"
+      text-anchor="middle"
+      dominant-baseline="central"
+      font-size="11"
+      fill="#333"
+    ></text>
+      <circle
+      class="note-circle"
+      data-string="5"
+      data-fret="12"
+      cx="584"
+      cy="220"
+      r="14"
+      fill="white"
+      stroke="#333"
+      stroke-width="1"
+    /><text
+      class="note-text"
+      data-string="5"
+      data-fret="12"
+      x="584"
+      y="220"
+      text-anchor="middle"
+      dominant-baseline="central"
+      font-size="11"
+      fill="#333"
+    ></text>
+        </svg>
+        <div class="fret-numbers">
+          <div class="fret-number" style="left: 35%">3</div>
+    <div class="fret-number" style="left: 52%">5</div>
+    <div class="fret-number" style="left: 67%">7</div>
+    <div class="fret-number" style="left: 80.25%">9</div>
+    <div class="fret-number" style="left: 97.33333333333334%">12</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="quiz-controls">
+    <label class="setting-group">
+      <input type="checkbox" id="naturals-only" checked>
+      Natural notes only
+    </label>
+    <div>
+      <button id="start-btn" onclick="startQuiz()">Start Quiz</button>
+      <button id="stop-btn" onclick="stopQuiz()" style="display: none;">Stop Quiz</button>
+      <span id="stats" class="stats"></span>
+    </div>
+  </div>
+
+  <div class="quiz-area" id="quiz-area">
+    <div class="countdown-container">
+      <div class="countdown-bar" id="countdown-bar"></div>
+    </div>
+    <div class="note-buttons" id="note-buttons">
+      <button class="note-btn" data-note="C">C</button>
+      <button class="note-btn accidental" data-note="C#">C#</button>
+      <button class="note-btn" data-note="D">D</button>
+      <button class="note-btn accidental" data-note="D#">D#</button>
+      <button class="note-btn" data-note="E">E</button>
+      <button class="note-btn" data-note="F">F</button>
+      <button class="note-btn accidental" data-note="F#">F#</button>
+      <button class="note-btn" data-note="G">G</button>
+      <button class="note-btn accidental" data-note="G#">G#</button>
+      <button class="note-btn" data-note="A">A</button>
+      <button class="note-btn accidental" data-note="A#">A#</button>
+      <button class="note-btn" data-note="B">B</button>
+    </div>
+    <div class="feedback" id="feedback"></div>
+    <div class="time-display" id="time-display"></div>
+    <div class="hint" id="hint"></div>
+  </div>
+
+  <script>
+    const TARGET_TIME = 3000;
+
+    // ============ Adaptive Selector (inlined from src/adaptive/adaptive.ts) ============
+    const ADAPTIVE_CONFIG = {
+      minTime: 1000,
+      unseenBoost: 3,
+      minSamples: 3,
+      ewmaAlpha: 0.3,
+      maxStoredTimes: 10,
+    };
+
+    function createAdaptiveSelector(namespace) {
+      const cfg = ADAPTIVE_CONFIG;
+      const statsKey = (itemId) => `adaptive_${namespace}_${itemId}`;
+      const lastSelectedKey = () => `adaptive_${namespace}_lastSelected`;
+
+      function getStats(itemId) {
+        const data = localStorage.getItem(statsKey(itemId));
+        if (!data) return null;
+        try {
+          return JSON.parse(data);
+        } catch {
+          return null;
+        }
+      }
+
+      function saveStats(itemId, stats) {
+        localStorage.setItem(statsKey(itemId), JSON.stringify(stats));
+      }
+
+      function getLastSelected() {
+        return localStorage.getItem(lastSelectedKey());
+      }
+
+      function setLastSelected(itemId) {
+        localStorage.setItem(lastSelectedKey(), itemId);
+      }
+
+      function recordResponse(itemId, timeMs) {
+        const existing = getStats(itemId);
+        const now = Date.now();
+
+        if (existing) {
+          const newEwma = cfg.ewmaAlpha * timeMs + (1 - cfg.ewmaAlpha) * existing.ewma;
+          const newTimes = [...existing.recentTimes, timeMs].slice(-cfg.maxStoredTimes);
+          saveStats(itemId, {
+            recentTimes: newTimes,
+            ewma: newEwma,
+            sampleCount: existing.sampleCount + 1,
+            lastSeen: now,
+          });
+        } else {
+          saveStats(itemId, {
+            recentTimes: [timeMs],
+            ewma: timeMs,
+            sampleCount: 1,
+            lastSeen: now,
+          });
+        }
+      }
+
+      function getWeight(itemId) {
+        const stats = getStats(itemId);
+        if (!stats) {
+          return cfg.unseenBoost;
+        }
+        const baseWeight = Math.max(stats.ewma, cfg.minTime) / cfg.minTime;
+        const sampleMultiplier = stats.sampleCount < cfg.minSamples ? cfg.unseenBoost : 1;
+        return baseWeight * sampleMultiplier;
+      }
+
+      function selectNext(validItems) {
+        if (validItems.length === 0) {
+          throw new Error("validItems cannot be empty");
+        }
+        if (validItems.length === 1) {
+          setLastSelected(validItems[0]);
+          return validItems[0];
+        }
+
+        const lastSelected = getLastSelected();
+        const weights = validItems.map((id) => {
+          const weight = getWeight(id);
+          return id === lastSelected ? 0 : weight;
+        });
+
+        const totalWeight = weights.reduce((sum, w) => sum + w, 0);
+        if (totalWeight === 0) {
+          const idx = Math.floor(Math.random() * validItems.length);
+          const selected = validItems[idx];
+          setLastSelected(selected);
+          return selected;
+        }
+
+        let random = Math.random() * totalWeight;
+        for (let i = 0; i < validItems.length; i++) {
+          random -= weights[i];
+          if (random <= 0) {
+            setLastSelected(validItems[i]);
+            return validItems[i];
+          }
+        }
+
+        const last = validItems[validItems.length - 1];
+        setLastSelected(last);
+        return last;
+      }
+
+      return { recordResponse, selectNext, getStats, getWeight };
+    }
+
+    const adaptiveSelector = createAdaptiveSelector('fretboard');
+    // ============ End Adaptive Selector ============
+
+    // String tuning (high E to low E, top to bottom visually)
+    const strings = ['E', 'B', 'G', 'D', 'A', 'E'];
+    const stringOffsets = [4, 11, 7, 2, 9, 4]; // semitones from C
+
+    // Note names
+    const noteNames = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+    const naturalNotes = ['C', 'D', 'E', 'F', 'G', 'A', 'B'];
+
+    // Accepted answers for each note
+    const noteAccepts = {
+      'C': ['c'],
+      'C#': ['c#', 'db'],
+      'D': ['d'],
+      'D#': ['d#', 'eb'],
+      'E': ['e'],
+      'F': ['f'],
+      'F#': ['f#', 'gb'],
+      'G': ['g'],
+      'G#': ['g#', 'ab'],
+      'A': ['a'],
+      'A#': ['a#', 'bb'],
+      'B': ['b']
+    };
+
+    // Settings
+    const STRINGS_KEY = 'fretboard_enabledStrings';
+    let enabledStrings = new Set([5]); // Default: low E only
+    let naturalsOnly = true;
+
+    // Load enabled strings from localStorage
+    function loadEnabledStrings() {
+      const saved = localStorage.getItem(STRINGS_KEY);
+      if (saved) {
+        try {
+          const arr = JSON.parse(saved);
+          enabledStrings = new Set(arr);
+        } catch {}
+      }
+      updateStringToggles();
+    }
+
+    function saveEnabledStrings() {
+      localStorage.setItem(STRINGS_KEY, JSON.stringify([...enabledStrings]));
+    }
+
+    function updateStringToggles() {
+      document.querySelectorAll('.string-toggle').forEach(btn => {
+        const s = parseInt(btn.dataset.string);
+        btn.classList.toggle('active', enabledStrings.has(s));
+      });
+    }
+
+    function toggleString(s) {
+      if (enabledStrings.has(s)) {
+        if (enabledStrings.size > 1) {
+          enabledStrings.delete(s);
+        }
+      } else {
+        enabledStrings.add(s);
+      }
+      saveEnabledStrings();
+      updateStringToggles();
+    }
+
+    let quizActive = false;
+    let currentString = null;
+    let currentFret = null;
+    let currentNote = null;
+    let answered = false;
+    let questionStartTime = null;
+    let countdownInterval = null;
+    let expired = false;
+
+    function getNoteAtPosition(string, fret) {
+      const offset = stringOffsets[string];
+      const noteIndex = (offset + fret) % 12;
+      return noteNames[noteIndex];
+    }
+
+    function highlightCircle(string, fret, color = '#FFD700') {
+      const circle = document.querySelector(`circle[data-string="${string}"][data-fret="${fret}"]`);
+      if (circle) {
+        circle.setAttribute('fill', color);
+      }
+    }
+
+    function showNoteText(string, fret) {
+      const text = document.querySelector(`text[data-string="${string}"][data-fret="${fret}"]`);
+      if (text) {
+        text.textContent = getNoteAtPosition(string, fret);
+      }
+    }
+
+    function clearAll() {
+      document.querySelectorAll('.note-circle').forEach(circle => {
+        circle.setAttribute('fill', 'white');
+      });
+      document.querySelectorAll('.note-text').forEach(text => {
+        text.textContent = '';
+      });
+    }
+
+    function median(arr) {
+      if (arr.length === 0) return null;
+      const sorted = [...arr].sort((a, b) => a - b);
+      const mid = Math.floor(sorted.length / 2);
+      return sorted.length % 2 ? sorted[mid] : Math.round((sorted[mid - 1] + sorted[mid]) / 2);
+    }
+
+    function getTimeColor(ms) {
+      if (ms === null) return '';
+      if (ms < 3000) return 'hsl(120, 70%, 35%)';
+      if (ms < 4000) return 'hsl(80, 70%, 35%)';
+      if (ms < 5000) return 'hsl(50, 70%, 40%)';
+      if (ms < 6000) return 'hsl(30, 70%, 40%)';
+      return 'hsl(0, 70%, 40%)';
+    }
+
+    function getEwmaValues() {
+      // Collect EWMA values from all positions that have been practiced
+      const ewmas = [];
+      for (let s = 0; s <= 5; s++) {
+        for (let f = 0; f < 13; f++) {
+          const stats = adaptiveSelector.getStats(`${s}-${f}`);
+          if (stats && stats.ewma) {
+            ewmas.push(stats.ewma);
+          }
+        }
+      }
+      return ewmas;
+    }
+
+    function updateStats() {
+      const ewmas = getEwmaValues();
+      const med = median(ewmas);
+      const statsEl = document.getElementById('stats');
+      if (med !== null) {
+        statsEl.innerHTML = `median: <span style="color:${getTimeColor(Math.round(med))}">${Math.round(med)}ms</span>`;
+      } else {
+        statsEl.textContent = '';
+      }
+    }
+
+    function startCountdown() {
+      const bar = document.getElementById('countdown-bar');
+      bar.style.width = '100%';
+      bar.classList.remove('expired');
+      expired = false;
+
+      if (countdownInterval) clearInterval(countdownInterval);
+
+      const startTime = Date.now();
+      countdownInterval = setInterval(() => {
+        const elapsed = Date.now() - startTime;
+        const remaining = Math.max(0, TARGET_TIME - elapsed);
+        const percent = (remaining / TARGET_TIME) * 100;
+        bar.style.width = percent + '%';
+
+        if (remaining === 0 && !expired) {
+          expired = true;
+          bar.classList.add('expired');
+          clearInterval(countdownInterval);
+        }
+      }, 50);
+    }
+
+    function startQuiz() {
+      updateStats();
+      quizActive = true;
+      document.getElementById('start-btn').style.display = 'none';
+      document.getElementById('stop-btn').style.display = 'inline';
+      document.getElementById('quiz-area').classList.add('active');
+      nextQuestion();
+    }
+
+    function stopQuiz() {
+      quizActive = false;
+      if (countdownInterval) {
+        clearInterval(countdownInterval);
+        countdownInterval = null;
+      }
+      clearAll();
+      document.getElementById('start-btn').style.display = 'inline';
+      document.getElementById('stop-btn').style.display = 'none';
+      document.getElementById('quiz-area').classList.remove('active');
+      updateStats();
+    }
+
+    function getValidItemIds() {
+      const itemIds = [];
+      for (const s of enabledStrings) {
+        for (let f = 0; f < 13; f++) {
+          const note = getNoteAtPosition(s, f);
+          if (!naturalsOnly || naturalNotes.includes(note)) {
+            itemIds.push(`${s}-${f}`);
+          }
+        }
+      }
+      return itemIds;
+    }
+
+    function setNoteButtonsEnabled(enabled) {
+      document.querySelectorAll('.note-btn').forEach(btn => {
+        btn.disabled = !enabled;
+      });
+    }
+
+    function nextQuestion() {
+      clearAll();
+
+      const validItemIds = getValidItemIds();
+      const selectedId = adaptiveSelector.selectNext(validItemIds);
+      const [s, f] = selectedId.split('-').map(Number);
+      currentString = s;
+      currentFret = f;
+      currentNote = getNoteAtPosition(currentString, currentFret);
+
+      highlightCircle(currentString, currentFret, '#FFD700');
+
+      document.getElementById('feedback').textContent = '';
+      document.getElementById('feedback').className = 'feedback';
+      document.getElementById('time-display').textContent = '';
+      document.getElementById('hint').textContent = '';
+      setNoteButtonsEnabled(true);
+      answered = false;
+      questionStartTime = Date.now();
+      startCountdown();
+    }
+
+    function checkAnswer(userNote) {
+      if (answered) return;
+
+      const feedback = document.getElementById('feedback');
+      const hint = document.getElementById('hint');
+      const timeDisplay = document.getElementById('time-display');
+
+      const responseTime = Date.now() - questionStartTime;
+
+      if (countdownInterval) {
+        clearInterval(countdownInterval);
+        countdownInterval = null;
+      }
+
+      answered = true;
+      setNoteButtonsEnabled(false);
+
+      const accepts = noteAccepts[currentNote];
+      const correct = accepts.includes(userNote.toLowerCase());
+
+      if (correct) {
+        feedback.textContent = 'Correct!';
+        feedback.className = 'feedback correct';
+        highlightCircle(currentString, currentFret, '#4CAF50');
+        adaptiveSelector.recordResponse(`${currentString}-${currentFret}`, responseTime);
+        updateStats();
+      } else {
+        feedback.textContent = 'Incorrect — ' + currentNote;
+        feedback.className = 'feedback incorrect';
+        highlightCircle(currentString, currentFret, '#f44336');
+      }
+      showNoteText(currentString, currentFret);
+      timeDisplay.textContent = responseTime + ' ms';
+      hint.textContent = 'Tap anywhere or press Space for next';
+    }
+
+    // Keyboard input for notes
+    let pendingNote = null;
+    let pendingTimeout = null;
+
+    function submitPendingNote() {
+      if (pendingNote) {
+        checkAnswer(pendingNote);
+        pendingNote = null;
+      }
+      if (pendingTimeout) {
+        clearTimeout(pendingTimeout);
+        pendingTimeout = null;
+      }
+    }
+
+    document.addEventListener('keydown', (e) => {
+      if (!quizActive) return;
+
+      if (e.key === 'Escape') {
+        stopQuiz();
+        return;
+      }
+
+      if ((e.key === ' ' || e.key === 'Enter') && answered) {
+        e.preventDefault();
+        nextQuestion();
+        return;
+      }
+
+      if (answered) return;
+
+      const key = e.key.toUpperCase();
+
+      // Handle # for sharps or b for flats
+      if (pendingNote && !naturalsOnly) {
+        if (e.key === '#' || (e.shiftKey && e.key === '3')) {
+          e.preventDefault();
+          clearTimeout(pendingTimeout);
+          checkAnswer(pendingNote + '#');
+          pendingNote = null;
+          pendingTimeout = null;
+          return;
+        }
+        if (e.key === 'b' || e.key === 'B') {
+          e.preventDefault();
+          clearTimeout(pendingTimeout);
+          checkAnswer(pendingNote + 'b');
+          pendingNote = null;
+          pendingTimeout = null;
+          return;
+        }
+      }
+
+      // Handle note letters
+      if ('CDEFGAB'.includes(key)) {
+        e.preventDefault();
+        // Cancel any pending note
+        if (pendingTimeout) {
+          clearTimeout(pendingTimeout);
+        }
+
+        if (naturalsOnly) {
+          // Submit immediately in naturals-only mode
+          checkAnswer(key);
+        } else {
+          // Wait briefly for potential # or b
+          pendingNote = key;
+          pendingTimeout = setTimeout(submitPendingNote, 400);
+        }
+      }
+    });
+
+    // Tap anywhere to advance when answered
+    document.addEventListener('click', (e) => {
+      if (!quizActive || !answered) return;
+      // Don't advance if clicking a note button or control
+      if (e.target.closest('.note-btn, .quiz-controls, .string-toggle')) return;
+      nextQuestion();
+    });
+
+    // String toggle handlers
+    document.querySelectorAll('.string-toggle').forEach(btn => {
+      btn.addEventListener('click', () => {
+        toggleString(parseInt(btn.dataset.string));
+      });
+    });
+
+    // Note button handlers
+    document.querySelectorAll('.note-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        if (!quizActive || answered) return;
+        checkAnswer(btn.dataset.note);
+      });
+    });
+
+    function updateAccidentalButtons() {
+      document.querySelectorAll('.note-btn.accidental').forEach(btn => {
+        btn.classList.toggle('hidden', naturalsOnly);
+      });
+    }
+
+    // Settings event handlers
+    document.getElementById('naturals-only').addEventListener('change', (e) => {
+      naturalsOnly = e.target.checked;
+      updateAccidentalButtons();
+    });
+
+    // Initialize on load
+    loadEnabledStrings();
+    updateAccidentalButtons();
+    updateStats();
+  </script>
+</body>
+</html>

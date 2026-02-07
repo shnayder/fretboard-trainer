@@ -307,7 +307,7 @@ const html = `<!DOCTYPE html>
   </style>
 </head>
 <body>
-  <div class="version">v0.4/div>
+  <div class="version">v0.4</div>
   <h1>Fretboard Trainer</h1>
 
   <div class="fretboard-wrapper">

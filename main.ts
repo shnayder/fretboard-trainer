@@ -307,7 +307,7 @@ const html = `<!DOCTYPE html>
   </style>
 </head>
 <body>
-  <div class="version">v0.4</div>
+  <div class="version">v0.4/div>
   <h1>Fretboard Trainer</h1>
 
   <div class="fretboard-wrapper">
@@ -355,10 +355,10 @@ const html = `<!DOCTYPE html>
   <div class="quiz-area" id="quiz-area">
     <div class="heatmap-legend" id="heatmap-legend">
       <div class="legend-item"><div class="legend-swatch" style="background:#ddd"></div>No data</div>
-      <div class="legend-item"><div class="legend-swatch" style="background:hsl(120,60%,65%)"></div>&lt; 3s</div>
-      <div class="legend-item"><div class="legend-swatch" style="background:hsl(80,60%,65%)"></div>3–4s</div>
-      <div class="legend-item"><div class="legend-swatch" style="background:hsl(50,60%,65%)"></div>4–5s</div>
-      <div class="legend-item"><div class="legend-swatch" style="background:hsl(30,60%,65%)"></div>5–6s</div>
+      <div class="legend-item"><div class="legend-swatch" style="background:hsl(120,60%,65%)"></div>&lt; 1.5s</div>
+      <div class="legend-item"><div class="legend-swatch" style="background:hsl(80,60%,65%)"></div>1.5–3s</div>
+      <div class="legend-item"><div class="legend-swatch" style="background:hsl(50,60%,65%)"></div>3–4.5s</div>
+      <div class="legend-item"><div class="legend-swatch" style="background:hsl(30,60%,65%)"></div>4.5–6s</div>
       <div class="legend-item"><div class="legend-swatch" style="background:hsl(0,60%,65%)"></div>&gt; 6s</div>
     </div>
     <div class="countdown-container">

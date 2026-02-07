@@ -190,7 +190,7 @@ const html = `<!DOCTYPE html>
       flex-wrap: wrap;
       justify-content: flex-start;
       gap: 0.25rem;
-      margin: 0.5rem auto;
+      margin: 0.5rem auto 0.5rem 0;
       max-width: 220px;
     }
     .note-btn {
@@ -315,7 +315,7 @@ const html = `<!DOCTYPE html>
   </style>
 </head>
 <body>
-  <div class="version">v0.5</div>
+  <div class="version">v0.6</div>
   <h1>Fretboard Trainer</h1>
 
   <div class="fretboard-wrapper">

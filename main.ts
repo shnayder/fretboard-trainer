@@ -298,7 +298,7 @@ const html = `<!DOCTYPE html>
   </style>
 </head>
 <body>
-  <div class="version">v0.2</div>
+  <div class="version">v0.3</div>
   <h1>Fretboard Trainer</h1>
 
   <div class="fretboard-wrapper">
@@ -939,20 +939,50 @@ const html = `<!DOCTYPE html>
     loadEnabledStrings();
     updateAccidentalButtons();
     updateStats();
+
+    // Register service worker for cache busting on iOS home screen
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('sw.js');
+    }
   </script>
 </body>
 </html>`;
 
-export { html };
+const sw = `// Network-first service worker: always fetch latest, fall back to cache offline
+const CACHE = 'fretboard-v1';
+
+self.addEventListener('fetch', (event) => {
+  event.respondWith(
+    fetch(event.request)
+      .then((response) => {
+        const clone = response.clone();
+        caches.open(CACHE).then((cache) => cache.put(event.request, clone));
+        return response;
+      })
+      .catch(() => caches.match(event.request))
+  );
+});
+`;
+
+export { html, sw };
 
 if (import.meta.main) {
   if (Deno.args.includes("--build")) {
     await Deno.mkdir("docs", { recursive: true });
     await Deno.writeTextFile("docs/index.html", html);
-    console.log("Built to docs/index.html");
+    await Deno.writeTextFile("docs/sw.js", sw);
+    console.log("Built to docs/index.html + docs/sw.js");
   } else {
-    Deno.serve({ port: 8001 }, () => new Response(html, {
-      headers: { "content-type": "text/html" },
-    }));
+    Deno.serve({ port: 8001 }, (req) => {
+      const url = new URL(req.url);
+      if (url.pathname === '/sw.js') {
+        return new Response(sw, {
+          headers: { "content-type": "application/javascript" },
+        });
+      }
+      return new Response(html, {
+        headers: { "content-type": "text/html" },
+      });
+    });
   }
 }

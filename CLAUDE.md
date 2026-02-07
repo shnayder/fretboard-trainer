@@ -5,14 +5,15 @@ Interactive fretboard trainer for learning guitar note positions.
 ## Structure
 
 ```
-main.ts          # Single-file Deno app (HTML/CSS/JS embedded)
-docs/index.html  # Built static file for GitHub Pages
+main.ts           # Deno app: HTML/CSS/JS + service worker, embedded as template literals
+docs/index.html   # Built static file for GitHub Pages
+docs/sw.js        # Built service worker (network-first cache strategy)
 ```
 
 ## Development
 
 ```bash
-# Run dev server
+# Run dev server (serves both index.html and sw.js)
 deno run --allow-net main.ts
 
 # Build for GitHub Pages

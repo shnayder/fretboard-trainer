@@ -7,8 +7,7 @@ import {
   createAdaptiveSelector,
   createMemoryStorage,
   DEFAULT_CONFIG,
-  type ItemStats,
-} from "./adaptive.ts";
+} from "./adaptive.js";
 
 // ---------------------------------------------------------------------------
 // computeEwma
@@ -41,7 +40,7 @@ describe("computeWeight", () => {
   });
 
   it("returns ewma/minTime for seen items", () => {
-    const stats: ItemStats = {
+    const stats = {
       recentTimes: [2000],
       ewma: 2000,
       sampleCount: 1,
@@ -51,7 +50,7 @@ describe("computeWeight", () => {
   });
 
   it("floors weight at 1.0 via minTime clamp", () => {
-    const stats: ItemStats = {
+    const stats = {
       recentTimes: [500],
       ewma: 500,
       sampleCount: 5,
@@ -65,7 +64,7 @@ describe("computeWeight", () => {
   it("unseen items outweigh recently-seen items with typical response times", () => {
     const unseenWeight = computeWeight(null, cfg);
     // Typical first response: 2000ms
-    const seenOnce: ItemStats = {
+    const seenOnce = {
       recentTimes: [2000],
       ewma: 2000,
       sampleCount: 1,
@@ -81,7 +80,7 @@ describe("computeWeight", () => {
   it("unseen items outweigh seen items unless the seen item is very slow", () => {
     const unseenWeight = computeWeight(null, cfg);
     // Only items slower than unseenBoost * minTime (3000ms) outweigh unseen
-    const mediumSlow: ItemStats = {
+    const mediumSlow = {
       recentTimes: [2500],
       ewma: 2500,
       sampleCount: 2,
@@ -94,7 +93,7 @@ describe("computeWeight", () => {
 
     // A very slow item (>3000ms) *should* outweigh unseen — that's correct
     // behavior: it means the user genuinely struggles with it.
-    const verySlow: ItemStats = {
+    const verySlow = {
       recentTimes: [5000],
       ewma: 5000,
       sampleCount: 2,
@@ -190,9 +189,9 @@ describe("createAdaptiveSelector", () => {
 
     const stats = selector.getStats("0-0");
     assert.ok(stats);
-    assert.equal(stats!.ewma, 2000);
-    assert.equal(stats!.sampleCount, 1);
-    assert.deepEqual(stats!.recentTimes, [2000]);
+    assert.equal(stats.ewma, 2000);
+    assert.equal(stats.sampleCount, 1);
+    assert.deepEqual(stats.recentTimes, [2000]);
   });
 
   it("recordResponse updates existing stats with EWMA", () => {
@@ -204,8 +203,8 @@ describe("createAdaptiveSelector", () => {
     const stats = selector.getStats("0-0");
     assert.ok(stats);
     // ewma = 0.3 * 1000 + 0.7 * 2000 = 1700
-    assert.equal(stats!.ewma, 1700);
-    assert.equal(stats!.sampleCount, 2);
+    assert.equal(stats.ewma, 1700);
+    assert.equal(stats.sampleCount, 2);
   });
 
   it("caps stored recent times at maxStoredTimes", () => {
@@ -216,7 +215,7 @@ describe("createAdaptiveSelector", () => {
       selector.recordResponse("x", 1000 + i * 100);
     }
     const stats = selector.getStats("x");
-    assert.equal(stats!.recentTimes.length, 3);
+    assert.equal(stats.recentTimes.length, 3);
   });
 
   it("clamps outlier response times to maxResponseTime", () => {
@@ -232,8 +231,8 @@ describe("createAdaptiveSelector", () => {
     assert.ok(stats);
     // Should have clamped to 9000, not used 300000
     // ewma = 0.3 * 9000 + 0.7 * 2000 = 4100
-    assert.equal(stats!.ewma, 4100);
-    assert.deepEqual(stats!.recentTimes, [2000, 9000]);
+    assert.equal(stats.ewma, 4100);
+    assert.deepEqual(stats.recentTimes, [2000, 9000]);
   });
 
   it("clamps outlier on first response too", () => {
@@ -242,8 +241,8 @@ describe("createAdaptiveSelector", () => {
     selector.recordResponse("0-0", 60_000);
 
     const stats = selector.getStats("0-0");
-    assert.equal(stats!.ewma, 9000);
-    assert.deepEqual(stats!.recentTimes, [9000]);
+    assert.equal(stats.ewma, 9000);
+    assert.deepEqual(stats.recentTimes, [9000]);
   });
 
   // --- THE KEY BUG-FIX TEST ---
@@ -256,9 +255,6 @@ describe("createAdaptiveSelector", () => {
 
     // Record a response for "a" — simulating it's been asked once
     selector.recordResponse("a", 2000);
-    // Also select "a" so it becomes lastSelected
-    // (selectNext will skip "a" because it was lastSelected, AND because
-    //  unseen items should be weighted higher)
 
     // Now select next: "a" was just selected, "b"-"e" are unseen
     // The selector should prefer unseen items.

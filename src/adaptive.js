@@ -1,24 +1,10 @@
 // Adaptive question selector: prioritizes items the user is slower on,
 // with exploration boost for unseen items.
 //
-// The browser-compatible JS version of this logic lives in main.ts (search
-// for "Adaptive Selector"). Keep both in sync; tests here verify correctness.
+// This is the single source of truth. Tests import it as an ES module.
+// main.ts reads it at build time and strips "export" for browser inlining.
 
-export interface AdaptiveConfig {
-  /** Floor for weight computation (ms). Prevents fast items from reaching 0. */
-  minTime: number;
-  /** Weight multiplier for never-seen items (exploration). */
-  unseenBoost: number;
-  /** EWMA smoothing factor (0-1). Higher = more weight to recent times. */
-  ewmaAlpha: number;
-  /** Max recent response times to store per item. */
-  maxStoredTimes: number;
-  /** Ceiling for recorded response times (ms). Clamps outliers from
-   *  distracted/idle responses so they don't poison the EWMA. */
-  maxResponseTime: number;
-}
-
-export const DEFAULT_CONFIG: AdaptiveConfig = {
+export const DEFAULT_CONFIG = {
   minTime: 1000,
   unseenBoost: 3,
   ewmaAlpha: 0.3,
@@ -26,48 +12,22 @@ export const DEFAULT_CONFIG: AdaptiveConfig = {
   maxResponseTime: 9000,
 };
 
-export interface ItemStats {
-  recentTimes: number[];
-  ewma: number;
-  sampleCount: number;
-  lastSeen: number;
-}
-
-/** Storage abstraction — implemented by localStorage in the browser, by a
- *  plain Map in tests. */
-export interface StatsStorage {
-  getStats(itemId: string): ItemStats | null;
-  saveStats(itemId: string, stats: ItemStats): void;
-  getLastSelected(): string | null;
-  setLastSelected(itemId: string): void;
-}
-
 // ---------------------------------------------------------------------------
-// Pure functions (easily unit-tested)
+// Pure functions
 // ---------------------------------------------------------------------------
 
-export function computeEwma(
-  oldEwma: number,
-  newTime: number,
-  alpha: number,
-): number {
+export function computeEwma(oldEwma, newTime, alpha) {
   return alpha * newTime + (1 - alpha) * oldEwma;
 }
 
 /**
  * Compute selection weight for an item.
- *
- * - Unseen items get `cfg.unseenBoost` (high weight → exploration).
- * - Seen items get `ewma / minTime` — slower items are heavier.
- *
- * Previously, seen items with few samples were multiplied by unseenBoost,
- * which made them *heavier* than truly unseen items, causing the selector
- * to loop over a small set of already-asked notes at startup.
+ * - Unseen items get unseenBoost (high weight for exploration).
+ * - Seen items get ewma / minTime (slower = heavier).
+ * No extra multiplier for low-sample items — that caused a startup rut
+ * where seen items outweighed truly unseen ones.
  */
-export function computeWeight(
-  stats: ItemStats | null,
-  cfg: AdaptiveConfig,
-): number {
+export function computeWeight(stats, cfg) {
   if (!stats) {
     return cfg.unseenBoost;
   }
@@ -75,14 +35,10 @@ export function computeWeight(
 }
 
 /**
- * Weighted random selection from `items` using pre-computed `weights`.
- * `rand` should be in [0, 1) — injected for deterministic testing.
+ * Weighted random selection. rand should be in [0, 1).
+ * Injected for deterministic testing.
  */
-export function selectWeighted(
-  items: string[],
-  weights: number[],
-  rand: number,
-): string {
+export function selectWeighted(items, weights, rand) {
   const totalWeight = weights.reduce((sum, w) => sum + w, 0);
   if (totalWeight === 0) {
     return items[Math.floor(rand * items.length)];
@@ -96,15 +52,15 @@ export function selectWeighted(
 }
 
 // ---------------------------------------------------------------------------
-// Selector factory
+// Selector factory (storage-injected — works with localStorage or Map)
 // ---------------------------------------------------------------------------
 
 export function createAdaptiveSelector(
-  storage: StatsStorage,
-  cfg: AdaptiveConfig = DEFAULT_CONFIG,
-  randomFn: () => number = Math.random,
+  storage,
+  cfg = DEFAULT_CONFIG,
+  randomFn = Math.random,
 ) {
-  function recordResponse(itemId: string, timeMs: number): void {
+  function recordResponse(itemId, timeMs) {
     const clamped = Math.min(timeMs, cfg.maxResponseTime);
     const existing = storage.getStats(itemId);
     const now = Date.now();
@@ -130,15 +86,15 @@ export function createAdaptiveSelector(
     }
   }
 
-  function getWeight(itemId: string): number {
+  function getWeight(itemId) {
     return computeWeight(storage.getStats(itemId), cfg);
   }
 
-  function getStats(itemId: string): ItemStats | null {
+  function getStats(itemId) {
     return storage.getStats(itemId);
   }
 
-  function selectNext(validItems: string[]): string {
+  function selectNext(validItems) {
     if (validItems.length === 0) {
       throw new Error("validItems cannot be empty");
     }
@@ -161,25 +117,67 @@ export function createAdaptiveSelector(
 }
 
 // ---------------------------------------------------------------------------
-// In-memory storage (for tests; also usable as a template)
+// In-memory storage (for tests)
 // ---------------------------------------------------------------------------
 
-export function createMemoryStorage(): StatsStorage {
-  const stats = new Map<string, ItemStats>();
-  let lastSelected: string | null = null;
+export function createMemoryStorage() {
+  const stats = new Map();
+  let lastSelected = null;
 
   return {
-    getStats(itemId: string) {
+    getStats(itemId) {
       return stats.get(itemId) ?? null;
     },
-    saveStats(itemId: string, s: ItemStats) {
+    saveStats(itemId, s) {
       stats.set(itemId, s);
     },
     getLastSelected() {
       return lastSelected;
     },
-    setLastSelected(itemId: string) {
+    setLastSelected(itemId) {
       lastSelected = itemId;
+    },
+  };
+}
+
+// ---------------------------------------------------------------------------
+// localStorage-backed storage (for browser)
+// ---------------------------------------------------------------------------
+
+export function createLocalStorageAdapter(namespace) {
+  const cache = {};
+  const mkKey = (itemId) => `adaptive_${namespace}_${itemId}`;
+  const lastKey = `adaptive_${namespace}_lastSelected`;
+
+  return {
+    getStats(itemId) {
+      const k = mkKey(itemId);
+      if (!(k in cache)) {
+        const data = localStorage.getItem(k);
+        try {
+          cache[k] = data ? JSON.parse(data) : null;
+        } catch {
+          cache[k] = null;
+        }
+      }
+      return cache[k];
+    },
+    saveStats(itemId, stats) {
+      const k = mkKey(itemId);
+      cache[k] = stats;
+      localStorage.setItem(k, JSON.stringify(stats));
+    },
+    getLastSelected() {
+      return localStorage.getItem(lastKey);
+    },
+    setLastSelected(itemId) {
+      localStorage.setItem(lastKey, itemId);
+    },
+    /** Pre-populate cache to avoid localStorage reads during gameplay. */
+    preload(itemIds) {
+      for (const itemId of itemIds) {
+        this.getStats(itemId);
+      }
     },
   };
 }

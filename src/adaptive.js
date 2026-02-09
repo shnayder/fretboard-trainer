@@ -12,10 +12,12 @@ export const DEFAULT_CONFIG = {
   maxResponseTime: 9000,
   // Forgetting model
   initialStability: 4,       // hours — half-life after first correct answer
+  maxStability: 336,         // hours (14 days) — stability ceiling
   stabilityGrowthBase: 2.0,  // multiplier on each correct answer
   stabilityDecayOnWrong: 0.3,// multiplier on wrong answer
   recallThreshold: 0.5,      // P(recall) below this = "due"
   speedBonusMax: 1.5,        // fast answers grow stability up to this extra factor
+  selfCorrectionThreshold: 1500, // ms — response time below this triggers self-correction
 };
 
 // ---------------------------------------------------------------------------
@@ -57,11 +59,11 @@ export function updateStability(oldStability, responseTimeMs, elapsedHours, cfg)
   let newStability = oldStability * cfg.stabilityGrowthBase * speedFactor;
 
   // Self-correction: fast answer after long gap means true half-life is long
-  if (elapsedHours > 0 && responseTimeMs < cfg.maxResponseTime * 0.5) {
+  if (elapsedHours > 0 && responseTimeMs < cfg.selfCorrectionThreshold) {
     newStability = Math.max(newStability, elapsedHours * 1.5);
   }
 
-  return newStability;
+  return Math.min(newStability, cfg.maxStability);
 }
 
 /**

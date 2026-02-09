@@ -166,17 +166,36 @@ describe("updateStability", () => {
   });
 
   it("self-corrects: fast answer after long gap boosts stability", () => {
-    // Fast answer (1000ms) after 720 hours (30 days) away
+    // Fast answer (1000ms) after 100 hours away, oldS=4
+    // Normal growth would be ~12h, but self-correction: 100 * 1.5 = 150h
+    const newS = updateStability(4, 1000, 100, cfg);
+    assert.ok(newS >= 150, `self-corrected stability (${newS}) should be >= 150`);
+  });
+
+  it("self-correction is capped at maxStability", () => {
+    // Fast answer after 720 hours — self-correction would give 1080h,
+    // but cap at maxStability (336h)
     const newS = updateStability(4, 1000, 720, cfg);
-    // Should be at least 720 * 1.5 = 1080
-    assert.ok(newS >= 1080, `self-corrected stability (${newS}) should be >= 1080`);
+    assert.equal(newS, cfg.maxStability);
+  });
+
+  it("does NOT self-correct for medium speed answers", () => {
+    // 3000ms is above selfCorrectionThreshold (1500ms) — no self-correction
+    const newS = updateStability(4, 3000, 720, cfg);
+    // Should just be normal growth, not the large self-correction
+    assert.ok(newS < 100, `medium speed stability (${newS}) should not self-correct`);
   });
 
   it("does NOT self-correct for slow answers after long gap", () => {
     // Slow answer (7000ms) after 720 hours — they struggled, no correction
     const newS = updateStability(4, 7000, 720, cfg);
-    // Should just be normal growth, not the large self-correction
-    assert.ok(newS < 720, `slow answer stability (${newS}) should not self-correct`);
+    assert.ok(newS < 100, `slow answer stability (${newS}) should not self-correct`);
+  });
+
+  it("caps stability at maxStability even from normal growth", () => {
+    // Very high existing stability * growth should still cap
+    const newS = updateStability(300, 1000, 24, cfg);
+    assert.equal(newS, cfg.maxStability);
   });
 });
 

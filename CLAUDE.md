@@ -5,10 +5,11 @@ Interactive fretboard trainer for learning guitar note positions.
 ## Structure
 
 ```
-main.ts                # Deno entry point: assembles HTML from modules, serves/builds
+main.ts                # Deno entry point: reads src/ files, assembles HTML, serves/builds
 src/
-  adaptive.ts          # Adaptive question selector (testable, pure logic)
-  adaptive_test.ts     # Tests for adaptive selector (node --test via npx tsx)
+  adaptive.js          # Adaptive question selector (ES module, single source of truth)
+  adaptive_test.ts     # Tests for adaptive selector (npx tsx --test)
+  app.js               # Browser quiz/UI logic (references adaptive globals)
   fretboard.ts         # SVG fretboard generation (build-time)
   styles.css           # CSS (read at build time, inlined into HTML)
 docs/index.html        # Built static file for GitHub Pages
@@ -37,14 +38,16 @@ npx tsx --test src/adaptive_test.ts
 
 ## Adaptive Selector
 
-The adaptive question selector lives in `src/adaptive.ts` (tested reference) with a
-browser-compatible copy inlined in `main.ts`. Keep both in sync. Key design:
+The adaptive question selector lives in `src/adaptive.js` — a single JS file
+that is both the ES module imported by tests and the source that `main.ts` reads
+at build time (stripping `export` keywords for browser inlining). Key design:
 
 - **Unseen items** get `unseenBoost` weight (exploration)
 - **Seen items** get `ewma / minTime` weight (slower = more practice)
 - No extra multiplier for low-sample items — this was a bug that caused startup ruts
+- Response times clamped to `maxResponseTime` (9s) to reject outliers
 - Last-selected item gets weight 0 (no immediate repeats)
-- Storage is injected (localStorage in browser, Map in tests)
+- Storage is injected (localStorage adapter in browser, Map in tests)
 
 ## Keyboard Shortcuts (during quiz)
 

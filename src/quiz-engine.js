@@ -125,6 +125,7 @@ export function createQuizEngine(mode, container) {
     stopBtn: container.querySelector('.stop-btn'),
     heatmapBtn: container.querySelector('.heatmap-btn'),
     stats: container.querySelector('.stats'),
+    statsControls: container.querySelector('.stats-controls'),
     quizArea: container.querySelector('.quiz-area'),
   };
 
@@ -228,6 +229,7 @@ export function createQuizEngine(mode, container) {
     if (mode.onStart) mode.onStart();
     if (els.startBtn) els.startBtn.style.display = 'none';
     if (els.heatmapBtn) els.heatmapBtn.style.display = 'none';
+    if (els.statsControls) els.statsControls.style.display = 'none';
     if (els.stopBtn) els.stopBtn.style.display = 'inline';
     if (els.quizArea) els.quizArea.classList.add('active');
     nextQuestion();
@@ -241,6 +243,7 @@ export function createQuizEngine(mode, container) {
     }
     if (els.startBtn) els.startBtn.style.display = 'inline';
     if (els.heatmapBtn) els.heatmapBtn.style.display = 'inline';
+    if (els.statsControls) els.statsControls.style.display = '';
     if (els.stopBtn) els.stopBtn.style.display = 'none';
     if (els.quizArea) els.quizArea.classList.remove('active');
     if (mode.onStop) mode.onStop();

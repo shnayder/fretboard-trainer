@@ -16,7 +16,7 @@ function createSpeedTapMode() {
   let foundPositions = new Set(); // "s-f" strings
   let roundStartTime = null;
   let timerInterval = null;
-  let wrongFlashTimeouts = [];
+  let wrongFlashTimeouts = new Set();
 
   const noteNames = NOTES.map(n => n.name);
 
@@ -101,7 +101,7 @@ function createSpeedTapMode() {
   function startTimer() {
     roundStartTime = Date.now();
     updateTimerDisplay();
-    timerInterval = setInterval(updateTimerDisplay, 50);
+    timerInterval = setInterval(updateTimerDisplay, 100);
   }
 
   function stopTimer() {
@@ -133,7 +133,7 @@ function createSpeedTapMode() {
 
   function nextRound() {
     wrongFlashTimeouts.forEach(t => clearTimeout(t));
-    wrongFlashTimeouts = [];
+    wrongFlashTimeouts.clear();
     clearAll();
 
     const items = getEnabledItems();
@@ -199,12 +199,13 @@ function createSpeedTapMode() {
       showNoteText(string, fret);
 
       const timeout = setTimeout(() => {
+        wrongFlashTimeouts.delete(timeout);
         if (!foundPositions.has(key)) {
           highlightCircle(string, fret, 'white');
           clearNoteText(string, fret);
         }
       }, 800);
-      wrongFlashTimeouts.push(timeout);
+      wrongFlashTimeouts.add(timeout);
     }
   }
 
@@ -257,8 +258,20 @@ function createSpeedTapMode() {
     roundActive = false;
     stopTimer();
     wrongFlashTimeouts.forEach(t => clearTimeout(t));
-    wrongFlashTimeouts = [];
+    wrongFlashTimeouts.clear();
     clearAll();
+
+    currentNote = null;
+    roundStartTime = null;
+
+    if (els.prompt) els.prompt.textContent = '';
+    if (els.progress) els.progress.textContent = '';
+    if (els.timer) els.timer.textContent = '';
+    if (els.feedback) {
+      els.feedback.textContent = '';
+      els.feedback.className = 'feedback';
+    }
+    if (els.hint) els.hint.textContent = '';
 
     if (els.startBtn) els.startBtn.style.display = 'inline';
     if (els.stopBtn) els.stopBtn.style.display = 'none';

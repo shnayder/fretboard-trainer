@@ -190,15 +190,15 @@ export function createQuizEngine(mode, container) {
     nextQuestion();
   }
 
-  // Attach event listeners (scoped to document since keys are global)
+  // Attach event listeners: keyboard on document (global), clicks on container
   function attach() {
     document.addEventListener('keydown', handleKeydown);
-    document.addEventListener('click', handleClick);
+    container.addEventListener('click', handleClick);
   }
 
   function detach() {
     document.removeEventListener('keydown', handleKeydown);
-    document.removeEventListener('click', handleClick);
+    container.removeEventListener('click', handleClick);
   }
 
   return {

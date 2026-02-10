@@ -16,11 +16,13 @@ function createNavigation() {
   function closeDrawer() {
     if (drawer) drawer.classList.remove('open');
     if (overlay) overlay.classList.remove('open');
+    if (hamburger) hamburger.setAttribute('aria-expanded', 'false');
   }
 
   function openDrawer() {
     if (drawer) drawer.classList.add('open');
     if (overlay) overlay.classList.add('open');
+    if (hamburger) hamburger.setAttribute('aria-expanded', 'true');
   }
 
   function registerMode(id, modeController) {

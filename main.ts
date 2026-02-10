@@ -53,12 +53,12 @@ async function buildHTML(): Promise<string> {
 <body>
   <!-- Navigation -->
   <div class="nav-overlay"></div>
-  <div class="nav-drawer">
+  <div class="nav-drawer" id="nav-drawer">
     <button data-mode="fretboard">Fretboard</button>
   </div>
 
   <div class="top-bar">
-    <button class="hamburger">\u2630</button>
+    <button class="hamburger" type="button" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="nav-drawer">\u2630</button>
     <h1 id="mode-title">Fretboard</h1>
     <div class="version">v1.3</div>
   </div>

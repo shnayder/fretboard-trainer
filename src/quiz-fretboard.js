@@ -1,9 +1,8 @@
 // Fretboard quiz mode: identify the note at a highlighted fretboard position.
 // Plugs into the shared quiz engine via the mode interface.
 //
-// Depends on globals: NOTES, NATURAL_NOTES, STRING_OFFSETS, noteByNum,
-// noteMatchesInput, createQuizEngine, createLocalStorageAdapter,
-// createAdaptiveSelector, DEFAULT_CONFIG
+// Depends on globals: NOTES, NATURAL_NOTES, STRING_OFFSETS,
+// noteMatchesInput, createQuizEngine, DEFAULT_CONFIG
 
 function createFretboardMode() {
   const container = document.getElementById('mode-fretboard');

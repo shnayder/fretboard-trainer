@@ -88,7 +88,8 @@ Config: `expansionThreshold` (default 0.7) in `DEFAULT_CONFIG`.
 
 `getStringRecommendations` returns per-string:
 `{ string, dueCount, unseenCount, masteredCount, totalCount }` — separating
-"never seen" from "seen but forgotten" so the UI can make smarter decisions.
+items with no recall data (`unseenCount`) from those with established recall
+(`dueCount` + `masteredCount`), so the UI can make smarter decisions.
 
 ## Keyboard Shortcuts (during quiz)
 

@@ -258,8 +258,8 @@ export function createAdaptiveSelector(
    * sorted by needsWork (dueCount + unseenCount) descending.
    * getItemIds(stringIndex) should return the item IDs for that string.
    *
-   * - unseenCount: items with no stats at all (never practiced)
-   * - dueCount: items seen but recall < threshold (need review)
+   * - unseenCount: items with no recall data (never answered correctly)
+   * - dueCount: items with established recall that dropped below threshold
    * - masteredCount: items with recall >= threshold (currently retained)
    */
   function getStringRecommendations(stringIndices, getItemIds) {

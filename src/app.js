@@ -526,6 +526,11 @@ function applyRecommendations() {
       newEnabled.add(r.string);
     }
   }
+  // Always include the top started string (handles single-string and tie cases)
+  if (newEnabled.size === 0) {
+    recommendedStrings.add(startedByWork[0].string);
+    newEnabled.add(startedByWork[0].string);
+  }
 
   // Only suggest one new string if consolidation is high enough
   if (consolidatedRatio >= DEFAULT_CONFIG.expansionThreshold && unstarted.length > 0) {

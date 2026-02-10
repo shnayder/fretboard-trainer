@@ -141,11 +141,13 @@ export function createQuizEngine(mode, container) {
 
   function start() {
     active = true;
+    // Call onStart first so modes can tear down their idle UI (e.g. heatmap)
+    // before the engine sets up the quiz UI state.
+    if (mode.onStart) mode.onStart();
     if (els.startBtn) els.startBtn.style.display = 'none';
     if (els.heatmapBtn) els.heatmapBtn.style.display = 'none';
     if (els.stopBtn) els.stopBtn.style.display = 'inline';
     if (els.quizArea) els.quizArea.classList.add('active');
-    if (mode.onStart) mode.onStart();
     nextQuestion();
   }
 

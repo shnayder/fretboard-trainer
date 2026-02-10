@@ -21,6 +21,7 @@ const css = read("src/styles.css");
 const adaptiveJS = readModule("src/adaptive.js");
 const musicDataJS = readModule("src/music-data.js");
 const quizEngineJS = readModule("src/quiz-engine.js");
+const statsDisplayJS = readModule("src/stats-display.js");
 const quizFretboardJS = read("src/quiz-fretboard.js");
 const quizNoteSemitonesJS = read("src/quiz-note-semitones.js");
 const quizIntervalSemitonesJS = read("src/quiz-interval-semitones.js");
@@ -144,10 +145,12 @@ const html = `<!DOCTYPE html>
     <div class="quiz-controls">
       <div>
         <button class="start-btn">Start Quiz</button>
+        <button class="heatmap-btn">Show Stats</button>
         <button class="stop-btn" style="display: none;">Stop Quiz</button>
         <span class="stats"></span>
       </div>
     </div>
+    <div class="stats-container"></div>
     <div class="quiz-area">
       <div class="countdown-container"><div class="countdown-bar"></div></div>
       <div class="quiz-prompt"></div>
@@ -190,10 +193,12 @@ const html = `<!DOCTYPE html>
     <div class="quiz-controls">
       <div>
         <button class="start-btn">Start Quiz</button>
+        <button class="heatmap-btn">Show Stats</button>
         <button class="stop-btn" style="display: none;">Stop Quiz</button>
         <span class="stats"></span>
       </div>
     </div>
+    <div class="stats-container"></div>
     <div class="quiz-area">
       <div class="countdown-container"><div class="countdown-bar"></div></div>
       <div class="quiz-prompt"></div>
@@ -236,10 +241,12 @@ const html = `<!DOCTYPE html>
     <div class="quiz-controls">
       <div>
         <button class="start-btn">Start Quiz</button>
+        <button class="heatmap-btn">Show Stats</button>
         <button class="stop-btn" style="display: none;">Stop Quiz</button>
         <span class="stats"></span>
       </div>
     </div>
+    <div class="stats-container"></div>
     <div class="quiz-area">
       <div class="countdown-container"><div class="countdown-bar"></div></div>
       <div class="quiz-prompt"></div>
@@ -268,10 +275,12 @@ const html = `<!DOCTYPE html>
     <div class="quiz-controls">
       <div>
         <button class="start-btn">Start Quiz</button>
+        <button class="heatmap-btn">Show Stats</button>
         <button class="stop-btn" style="display: none;">Stop Quiz</button>
         <span class="stats"></span>
       </div>
     </div>
+    <div class="stats-container"></div>
     <div class="quiz-area">
       <div class="countdown-container"><div class="countdown-bar"></div></div>
       <div class="quiz-prompt"></div>
@@ -299,6 +308,7 @@ const html = `<!DOCTYPE html>
 ${adaptiveJS}
 ${musicDataJS}
 ${quizEngineJS}
+${statsDisplayJS}
 ${quizFretboardJS}
 ${quizNoteSemitonesJS}
 ${quizIntervalSemitonesJS}

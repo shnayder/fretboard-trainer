@@ -11,6 +11,10 @@ body {
   max-width: 1400px;
   margin: 0 auto;
   padding: 0 1rem;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  min-height: 100dvh;
 }
 
 /* --- Top bar & navigation --- */
@@ -94,6 +98,7 @@ body {
 /* --- Mode screens --- */
 .mode-screen {
   padding-top: 0.5rem;
+  flex: 1;
 }
 
 /* --- Fretboard --- */
@@ -460,7 +465,7 @@ button {
   <div class="top-bar">
     <button class="hamburger" type="button" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="nav-drawer">☰</button>
     <h1 id="mode-title">Fretboard</h1>
-    <div class="version">v1.7</div>
+    <div class="version">v1.8</div>
   </div>
 
   <!-- Fretboard mode -->

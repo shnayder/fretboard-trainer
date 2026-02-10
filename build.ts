@@ -54,7 +54,7 @@ const html = `<!DOCTYPE html>
   <div class="top-bar">
     <button class="hamburger" type="button" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="nav-drawer">\u2630</button>
     <h1 id="mode-title">Fretboard</h1>
-    <div class="version">v1.7</div>
+    <div class="version">v1.8</div>
   </div>
 
   <!-- Fretboard mode -->

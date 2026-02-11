@@ -19,15 +19,20 @@ threshold used by string recommendations for "mastered" items.
 
 ### Review message (when idle)
 
-**Trigger:** On mode activation and after quiz stops, check if any
-previously-learned items need review.
+**Trigger:** On mode activation and after quiz stops, check if
+previously-mastered material needs review.
 
-**Condition:** At least one item has:
+**Condition — ALL items must have high prior skill:**
 1. Been answered correctly before (`lastCorrectAt != null`)
-2. Recall dropped below `recallThreshold`
+2. Have `speedScore >= 0.5` (EWMA at or below automaticityTarget of 3s)
 
-Items that were only answered wrong (no `lastCorrectAt`) or never seen
-don't trigger the review message — only items the user previously knew.
+**AND at least one item's recall has decayed** below `recallThreshold`.
+
+This avoids false positives from items still being learned, one-off
+correct answers, or fat-finger mistakes on items you barely know. The
+speedScore threshold (0.5) means you were answering at or below the
+automaticity target — real evidence of prior mastery, not just having
+seen an item once.
 
 ### Priority order
 

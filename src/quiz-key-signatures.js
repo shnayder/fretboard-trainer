@@ -4,7 +4,7 @@
 // Grouped by accidental count for progressive unlocking.
 //
 // Depends on globals: MAJOR_KEYS, keySignatureLabel, keyBySignatureLabel,
-// noteMatchesInput, NOTES, createQuizEngine, createNoteKeyHandler,
+// spelledNoteMatchesSemitone, createQuizEngine, createNoteKeyHandler,
 // updateModeStats, renderStatsTable, buildStatsLegend, DEFAULT_CONFIG,
 // computeRecommendations
 
@@ -30,11 +30,6 @@ function createKeySignaturesMode() {
     ALL_ITEMS.push(key.root + ':fwd');
     ALL_ITEMS.push(key.root + ':rev');
   }
-
-  // Signature labels for answer buttons (built once)
-  const SIG_LABELS = ['0'];
-  for (let i = 1; i <= 7; i++) SIG_LABELS.push(i + '#');
-  for (let i = 1; i <= 7; i++) SIG_LABELS.push(i + 'b');
 
   function parseItem(itemId) {
     const [rootName, dir] = itemId.split(':');
@@ -192,10 +187,7 @@ function createKeySignaturesMode() {
         const expected = keySignatureLabel(currentItem.key);
         return { correct: input === expected, correctAnswer: expected };
       } else {
-        const rootNote = NOTES.find(n => n.name === currentItem.key.root)
-                      || { accepts: [currentItem.key.root.toLowerCase()] };
-        const correct = noteMatchesInput(rootNote, input)
-                      || input.toLowerCase() === currentItem.key.root.toLowerCase();
+        const correct = spelledNoteMatchesSemitone(currentItem.key.root, input);
         return { correct, correctAnswer: currentItem.key.root };
       }
     },
@@ -220,6 +212,7 @@ function createKeySignaturesMode() {
       // Forward: number keys for sig selection
       if (e.key >= '0' && e.key <= '7') {
         e.preventDefault();
+        if (pendingSigTimeout) clearTimeout(pendingSigTimeout);
         pendingSigDigit = e.key;
         pendingSigTimeout = setTimeout(() => {
           if (pendingSigDigit === '0') {

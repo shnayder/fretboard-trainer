@@ -3,7 +3,7 @@
 // ~132 items: 12 roots x chord types, grouped by chord type.
 //
 // Depends on globals: CHORD_TYPES, CHORD_ROOTS, getChordTones,
-// chordDisplayName, spelledNoteMatchesSemitone,
+// chordDisplayName, spelledNoteMatchesInput,
 // createQuizEngine, createNoteKeyHandler, updateModeStats,
 // renderStatsGrid, buildStatsLegend, DEFAULT_CONFIG,
 // computeRecommendations
@@ -142,7 +142,7 @@ function createChordSpellingMode() {
 
     const idx = enteredTones.length;
     const expected = currentItem.tones[idx];
-    const isCorrect = spelledNoteMatchesSemitone(expected, input);
+    const isCorrect = spelledNoteMatchesInput(expected, input);
 
     enteredTones.push({
       input,

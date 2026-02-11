@@ -21,7 +21,7 @@ Reverse answer: a note name — reuses existing note buttons.
 ### Items
 - 12 major keys × 2 directions = 24 items
   (C# and Cb are enharmonic with Db and B; handle as aliases)
-- Item ID format: `D:fwd`, `3b:rev`
+- Item ID format: `D:fwd`, `Eb:rev` (reverse IDs use the key root; the signature label is derived at runtime)
 
 ### Grouping & sequencing
 

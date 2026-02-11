@@ -74,6 +74,7 @@ function createFretboardMode() {
     }
     saveEnabledStrings();
     updateStringToggles();
+    engine.updateIdleMessage();
   }
 
   // --- Heatmap ---
@@ -349,6 +350,7 @@ function createFretboardMode() {
       naturalsCheckbox.addEventListener('change', (e) => {
         naturalsOnly = e.target.checked;
         updateAccidentalButtons();
+        engine.updateIdleMessage();
       });
     }
 

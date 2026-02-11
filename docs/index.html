@@ -6,6 +6,7 @@
   <title>Fretboard Trainer</title>
   <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
   <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+
   <style>
     * { -webkit-tap-highlight-color: transparent; }
 body {
@@ -546,7 +547,7 @@ button {
   <div class="top-bar">
     <button class="hamburger" type="button" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="nav-drawer">☰</button>
     <h1 id="mode-title">Fretboard</h1>
-    <div class="version">v2.7</div>
+    <div class="version">v2.8</div>
   </div>
 
   <!-- Fretboard mode -->
@@ -5154,6 +5155,7 @@ function createFretboardMode() {
     }
     saveEnabledStrings();
     updateStringToggles();
+    engine.updateIdleMessage();
   }
 
   // --- Heatmap ---
@@ -5429,6 +5431,7 @@ function createFretboardMode() {
       naturalsCheckbox.addEventListener('change', (e) => {
         naturalsOnly = e.target.checked;
         updateAccidentalButtons();
+        engine.updateIdleMessage();
       });
     }
 

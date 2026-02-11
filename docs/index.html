@@ -4750,7 +4750,7 @@ function engineUpdateMasteryAfterAnswer(state, allMastered) {
  * Route a keydown event to an action descriptor. Pure — no DOM.
  * @param {EngineState} state
  * @param {string} key - e.key value
- * @returns {{ action: 'stop' | 'next' | 'delegate' | 'ignore' }}
+ * @returns {{ action: string }} action is one of 'stop', 'next', 'delegate', 'ignore'
  */
 function engineRouteKey(state, key) {
   if (state.phase !== 'active') return { action: 'ignore' };
@@ -5000,6 +5000,7 @@ function createQuizEngine(mode, container) {
   }
 
   function updateIdleMessage() {
+    if (state.phase !== 'idle') return;
     const items = mode.getEnabledItems();
     state = engineUpdateIdleMessage(
       state,
@@ -5327,7 +5328,7 @@ function createFretboardHelpers(musicData) {
    */
   function checkFretboardAnswer(currentNote, input) {
     const note = musicData.notes.find(n => n.name === currentNote);
-    const correct = note && musicData.noteMatchesInput(note, input);
+    const correct = !!(note && musicData.noteMatchesInput(note, input));
     return { correct, correctAnswer: currentNote };
   }
 

@@ -125,7 +125,7 @@ export function engineUpdateMasteryAfterAnswer(state, allMastered) {
  * Route a keydown event to an action descriptor. Pure — no DOM.
  * @param {EngineState} state
  * @param {string} key - e.key value
- * @returns {{ action: 'stop' | 'next' | 'delegate' | 'ignore' }}
+ * @returns {{ action: string }} action is one of 'stop', 'next', 'delegate', 'ignore'
  */
 export function engineRouteKey(state, key) {
   if (state.phase !== 'active') return { action: 'ignore' };

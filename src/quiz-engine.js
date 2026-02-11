@@ -238,6 +238,7 @@ export function createQuizEngine(mode, container) {
   }
 
   function updateIdleMessage() {
+    if (state.phase !== 'idle') return;
     const items = mode.getEnabledItems();
     state = engineUpdateIdleMessage(
       state,

@@ -5084,7 +5084,7 @@ function buildStatsLegend(statsMode) {
 // and quiz-interval-math.js into a single pure function.
 //
 // This is an ES module — exports stripped for browser inlining.
-// Depends on globals: DEFAULT_CONFIG (from adaptive.js)
+// Pure w.r.t. configuration: callers pass `config.expansionThreshold`.
 
 /**
  * Compute which subsets (strings, distance groups) to recommend and enable.
@@ -5220,7 +5220,6 @@ function createFretboardMode() {
       enabledStrings.add(s);
     }
     saveEnabledStrings();
-    updateStringToggles();
     refreshUI();
   }
 
@@ -6433,7 +6432,6 @@ function createSemitoneMathMode() {
       enabledGroups.add(g);
     }
     saveEnabledGroups();
-    updateGroupToggles();
     refreshUI();
   }
 
@@ -6713,7 +6711,6 @@ function createIntervalMathMode() {
       enabledGroups.add(g);
     }
     saveEnabledGroups();
-    updateGroupToggles();
     refreshUI();
   }
 

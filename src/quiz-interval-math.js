@@ -116,7 +116,6 @@ function createIntervalMathMode() {
       enabledGroups.add(g);
     }
     saveEnabledGroups();
-    updateGroupToggles();
     refreshUI();
   }
 

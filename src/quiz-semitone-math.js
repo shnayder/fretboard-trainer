@@ -110,7 +110,6 @@ function createSemitoneMathMode() {
       enabledGroups.add(g);
     }
     saveEnabledGroups();
-    updateGroupToggles();
     refreshUI();
   }
 

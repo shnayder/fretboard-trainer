@@ -74,7 +74,6 @@ function createFretboardMode() {
       enabledStrings.add(s);
     }
     saveEnabledStrings();
-    updateStringToggles();
     refreshUI();
   }
 

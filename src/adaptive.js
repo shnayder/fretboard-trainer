@@ -296,7 +296,22 @@ export function createAdaptiveSelector(
     return items.length > 0;
   }
 
-  return { recordResponse, selectNext, getStats, getWeight, getRecall, getAutomaticity, getStringRecommendations, checkAllMastered };
+  /**
+   * Check if any previously-learned item needs review.
+   * Returns true when at least one item has been answered correctly before
+   * (lastCorrectAt != null) but its recall has since dropped below threshold.
+   */
+  function checkNeedsReview(items) {
+    for (const id of items) {
+      const stats = storage.getStats(id);
+      if (!stats || stats.lastCorrectAt == null) continue;
+      const recall = getRecall(id);
+      if (recall !== null && recall < cfg.recallThreshold) return true;
+    }
+    return false;
+  }
+
+  return { recordResponse, selectNext, getStats, getWeight, getRecall, getAutomaticity, getStringRecommendations, checkAllMastered, checkNeedsReview };
 }
 
 // ---------------------------------------------------------------------------

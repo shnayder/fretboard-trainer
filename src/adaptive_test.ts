@@ -606,6 +606,54 @@ describe("createAdaptiveSelector", () => {
     assert.equal(selector.checkAllMastered([]), false);
   });
 
+  it("checkNeedsReview returns true when previously-correct items have low recall", () => {
+    const storage = createMemoryStorage();
+    const selector = createAdaptiveSelector(storage);
+
+    // Item answered correctly long ago — recall has decayed
+    storage.saveStats("a", {
+      recentTimes: [1500],
+      ewma: 1500,
+      sampleCount: 3,
+      lastSeen: Date.now() - 48 * 3600000,
+      stability: 4, // 4h half-life, 48h elapsed → recall ≈ 0
+      lastCorrectAt: Date.now() - 48 * 3600000,
+    });
+
+    assert.equal(selector.checkNeedsReview(["a"]), true);
+  });
+
+  it("checkNeedsReview returns false when all items are freshly answered", () => {
+    const storage = createMemoryStorage();
+    const selector = createAdaptiveSelector(storage);
+    selector.recordResponse("a", 1500);
+    selector.recordResponse("b", 1500);
+
+    // Just answered — recall is ~1, well above threshold
+    assert.equal(selector.checkNeedsReview(["a", "b"]), false);
+  });
+
+  it("checkNeedsReview returns false when items are unseen (no prior accuracy)", () => {
+    const storage = createMemoryStorage();
+    const selector = createAdaptiveSelector(storage);
+    // No responses recorded — items are unseen, not "due for review"
+    assert.equal(selector.checkNeedsReview(["a", "b"]), false);
+  });
+
+  it("checkNeedsReview returns false for empty items array", () => {
+    const storage = createMemoryStorage();
+    const selector = createAdaptiveSelector(storage);
+    assert.equal(selector.checkNeedsReview([]), false);
+  });
+
+  it("checkNeedsReview ignores items that were only answered wrong", () => {
+    const storage = createMemoryStorage();
+    const selector = createAdaptiveSelector(storage);
+    // Wrong answer: lastCorrectAt stays null
+    selector.recordResponse("a", 3000, false);
+    assert.equal(selector.checkNeedsReview(["a"]), false);
+  });
+
   it("getStringRecommendations ranks strings by needsWork (due + unseen)", () => {
     const storage = createMemoryStorage();
     const selector = createAdaptiveSelector(storage);

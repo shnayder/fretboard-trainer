@@ -30,6 +30,15 @@ start/stop cycle.
 
 ## What was actually done
 
-Implemented exactly as planned — no deviations. Added `engine.updateIdleMessage()`
-calls to both `toggleString()` (line 77) and the naturals-only change handler
-(line 352) in `quiz-fretboard.js`. Version bumped to v2.8.
+Implemented message scope fix as planned. Added `engine.updateIdleMessage()`
+calls to both `toggleString()` and the naturals-only change handler
+in `quiz-fretboard.js`. Version bumped to v2.8.
+
+Additionally fixed stale recommendations (orange borders): recommendations
+were only computed at page load via `applyRecommendations()` in `init()` and
+never refreshed. Refactored into `computeRecommendations()` (pure logic) +
+`updateRecommendations()` (highlight-only refresh) + `applyRecommendations()`
+(full init with enabled-set override). Added `updateRecommendations()` calls
+to `activate()` and `onStop()` in all three modes (fretboard, semitone math,
+interval math) so orange borders update after quiz sessions and mode switches
+without overriding the user's manual group/string selection. Version v2.9.

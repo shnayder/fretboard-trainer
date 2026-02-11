@@ -85,6 +85,7 @@ function createSemitoneMathMode() {
     }
     saveEnabledGroups();
     updateGroupToggles();
+    engine.updateIdleMessage();
   }
 
   function applyRecommendations(selector) {

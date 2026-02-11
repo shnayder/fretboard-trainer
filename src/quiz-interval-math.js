@@ -91,6 +91,7 @@ function createIntervalMathMode() {
     }
     saveEnabledGroups();
     updateGroupToggles();
+    engine.updateIdleMessage();
   }
 
   function applyRecommendations(selector) {

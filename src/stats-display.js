@@ -36,6 +36,7 @@ export function getStatsCellColor(selector, itemId, statsMode) {
  * Returns grey when no items have data.
  */
 export function getStatsCellColorMerged(selector, itemIds, statsMode) {
+  if (typeof itemIds === 'string') return getStatsCellColor(selector, itemIds, statsMode);
   if (statsMode === 'retention') {
     let sum = 0, count = 0;
     for (const id of itemIds) {

@@ -115,6 +115,17 @@ describe("getStatsCellColor", () => {
 // ---------------------------------------------------------------------------
 
 describe("getStatsCellColorMerged", () => {
+  it("falls back to getStatsCellColor when passed a string", () => {
+    const selector = {
+      getAutomaticity: () => 0.9,
+      getStats: () => null,
+    };
+    assert.equal(
+      getStatsCellColorMerged(selector, "C+3" as any, "retention"),
+      getStatsCellColor(selector, "C+3", "retention"),
+    );
+  });
+
   it("returns grey when no items have data (retention)", () => {
     const selector = {
       getAutomaticity: () => null,

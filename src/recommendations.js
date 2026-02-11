@@ -3,7 +3,7 @@
 // and quiz-interval-math.js into a single pure function.
 //
 // This is an ES module — exports stripped for browser inlining.
-// Depends on globals: DEFAULT_CONFIG (from adaptive.js)
+// Pure w.r.t. configuration: callers pass `config.expansionThreshold`.
 
 /**
  * Compute which subsets (strings, distance groups) to recommend and enable.

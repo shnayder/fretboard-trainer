@@ -173,13 +173,13 @@ a different design (highlight circles). Defer to a future change.
 - Verify color thresholds scale correctly (e.g., baseline=1500 → green < 2250ms)
 
 **`quiz-engine_test.ts`:**
-- Calibration median computation (odd/even trial counts, outlier robustness)
-- Baseline storage and retrieval
-- Config scaling applied correctly at start
+- Existing tests only: TARGET_TIME constant, createNoteKeyHandler, updateModeStats.
+- Calibration and baseline tests are not unit-testable here (require DOM + globals).
+- Median computation is tested via `computeMedian` in `adaptive_test.ts`.
 
 ### 7. Version bump
 
-Increment version in `main.ts` and `build.ts` (v2.12 → v2.13).
+Increment version in `main.ts` and `build.ts` (v3.0 → v3.1).
 
 ## What this does NOT do
 

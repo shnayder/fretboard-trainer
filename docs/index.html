@@ -4571,7 +4571,7 @@ function deriveScaledConfig(motorBaseline, baseCfg = DEFAULT_CONFIG) {
 }
 
 /**
- * Compute median of a sorted-in-place numeric array.
+ * Compute median of a numeric array (non-mutating — copies and sorts internally).
  */
 function computeMedian(values) {
   if (values.length === 0) return null;
@@ -5243,8 +5243,6 @@ function engineRouteKey(state, key) {
 // engineStart, engineNextQuestion, engineSubmitAnswer, engineStop,
 // engineUpdateIdleMessage, engineUpdateMasteryAfterAnswer, engineRouteKey
 
-const TARGET_TIME = 3000;
-
 /**
  * Create a keyboard handler for note input (C D E F G A B + #/b for accidentals).
  * Used by any mode where the answer is a note name.
@@ -5355,6 +5353,8 @@ function runCalibration(opts) {
   let targetBtn = null;
   let trialStartTime = null;
   let prevBtnIndex = -1;
+  let canceled = false;
+  let pendingTimeout = null;
 
   // Show instructions
   if (els.feedback) {
@@ -5365,6 +5365,7 @@ function runCalibration(opts) {
   if (els.timeDisplay) els.timeDisplay.textContent = '';
 
   function startTrial() {
+    if (canceled) return;
     if (trialIndex >= TRIAL_COUNT) {
       cleanup();
       const median = computeMedian(times);
@@ -5392,7 +5393,7 @@ function runCalibration(opts) {
     targetBtn.classList.remove('calibration-target');
     targetBtn = null;
     trialIndex++;
-    setTimeout(startTrial, PAUSE_MS);
+    pendingTimeout = setTimeout(startTrial, PAUSE_MS);
   }
 
   function handleCalibrationClick(e) {
@@ -5413,6 +5414,11 @@ function runCalibration(opts) {
   }
 
   function cleanup() {
+    canceled = true;
+    if (pendingTimeout !== null) {
+      clearTimeout(pendingTimeout);
+      pendingTimeout = null;
+    }
     container.removeEventListener('click', handleCalibrationClick);
     document.removeEventListener('keydown', handleCalibrationKey);
     if (targetBtn) {
@@ -5910,7 +5916,7 @@ function buildStatsLegend(statsMode, baseline) {
     + '<div class="legend-item"><div class="legend-swatch" style="background:hsl(80,60%,65%)"></div>' + t1 + '\u2013' + t2 + '</div>'
     + '<div class="legend-item"><div class="legend-swatch" style="background:hsl(50,60%,65%)"></div>' + t2 + '\u2013' + t3 + '</div>'
     + '<div class="legend-item"><div class="legend-swatch" style="background:hsl(30,60%,65%)"></div>' + t3 + '\u2013' + t4 + '</div>'
-    + '<div class="legend-item"><div class="legend-swatch" style="background:hsl(0,60%,65%)"></div>&gt; ' + t4 + '</div>'
+    + '<div class="legend-item"><div class="legend-swatch" style="background:hsl(0,60%,65%)"></div>&ge; ' + t4 + '</div>'
     + '</div>';
 }
 

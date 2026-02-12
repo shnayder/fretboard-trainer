@@ -152,6 +152,6 @@ export function buildStatsLegend(statsMode, baseline) {
     + '<div class="legend-item"><div class="legend-swatch" style="background:hsl(80,60%,65%)"></div>' + t1 + '\u2013' + t2 + '</div>'
     + '<div class="legend-item"><div class="legend-swatch" style="background:hsl(50,60%,65%)"></div>' + t2 + '\u2013' + t3 + '</div>'
     + '<div class="legend-item"><div class="legend-swatch" style="background:hsl(30,60%,65%)"></div>' + t3 + '\u2013' + t4 + '</div>'
-    + '<div class="legend-item"><div class="legend-swatch" style="background:hsl(0,60%,65%)"></div>&gt; ' + t4 + '</div>'
+    + '<div class="legend-item"><div class="legend-swatch" style="background:hsl(0,60%,65%)"></div>&ge; ' + t4 + '</div>'
     + '</div>';
 }

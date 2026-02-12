@@ -156,7 +156,7 @@ export function deriveScaledConfig(motorBaseline, baseCfg = DEFAULT_CONFIG) {
 }
 
 /**
- * Compute median of a sorted-in-place numeric array.
+ * Compute median of a numeric array (non-mutating — copies and sorts internally).
  */
 export function computeMedian(values) {
   if (values.length === 0) return null;

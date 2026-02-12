@@ -8,8 +8,6 @@
 // engineStart, engineNextQuestion, engineSubmitAnswer, engineStop,
 // engineUpdateIdleMessage, engineUpdateMasteryAfterAnswer, engineRouteKey
 
-export const TARGET_TIME = 3000;
-
 /**
  * Create a keyboard handler for note input (C D E F G A B + #/b for accidentals).
  * Used by any mode where the answer is a note name.
@@ -120,6 +118,8 @@ function runCalibration(opts) {
   let targetBtn = null;
   let trialStartTime = null;
   let prevBtnIndex = -1;
+  let canceled = false;
+  let pendingTimeout = null;
 
   // Show instructions
   if (els.feedback) {
@@ -130,6 +130,7 @@ function runCalibration(opts) {
   if (els.timeDisplay) els.timeDisplay.textContent = '';
 
   function startTrial() {
+    if (canceled) return;
     if (trialIndex >= TRIAL_COUNT) {
       cleanup();
       const median = computeMedian(times);
@@ -157,7 +158,7 @@ function runCalibration(opts) {
     targetBtn.classList.remove('calibration-target');
     targetBtn = null;
     trialIndex++;
-    setTimeout(startTrial, PAUSE_MS);
+    pendingTimeout = setTimeout(startTrial, PAUSE_MS);
   }
 
   function handleCalibrationClick(e) {
@@ -178,6 +179,11 @@ function runCalibration(opts) {
   }
 
   function cleanup() {
+    canceled = true;
+    if (pendingTimeout !== null) {
+      clearTimeout(pendingTimeout);
+      pendingTimeout = null;
+    }
     container.removeEventListener('click', handleCalibrationClick);
     document.removeEventListener('keydown', handleCalibrationKey);
     if (targetBtn) {

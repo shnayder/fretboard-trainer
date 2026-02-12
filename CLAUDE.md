@@ -36,6 +36,8 @@ src/
   recommendations_test.ts  # Tests for recommendations
   stats-display.js     # Shared stats color functions, table/grid rendering
   stats-display_test.ts  # Tests for stats display helpers
+scripts/
+  take-screenshots.ts  # Playwright script: captures all mode screenshots
 docs/index.html        # Built static file for GitHub Pages
 docs/sw.js             # Built service worker (network-first cache strategy)
 plans/                 # Implementation plans (checked in before starting work)
@@ -218,6 +220,20 @@ npx tsx --test src/*_test.ts
 ## Versioning
 
 There is a small version number displayed at the top-right of the app (`<div class="version">`). Increment it (e.g. v0.2 → v0.3) with every change so the user can confirm they have the latest build.
+
+## Screenshots
+
+Capture screenshots of all 10 modes (idle + quiz) plus the hamburger menu:
+
+```bash
+# First time:
+npm install && npx playwright install chromium
+
+# Take screenshots (starts dev server automatically):
+npx tsx scripts/take-screenshots.ts
+```
+
+Output: `screenshots/` directory (gitignored), 21 PNGs.
 
 ## Branching
 

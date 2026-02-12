@@ -321,6 +321,19 @@ button {
   grid-template-columns: repeat(3, 1fr);
 }
 
+/* --- Calibration highlight --- */
+.calibration-target {
+  background: #4CAF50 !important;
+  border-color: #388E3C !important;
+  color: white !important;
+  box-shadow: 0 0 12px rgba(76, 175, 80, 0.6);
+}
+.calibration-progress {
+  font-size: 0.9rem;
+  color: #666;
+  margin-top: 0.5rem;
+}
+
 /* --- Feedback --- */
 .feedback {
   font-size: 1.5rem;
@@ -2282,6 +2295,7 @@ button {
       <div>
         <button class="start-btn">Start Quiz</button>
         <button class="stop-btn" style="display: none;">Stop Quiz</button>
+        <button class="recalibrate-btn" style="display: none;">Recalibrate</button>
       </div>
     </div>
     <div class="quiz-area">
@@ -3997,6 +4011,7 @@ button {
       <div>
         <button class="start-btn">Start Quiz</button>
         <button class="stop-btn" style="display: none;">Stop Quiz</button>
+        <button class="recalibrate-btn" style="display: none;">Recalibrate</button>
       </div>
     </div>
 
@@ -4023,6 +4038,7 @@ button {
       <div>
         <button class="start-btn">Start Quiz</button>
         <button class="stop-btn" style="display: none;">Stop Quiz</button>
+        <button class="recalibrate-btn" style="display: none;">Recalibrate</button>
       </div>
     </div>
     <div class="quiz-area">
@@ -4074,6 +4090,7 @@ button {
       <div>
         <button class="start-btn">Start Quiz</button>
         <button class="stop-btn" style="display: none;">Stop Quiz</button>
+        <button class="recalibrate-btn" style="display: none;">Recalibrate</button>
       </div>
     </div>
     <div class="quiz-area">
@@ -4128,6 +4145,7 @@ button {
       <div>
         <button class="start-btn">Start Quiz</button>
         <button class="stop-btn" style="display: none;">Stop Quiz</button>
+        <button class="recalibrate-btn" style="display: none;">Recalibrate</button>
       </div>
     </div>
     <div class="quiz-area">
@@ -4168,6 +4186,7 @@ button {
       <div>
         <button class="start-btn">Start Quiz</button>
         <button class="stop-btn" style="display: none;">Stop Quiz</button>
+        <button class="recalibrate-btn" style="display: none;">Recalibrate</button>
       </div>
     </div>
     <div class="quiz-area">
@@ -4208,6 +4227,7 @@ button {
       <div>
         <button class="start-btn">Start Quiz</button>
         <button class="stop-btn" style="display: none;">Stop Quiz</button>
+        <button class="recalibrate-btn" style="display: none;">Recalibrate</button>
       </div>
     </div>
     <div class="quiz-area">
@@ -4265,6 +4285,7 @@ button {
       <div>
         <button class="start-btn">Start Quiz</button>
         <button class="stop-btn" style="display: none;">Stop Quiz</button>
+        <button class="recalibrate-btn" style="display: none;">Recalibrate</button>
       </div>
     </div>
     <div class="quiz-area">
@@ -4314,6 +4335,7 @@ button {
       <div>
         <button class="start-btn">Start Quiz</button>
         <button class="stop-btn" style="display: none;">Stop Quiz</button>
+        <button class="recalibrate-btn" style="display: none;">Recalibrate</button>
       </div>
     </div>
     <div class="quiz-area">
@@ -4363,6 +4385,7 @@ button {
       <div>
         <button class="start-btn">Start Quiz</button>
         <button class="stop-btn" style="display: none;">Stop Quiz</button>
+        <button class="recalibrate-btn" style="display: none;">Recalibrate</button>
       </div>
     </div>
     <div class="quiz-area">
@@ -4529,6 +4552,33 @@ function selectWeighted(items, weights, rand) {
     if (remaining <= 0) return items[i];
   }
   return items[items.length - 1];
+}
+
+/**
+ * Derive a scaled config from a motor baseline measurement.
+ * The default config assumes baseline = 1000ms. This scales all
+ * absolute timing thresholds proportionally to the measured baseline.
+ */
+function deriveScaledConfig(motorBaseline, baseCfg = DEFAULT_CONFIG) {
+  const scale = motorBaseline / 1000;
+  return {
+    ...baseCfg,
+    minTime: Math.round(baseCfg.minTime * scale),
+    automaticityTarget: Math.round(baseCfg.automaticityTarget * scale),
+    selfCorrectionThreshold: Math.round(baseCfg.selfCorrectionThreshold * scale),
+    maxResponseTime: Math.round(baseCfg.maxResponseTime * scale),
+  };
+}
+
+/**
+ * Compute median of a numeric array (non-mutating — copies and sorts internally).
+ */
+function computeMedian(values) {
+  if (values.length === 0) return null;
+  const sorted = [...values].sort((a, b) => a - b);
+  const mid = Math.floor(sorted.length / 2);
+  if (sorted.length % 2 === 1) return sorted[mid];
+  return (sorted[mid - 1] + sorted[mid]) / 2;
 }
 
 // ---------------------------------------------------------------------------
@@ -4709,7 +4759,15 @@ function createAdaptiveSelector(
     return hasDueItem;
   }
 
-  return { recordResponse, selectNext, getStats, getWeight, getRecall, getAutomaticity, getStringRecommendations, checkAllMastered, checkNeedsReview };
+  function updateConfig(newCfg) {
+    cfg = { ...cfg, ...newCfg };
+  }
+
+  function getConfig() {
+    return cfg;
+  }
+
+  return { recordResponse, selectNext, getStats, getWeight, getRecall, getAutomaticity, getStringRecommendations, checkAllMastered, checkNeedsReview, updateConfig, getConfig };
 }
 
 // ---------------------------------------------------------------------------
@@ -5185,8 +5243,6 @@ function engineRouteKey(state, key) {
 // engineStart, engineNextQuestion, engineSubmitAnswer, engineStop,
 // engineUpdateIdleMessage, engineUpdateMasteryAfterAnswer, engineRouteKey
 
-const TARGET_TIME = 3000;
-
 /**
  * Create a keyboard handler for note input (C D E F G A B + #/b for accidentals).
  * Used by any mode where the answer is a note name.
@@ -5266,6 +5322,121 @@ function updateModeStats(selector, itemIds, statsEl) {
 }
 
 /**
+ * Determine the keyboard key that would activate a given button.
+ * Returns null if no single-key shortcut exists (e.g. sharps, two-digit numbers).
+ */
+function getKeyForButton(btn) {
+  const note = btn.dataset.note;
+  if (note && note.length === 1 && 'CDEFGAB'.includes(note.toUpperCase())) return note.toUpperCase();
+  const num = btn.dataset.num;
+  if (num !== undefined && num.length === 1) return num;
+  return null;
+}
+
+/**
+ * Run a motor-baseline calibration sequence.
+ * Highlights random buttons one at a time; user taps or types to respond.
+ *
+ * @param {object}   opts
+ * @param {Element[]} opts.buttons    - answer buttons to use for calibration
+ * @param {object}   opts.els        - engine DOM elements (feedback, hint, timeDisplay)
+ * @param {Element}  opts.container  - mode container element
+ * @param {function} opts.onComplete - called with median time in ms
+ */
+function runCalibration(opts) {
+  const { buttons, els, container, onComplete } = opts;
+  const TRIAL_COUNT = 10;
+  const PAUSE_MS = 400;
+
+  const times = [];
+  let trialIndex = 0;
+  let targetBtn = null;
+  let trialStartTime = null;
+  let prevBtnIndex = -1;
+  let canceled = false;
+  let pendingTimeout = null;
+
+  // Show instructions
+  if (els.feedback) {
+    els.feedback.textContent = 'Quick warm-up!';
+    els.feedback.className = 'feedback';
+  }
+  if (els.hint) els.hint.textContent = 'Tap the highlighted button as fast as you can';
+  if (els.timeDisplay) els.timeDisplay.textContent = '';
+
+  function startTrial() {
+    if (canceled) return;
+    if (trialIndex >= TRIAL_COUNT) {
+      cleanup();
+      const median = computeMedian(times);
+      onComplete(median);
+      return;
+    }
+
+    // Pick random button (not same as previous)
+    let idx;
+    do {
+      idx = Math.floor(Math.random() * buttons.length);
+    } while (idx === prevBtnIndex && buttons.length > 1);
+    prevBtnIndex = idx;
+
+    targetBtn = buttons[idx];
+    targetBtn.classList.add('calibration-target');
+    trialStartTime = Date.now();
+
+    if (els.timeDisplay) els.timeDisplay.textContent = (trialIndex + 1) + ' / ' + TRIAL_COUNT;
+  }
+
+  function recordTrial() {
+    const elapsed = Date.now() - trialStartTime;
+    times.push(elapsed);
+    targetBtn.classList.remove('calibration-target');
+    targetBtn = null;
+    trialIndex++;
+    pendingTimeout = setTimeout(startTrial, PAUSE_MS);
+  }
+
+  function handleCalibrationClick(e) {
+    if (!targetBtn) return;
+    const clicked = e.target.closest('.note-btn, .answer-btn');
+    if (clicked === targetBtn) {
+      recordTrial();
+    }
+  }
+
+  function handleCalibrationKey(e) {
+    if (!targetBtn) return;
+    const expectedKey = getKeyForButton(targetBtn);
+    if (expectedKey && e.key.toUpperCase() === expectedKey) {
+      e.preventDefault();
+      recordTrial();
+    }
+  }
+
+  function cleanup() {
+    canceled = true;
+    if (pendingTimeout !== null) {
+      clearTimeout(pendingTimeout);
+      pendingTimeout = null;
+    }
+    container.removeEventListener('click', handleCalibrationClick);
+    document.removeEventListener('keydown', handleCalibrationKey);
+    if (targetBtn) {
+      targetBtn.classList.remove('calibration-target');
+      targetBtn = null;
+    }
+  }
+
+  container.addEventListener('click', handleCalibrationClick);
+  document.addEventListener('keydown', handleCalibrationKey);
+
+  startTrial();
+
+  // Return cleanup function in case the quiz is stopped during calibration
+  return cleanup;
+}
+
+/**
  * Create a quiz engine for a given mode.
  *
  * @param {object} mode - Quiz mode configuration:
@@ -5277,6 +5448,7 @@ function updateModeStats(selector, itemIds, statsEl) {
  *   mode.onStart()    - Called when quiz starts (optional)
  *   mode.onStop()     - Called when quiz stops (optional)
  *   mode.handleKey(e, state) - Mode-specific key handling, return true if handled (optional)
+ *   mode.getCalibrationButtons() - Returns array of DOM elements for calibration (optional)
  *
  * @param {HTMLElement} container - Root element containing quiz DOM elements.
  *   Expected children (found by class):
@@ -5285,11 +5457,26 @@ function updateModeStats(selector, itemIds, statsEl) {
  *     .stats-controls, .mastery-message
  *
  * @returns {{ start, stop, submitAnswer, nextQuestion, attach, detach,
- *             updateIdleMessage, isActive, isAnswered, selector, storage, els }}
+ *             updateIdleMessage, isActive, isAnswered, selector, storage, els, baseline }}
  */
 function createQuizEngine(mode, container) {
   const storage = createLocalStorageAdapter(mode.storageNamespace);
   const selector = createAdaptiveSelector(storage);
+
+  const baselineKey = 'motorBaseline_' + mode.storageNamespace;
+  let motorBaseline = null;
+  let calibrating = false;
+  let calibrationCleanup = null;
+
+  // Load stored baseline and apply to config at init time
+  const storedBaseline = localStorage.getItem(baselineKey);
+  if (storedBaseline) {
+    const parsed = parseInt(storedBaseline, 10);
+    if (parsed > 0) {
+      motorBaseline = parsed;
+      selector.updateConfig(deriveScaledConfig(motorBaseline, DEFAULT_CONFIG));
+    }
+  }
 
   let state = initialEngineState();
   let countdownInterval = null;
@@ -5307,6 +5494,7 @@ function createQuizEngine(mode, container) {
     statsControls: container.querySelector('.stats-controls'),
     quizArea: container.querySelector('.quiz-area'),
     masteryMessage: container.querySelector('.mastery-message'),
+    recalibrateBtn: container.querySelector('.recalibrate-btn'),
   };
 
   // --- Render: declaratively map state to DOM ---
@@ -5327,10 +5515,17 @@ function createQuizEngine(mode, container) {
       els.masteryMessage.textContent   = state.masteryText;
       els.masteryMessage.style.display = state.showMastery ? 'block' : 'none';
     }
+    if (els.recalibrateBtn) {
+      els.recalibrateBtn.style.display = (state.phase === 'idle' && motorBaseline) ? 'inline' : 'none';
+    }
     setAnswerButtonsEnabled(state.answersEnabled);
   }
 
   // --- Countdown (purely DOM/timer — not part of state) ---
+
+  function getTargetTime() {
+    return selector.getConfig().automaticityTarget;
+  }
 
   function startCountdown() {
     const bar = els.countdownBar;
@@ -5340,12 +5535,13 @@ function createQuizEngine(mode, container) {
 
     if (countdownInterval) clearInterval(countdownInterval);
 
+    const targetTime = getTargetTime();
     let expired = false;
     const startTime = Date.now();
     countdownInterval = setInterval(() => {
       const elapsed = Date.now() - startTime;
-      const remaining = Math.max(0, TARGET_TIME - elapsed);
-      bar.style.width = (remaining / TARGET_TIME) * 100 + '%';
+      const remaining = Math.max(0, targetTime - elapsed);
+      bar.style.width = (remaining / targetTime) * 100 + '%';
 
       if (remaining === 0 && !expired) {
         expired = true;
@@ -5365,6 +5561,49 @@ function createQuizEngine(mode, container) {
     });
   }
 
+  // --- Baseline application ---
+
+  function applyBaseline(baseline) {
+    motorBaseline = baseline;
+    localStorage.setItem(baselineKey, String(baseline));
+    selector.updateConfig(deriveScaledConfig(baseline, DEFAULT_CONFIG));
+  }
+
+  // --- Calibration ---
+
+  function getCalibrationButtons() {
+    if (mode.getCalibrationButtons) return mode.getCalibrationButtons();
+    // Fallback: all visible note/answer buttons
+    return Array.from(container.querySelectorAll('.note-btn:not(.hidden), .answer-btn'));
+  }
+
+  function startCalibration(onComplete) {
+    calibrating = true;
+    const buttons = getCalibrationButtons();
+    if (buttons.length < 2) {
+      calibrating = false;
+      onComplete();
+      return;
+    }
+
+    // Enable buttons for tapping during calibration
+    setAnswerButtonsEnabled(true);
+
+    calibrationCleanup = runCalibration({
+      buttons,
+      els,
+      container,
+      onComplete: function(median) {
+        calibrating = false;
+        calibrationCleanup = null;
+        if (median && median > 0) {
+          applyBaseline(median);
+        }
+        onComplete();
+      },
+    });
+  }
+
   // --- Engine lifecycle ---
 
   function nextQuestion() {
@@ -5379,6 +5618,7 @@ function createQuizEngine(mode, container) {
   }
 
   function submitAnswer(input) {
+    if (calibrating) return;
     if (state.phase !== 'active' || state.answered) return;
 
     const responseTime = Date.now() - state.questionStartTime;
@@ -5411,7 +5651,24 @@ function createQuizEngine(mode, container) {
     // before the engine renders the quiz UI state.
     if (mode.onStart) mode.onStart();
     render();
-    nextQuestion();
+
+    if (!motorBaseline) {
+      // Run calibration before first quiz question
+      startCalibration(function() {
+        nextQuestion();
+      });
+    } else {
+      nextQuestion();
+    }
+  }
+
+  function recalibrate() {
+    state = engineStart(state);
+    if (mode.onStart) mode.onStart();
+    render();
+    startCalibration(function() {
+      nextQuestion();
+    });
   }
 
   function updateIdleMessage() {
@@ -5426,6 +5683,13 @@ function createQuizEngine(mode, container) {
   }
 
   function stop() {
+    if (calibrating) {
+      calibrating = false;
+      if (calibrationCleanup) {
+        calibrationCleanup();
+        calibrationCleanup = null;
+      }
+    }
     if (countdownInterval) {
       clearInterval(countdownInterval);
       countdownInterval = null;
@@ -5438,6 +5702,7 @@ function createQuizEngine(mode, container) {
 
   // Keyboard handler — uses pure routing, delegates mode-specific keys
   function handleKeydown(e) {
+    if (calibrating) return; // calibration has its own key handler
     const routed = engineRouteKey(state, e.key);
     switch (routed.action) {
       case 'stop':
@@ -5457,6 +5722,7 @@ function createQuizEngine(mode, container) {
 
   // Tap-to-advance handler
   function handleClick(e) {
+    if (calibrating) return; // calibration handles its own clicks
     if (state.phase !== 'active' || !state.answered) return;
     if (e.target.closest('.answer-btn, .note-btn, .quiz-controls, .string-toggle')) return;
     nextQuestion();
@@ -5473,9 +5739,15 @@ function createQuizEngine(mode, container) {
     container.removeEventListener('click', handleClick);
   }
 
+  // Wire up recalibrate button
+  if (els.recalibrateBtn) {
+    els.recalibrateBtn.addEventListener('click', recalibrate);
+  }
+
   return {
     start,
     stop,
+    recalibrate,
     submitAnswer,
     nextQuestion,
     attach,
@@ -5483,6 +5755,7 @@ function createQuizEngine(mode, container) {
     updateIdleMessage,
     get isActive() { return state.phase === 'active'; },
     get isAnswered() { return state.answered; },
+    get baseline() { return motorBaseline; },
     selector,
     storage,
     els,
@@ -5504,21 +5777,22 @@ function getAutomaticityColor(auto) {
   return 'hsl(0, 60%, 65%)';
 }
 
-function getSpeedHeatmapColor(ms) {
+function getSpeedHeatmapColor(ms, baseline) {
   if (ms === null) return '#ddd';
-  if (ms < 1500) return 'hsl(120, 60%, 65%)';
-  if (ms < 3000) return 'hsl(80, 60%, 65%)';
-  if (ms < 4500) return 'hsl(50, 60%, 65%)';
-  if (ms < 6000) return 'hsl(30, 60%, 65%)';
+  const b = baseline || 1000;
+  if (ms < b * 1.5) return 'hsl(120, 60%, 65%)';
+  if (ms < b * 3.0) return 'hsl(80, 60%, 65%)';
+  if (ms < b * 4.5) return 'hsl(50, 60%, 65%)';
+  if (ms < b * 6.0) return 'hsl(30, 60%, 65%)';
   return 'hsl(0, 60%, 65%)';
 }
 
-function getStatsCellColor(selector, itemId, statsMode) {
+function getStatsCellColor(selector, itemId, statsMode, baseline) {
   if (statsMode === 'retention') {
     return getAutomaticityColor(selector.getAutomaticity(itemId));
   }
   const stats = selector.getStats(itemId);
-  return getSpeedHeatmapColor(stats ? stats.ewma : null);
+  return getSpeedHeatmapColor(stats ? stats.ewma : null, baseline);
 }
 
 /**
@@ -5526,8 +5800,8 @@ function getStatsCellColor(selector, itemId, statsMode) {
  * Only items that have data contribute to the average.
  * Returns grey when no items have data.
  */
-function getStatsCellColorMerged(selector, itemIds, statsMode) {
-  if (typeof itemIds === 'string') return getStatsCellColor(selector, itemIds, statsMode);
+function getStatsCellColorMerged(selector, itemIds, statsMode, baseline) {
+  if (typeof itemIds === 'string') return getStatsCellColor(selector, itemIds, statsMode, baseline);
   if (statsMode === 'retention') {
     let sum = 0, count = 0;
     for (const id of itemIds) {
@@ -5541,7 +5815,7 @@ function getStatsCellColorMerged(selector, itemIds, statsMode) {
     const stats = selector.getStats(id);
     if (stats && stats.ewma != null) { sum += stats.ewma; count++; }
   }
-  return getSpeedHeatmapColor(count > 0 ? sum / count : null);
+  return getSpeedHeatmapColor(count > 0 ? sum / count : null, baseline);
 }
 
 /**
@@ -5553,8 +5827,9 @@ function getStatsCellColorMerged(selector, itemIds, statsMode) {
  * @param {string}   revHeader - column header for reverse direction (e.g. "#\u2192N")
  * @param {string}   statsMode - 'retention' | 'speed'
  * @param {Element}  containerEl
+ * @param {number}   [baseline] - motor baseline in ms (optional)
  */
-function renderStatsTable(selector, rows, fwdHeader, revHeader, statsMode, containerEl) {
+function renderStatsTable(selector, rows, fwdHeader, revHeader, statsMode, containerEl, baseline) {
   if (!rows || rows.length === 0) { containerEl.innerHTML = ''; return; }
   let html = '<table class="stats-table"><thead><tr>';
   html += '<th>' + rows[0]._colHeader + '</th><th>#</th>';
@@ -5562,8 +5837,8 @@ function renderStatsTable(selector, rows, fwdHeader, revHeader, statsMode, conta
   html += '</tr></thead><tbody>';
 
   for (const row of rows) {
-    const fwdColor = getStatsCellColor(selector, row.fwdItemId, statsMode);
-    const revColor = getStatsCellColor(selector, row.revItemId, statsMode);
+    const fwdColor = getStatsCellColor(selector, row.fwdItemId, statsMode, baseline);
+    const revColor = getStatsCellColor(selector, row.revItemId, statsMode, baseline);
     html += '<tr>';
     html += '<td>' + row.label + '</td>';
     html += '<td>' + row.sublabel + '</td>';
@@ -5585,8 +5860,9 @@ function renderStatsTable(selector, rows, fwdHeader, revHeader, statsMode, conta
  * @param {string}   statsMode   - 'retention' | 'speed'
  * @param {Element}  containerEl
  * @param {Array}    [notes]     - optional notes array (defaults to global NOTES)
+ * @param {number}   [baseline]  - motor baseline in ms (optional)
  */
-function renderStatsGrid(selector, colLabels, getItemId, statsMode, containerEl, notes) {
+function renderStatsGrid(selector, colLabels, getItemId, statsMode, containerEl, notes, baseline) {
   const noteList = notes || NOTES;
   let html = '<table class="stats-grid"><thead><tr><th></th>';
   for (const col of colLabels) {
@@ -5599,8 +5875,8 @@ function renderStatsGrid(selector, colLabels, getItemId, statsMode, containerEl,
     for (let i = 0; i < colLabels.length; i++) {
       const itemId = getItemId(note.name, i);
       const color = Array.isArray(itemId)
-        ? getStatsCellColorMerged(selector, itemId, statsMode)
-        : getStatsCellColor(selector, itemId, statsMode);
+        ? getStatsCellColorMerged(selector, itemId, statsMode, baseline)
+        : getStatsCellColor(selector, itemId, statsMode, baseline);
       html += '<td class="stats-cell" style="background:' + color + '"></td>';
     }
     html += '</tr>';
@@ -5610,10 +5886,15 @@ function renderStatsGrid(selector, colLabels, getItemId, statsMode, containerEl,
   containerEl.innerHTML = html;
 }
 
+function formatThreshold(ms) {
+  const s = ms / 1000;
+  return s % 1 === 0 ? s + 's' : s.toFixed(1) + 's';
+}
+
 /**
  * Build a shared legend HTML string.
  */
-function buildStatsLegend(statsMode) {
+function buildStatsLegend(statsMode, baseline) {
   if (statsMode === 'retention') {
     return '<div class="heatmap-legend active">'
       + '<div class="legend-item"><div class="legend-swatch" style="background:#ddd"></div>No data</div>'
@@ -5624,13 +5905,18 @@ function buildStatsLegend(statsMode) {
       + '<div class="legend-item"><div class="legend-swatch" style="background:hsl(0,60%,65%)"></div>Needs work (&lt;20%)</div>'
       + '</div>';
   }
+  const b = baseline || 1000;
+  const t1 = formatThreshold(b * 1.5);
+  const t2 = formatThreshold(b * 3);
+  const t3 = formatThreshold(b * 4.5);
+  const t4 = formatThreshold(b * 6);
   return '<div class="heatmap-legend active">'
     + '<div class="legend-item"><div class="legend-swatch" style="background:#ddd"></div>No data</div>'
-    + '<div class="legend-item"><div class="legend-swatch" style="background:hsl(120,60%,65%)"></div>&lt; 1.5s</div>'
-    + '<div class="legend-item"><div class="legend-swatch" style="background:hsl(80,60%,65%)"></div>1.5\u20133s</div>'
-    + '<div class="legend-item"><div class="legend-swatch" style="background:hsl(50,60%,65%)"></div>3\u20134.5s</div>'
-    + '<div class="legend-item"><div class="legend-swatch" style="background:hsl(30,60%,65%)"></div>4.5\u20136s</div>'
-    + '<div class="legend-item"><div class="legend-swatch" style="background:hsl(0,60%,65%)"></div>&gt; 6s</div>'
+    + '<div class="legend-item"><div class="legend-swatch" style="background:hsl(120,60%,65%)"></div>&lt; ' + t1 + '</div>'
+    + '<div class="legend-item"><div class="legend-swatch" style="background:hsl(80,60%,65%)"></div>' + t1 + '\u2013' + t2 + '</div>'
+    + '<div class="legend-item"><div class="legend-swatch" style="background:hsl(50,60%,65%)"></div>' + t2 + '\u2013' + t3 + '</div>'
+    + '<div class="legend-item"><div class="legend-swatch" style="background:hsl(30,60%,65%)"></div>' + t3 + '\u2013' + t4 + '</div>'
+    + '<div class="legend-item"><div class="legend-swatch" style="background:hsl(0,60%,65%)"></div>&ge; ' + t4 + '</div>'
     + '</div>';
 }
 
@@ -5900,7 +6186,7 @@ function createFretboardMode() {
     const statsContainer = container.querySelector('.stats-container');
 
     // Populate legend via shared helper
-    statsContainer.innerHTML = buildStatsLegend(mode);
+    statsContainer.innerHTML = buildStatsLegend(mode, engine.baseline);
     statsContainer.style.display = '';
 
     if (mode === 'retention') {
@@ -5918,7 +6204,7 @@ function createFretboardMode() {
         for (let f = 0; f < 13; f++) {
           const stats = selector.getStats(`${s}-${f}`);
           const ewma = stats ? stats.ewma : null;
-          highlightCircle(s, f, getSpeedHeatmapColor(ewma));
+          highlightCircle(s, f, getSpeedHeatmapColor(ewma, engine.baseline));
           showNoteText(s, f);
         }
       }
@@ -6044,6 +6330,11 @@ function createFretboardMode() {
 
     handleKey(e, { submitAnswer }) {
       return noteKeyHandler.handleKey(e);
+    },
+
+    getCalibrationButtons() {
+      // Use only visible note buttons (respects naturals-only setting)
+      return Array.from(container.querySelectorAll('.note-btn:not(.hidden)'));
     },
   };
 
@@ -6578,9 +6869,9 @@ function createNoteSemitonesMode() {
     statsContainer.innerHTML = '';
     const tableDiv = document.createElement('div');
     statsContainer.appendChild(tableDiv);
-    renderStatsTable(engine.selector, getTableRows(), 'N\u2192#', '#\u2192N', mode, tableDiv);
+    renderStatsTable(engine.selector, getTableRows(), 'N\u2192#', '#\u2192N', mode, tableDiv, engine.baseline);
     const legendDiv = document.createElement('div');
-    legendDiv.innerHTML = buildStatsLegend(mode);
+    legendDiv.innerHTML = buildStatsLegend(mode, engine.baseline);
     statsContainer.appendChild(legendDiv);
     statsContainer.style.display = '';
     btn.textContent = mode === 'retention' ? 'Show Speed' : 'Show Recall';
@@ -6689,6 +6980,10 @@ function createNoteSemitonesMode() {
       }
       return false;
     },
+
+    getCalibrationButtons() {
+      return Array.from(container.querySelectorAll('.answer-btn-note'));
+    },
   };
 
   let pendingDigit = null;
@@ -6786,9 +7081,9 @@ function createIntervalSemitonesMode() {
     statsContainer.innerHTML = '';
     const tableDiv = document.createElement('div');
     statsContainer.appendChild(tableDiv);
-    renderStatsTable(engine.selector, getTableRows(), 'I\u2192#', '#\u2192I', mode, tableDiv);
+    renderStatsTable(engine.selector, getTableRows(), 'I\u2192#', '#\u2192I', mode, tableDiv, engine.baseline);
     const legendDiv = document.createElement('div');
-    legendDiv.innerHTML = buildStatsLegend(mode);
+    legendDiv.innerHTML = buildStatsLegend(mode, engine.baseline);
     statsContainer.appendChild(legendDiv);
     statsContainer.style.display = '';
     btn.textContent = mode === 'retention' ? 'Show Speed' : 'Show Recall';
@@ -6891,6 +7186,10 @@ function createIntervalSemitonesMode() {
         }
       }
       return false;
+    },
+
+    getCalibrationButtons() {
+      return Array.from(container.querySelectorAll('.answer-btn-interval'));
     },
   };
 
@@ -7076,11 +7375,11 @@ function createSemitoneMathMode() {
     renderStatsGrid(engine.selector, colLabels, function(noteName, colIdx) {
       const n = colIdx + 1;
       return [noteName + '+' + n, noteName + '-' + n];
-    }, mode, gridDiv);
+    }, mode, gridDiv, undefined, engine.baseline);
 
     // Legend
     const legendDiv = document.createElement('div');
-    legendDiv.innerHTML = buildStatsLegend(mode);
+    legendDiv.innerHTML = buildStatsLegend(mode, engine.baseline);
     statsContainer.appendChild(legendDiv);
 
     statsContainer.style.display = '';
@@ -7140,6 +7439,10 @@ function createSemitoneMathMode() {
 
     handleKey(e, { submitAnswer }) {
       return noteKeyHandler.handleKey(e);
+    },
+
+    getCalibrationButtons() {
+      return Array.from(container.querySelectorAll('.answer-btn-note'));
     },
   };
 
@@ -7337,11 +7640,11 @@ function createIntervalMathMode() {
     renderStatsGrid(engine.selector, colLabels, function(noteName, colIdx) {
       const abbrev = MATH_INTERVALS[colIdx].abbrev;
       return [noteName + '+' + abbrev, noteName + '-' + abbrev];
-    }, mode, gridDiv);
+    }, mode, gridDiv, undefined, engine.baseline);
 
     // Legend
     const legendDiv = document.createElement('div');
-    legendDiv.innerHTML = buildStatsLegend(mode);
+    legendDiv.innerHTML = buildStatsLegend(mode, engine.baseline);
     statsContainer.appendChild(legendDiv);
 
     statsContainer.style.display = '';
@@ -7401,6 +7704,10 @@ function createIntervalMathMode() {
 
     handleKey(e, { submitAnswer }) {
       return noteKeyHandler.handleKey(e);
+    },
+
+    getCalibrationButtons() {
+      return Array.from(container.querySelectorAll('.answer-btn-note'));
     },
   };
 
@@ -7585,9 +7892,9 @@ function createKeySignaturesMode() {
     statsContainer.innerHTML = '';
     const tableDiv = document.createElement('div');
     statsContainer.appendChild(tableDiv);
-    renderStatsTable(engine.selector, getTableRows(), 'Key\u2192Sig', 'Sig\u2192Key', mode, tableDiv);
+    renderStatsTable(engine.selector, getTableRows(), 'Key\u2192Sig', 'Sig\u2192Key', mode, tableDiv, engine.baseline);
     const legendDiv = document.createElement('div');
-    legendDiv.innerHTML = buildStatsLegend(mode);
+    legendDiv.innerHTML = buildStatsLegend(mode, engine.baseline);
     statsContainer.appendChild(legendDiv);
     statsContainer.style.display = '';
     btn.textContent = mode === 'retention' ? 'Show Speed' : 'Show Recall';
@@ -7692,6 +7999,10 @@ function createKeySignaturesMode() {
         return true;
       }
       return false;
+    },
+
+    getCalibrationButtons() {
+      return Array.from(container.querySelectorAll('.answer-btn-note'));
     },
   };
 
@@ -7890,10 +8201,10 @@ function createScaleDegreesMode() {
     renderStatsGrid(engine.selector, colLabels, (keyRoot, colIdx) => {
       const d = colIdx + 1;
       return [keyRoot + ':' + d + ':fwd', keyRoot + ':' + d + ':rev'];
-    }, mode, gridDiv, keyNotes);
+    }, mode, gridDiv, keyNotes, engine.baseline);
 
     const legendDiv = document.createElement('div');
-    legendDiv.innerHTML = buildStatsLegend(mode);
+    legendDiv.innerHTML = buildStatsLegend(mode, engine.baseline);
     statsContainer.appendChild(legendDiv);
     statsContainer.style.display = '';
     btn.textContent = mode === 'retention' ? 'Show Speed' : 'Show Recall';
@@ -7977,6 +8288,10 @@ function createScaleDegreesMode() {
         return true;
       }
       return false;
+    },
+
+    getCalibrationButtons() {
+      return Array.from(container.querySelectorAll('.answer-btn-note'));
     },
   };
 
@@ -8172,10 +8487,10 @@ function createDiatonicChordsMode() {
     renderStatsGrid(engine.selector, colLabels, (keyRoot, colIdx) => {
       const d = colIdx + 1;
       return [keyRoot + ':' + d + ':fwd', keyRoot + ':' + d + ':rev'];
-    }, mode, gridDiv, keyNotes);
+    }, mode, gridDiv, keyNotes, engine.baseline);
 
     const legendDiv = document.createElement('div');
-    legendDiv.innerHTML = buildStatsLegend(mode);
+    legendDiv.innerHTML = buildStatsLegend(mode, engine.baseline);
     statsContainer.appendChild(legendDiv);
     statsContainer.style.display = '';
     btn.textContent = mode === 'retention' ? 'Show Speed' : 'Show Recall';
@@ -8261,6 +8576,10 @@ function createDiatonicChordsMode() {
         return true;
       }
       return false;
+    },
+
+    getCalibrationButtons() {
+      return Array.from(container.querySelectorAll('.answer-btn-note'));
     },
   };
 
@@ -8497,10 +8816,10 @@ function createChordSpellingMode() {
     const rootNotes = CHORD_ROOTS.map(r => ({ name: r, displayName: r }));
     renderStatsGrid(engine.selector, colLabels, (rootName, colIdx) => {
       return rootName + ':' + CHORD_TYPES[colIdx].name;
-    }, mode, gridDiv, rootNotes);
+    }, mode, gridDiv, rootNotes, engine.baseline);
 
     const legendDiv = document.createElement('div');
-    legendDiv.innerHTML = buildStatsLegend(mode);
+    legendDiv.innerHTML = buildStatsLegend(mode, engine.baseline);
     statsContainer.appendChild(legendDiv);
     statsContainer.style.display = '';
     btn.textContent = mode === 'retention' ? 'Show Speed' : 'Show Recall';
@@ -8566,6 +8885,10 @@ function createChordSpellingMode() {
 
     handleKey(e, ctx) {
       return noteKeyHandler.handleKey(e);
+    },
+
+    getCalibrationButtons() {
+      return Array.from(container.querySelectorAll('.answer-btn-note'));
     },
   };
 

@@ -1,11 +1,11 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
-import { TARGET_TIME, createNoteKeyHandler, updateModeStats } from "./quiz-engine.js";
-import { createMemoryStorage, createAdaptiveSelector } from "./adaptive.js";
+import { createNoteKeyHandler, updateModeStats } from "./quiz-engine.js";
+import { DEFAULT_CONFIG, createMemoryStorage, createAdaptiveSelector } from "./adaptive.js";
 
-describe("quiz-engine constants", () => {
-  it("TARGET_TIME is 3000ms", () => {
-    assert.equal(TARGET_TIME, 3000);
+describe("quiz-engine defaults", () => {
+  it("default automaticityTarget is 3000ms", () => {
+    assert.equal(DEFAULT_CONFIG.automaticityTarget, 3000);
   });
 });
 

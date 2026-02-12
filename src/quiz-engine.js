@@ -378,16 +378,19 @@ export function createQuizEngine(mode, container) {
       els.hint.textContent = "We'll measure your tap/type speed to set personalized targets. Tap each highlighted button as fast as you can — 10 taps total.";
     }
     if (els.timeDisplay) els.timeDisplay.textContent = '';
-    if (els.countdownBar) els.countdownBar.style.width = '0%';
+    if (els.countdownBar) {
+      els.countdownBar.style.width = '0%';
+      els.countdownBar.classList.remove('expired');
+    }
 
     // Show a "Start" button in the quiz area
     if (els.quizArea) els.quizArea.classList.add('active');
     setAnswerButtonsEnabled(false);
 
-    var calibStartBtn = document.createElement('button');
+    const calibStartBtn = document.createElement('button');
     calibStartBtn.textContent = 'Start';
     calibStartBtn.className = 'calibration-action-btn';
-    calibStartBtn.addEventListener('click', function() {
+    calibStartBtn.addEventListener('click', () => {
       calibStartBtn.remove();
       onReady();
     });
@@ -416,41 +419,41 @@ export function createQuizEngine(mode, container) {
     if (els.hint) els.hint.textContent = '';
     if (els.timeDisplay) els.timeDisplay.textContent = '';
 
-    var thresholds = getCalibrationThresholds(baseline);
+    const thresholds = getCalibrationThresholds(baseline);
 
-    var resultsDiv = document.createElement('div');
+    const resultsDiv = document.createElement('div');
     resultsDiv.className = 'calibration-results';
 
-    var baselineP = document.createElement('p');
+    const baselineP = document.createElement('p');
     baselineP.className = 'calibration-baseline';
     baselineP.textContent = 'Your baseline response time: ' + formatMs(baseline);
     resultsDiv.appendChild(baselineP);
 
-    var table = document.createElement('table');
+    const table = document.createElement('table');
     table.className = 'calibration-thresholds';
 
-    var thead = document.createElement('thead');
-    var headerRow = document.createElement('tr');
-    ['Speed', 'Response time', 'Meaning'].forEach(function(text) {
-      var th = document.createElement('th');
+    const thead = document.createElement('thead');
+    const headerRow = document.createElement('tr');
+    ['Speed', 'Response time', 'Meaning'].forEach((text) => {
+      const th = document.createElement('th');
       th.textContent = text;
       headerRow.appendChild(th);
     });
     thead.appendChild(headerRow);
     table.appendChild(thead);
 
-    var tbody = document.createElement('tbody');
-    thresholds.forEach(function(t) {
-      var tr = document.createElement('tr');
-      var tdLabel = document.createElement('td');
+    const tbody = document.createElement('tbody');
+    thresholds.forEach((t) => {
+      const tr = document.createElement('tr');
+      const tdLabel = document.createElement('td');
       tdLabel.textContent = t.label;
       tr.appendChild(tdLabel);
 
-      var tdTime = document.createElement('td');
+      const tdTime = document.createElement('td');
       tdTime.textContent = t.maxMs ? '< ' + formatMs(t.maxMs) : '> ' + formatMs(thresholds[thresholds.length - 2].maxMs);
       tr.appendChild(tdTime);
 
-      var tdMeaning = document.createElement('td');
+      const tdMeaning = document.createElement('td');
       tdMeaning.textContent = t.meaning;
       tr.appendChild(tdMeaning);
 
@@ -459,10 +462,10 @@ export function createQuizEngine(mode, container) {
     table.appendChild(tbody);
     resultsDiv.appendChild(table);
 
-    var doneBtn = document.createElement('button');
+    const doneBtn = document.createElement('button');
     doneBtn.textContent = 'Done';
     doneBtn.className = 'calibration-action-btn';
-    doneBtn.addEventListener('click', function() {
+    doneBtn.addEventListener('click', () => {
       resultsDiv.remove();
       onDone();
     });
@@ -484,8 +487,8 @@ export function createQuizEngine(mode, container) {
     // Ensure mode's onStart is called so answer buttons are visible
     if (mode.onStart) mode.onStart();
 
-    showCalibrationIntro(function onReady() {
-      var buttons = getCalibrationButtons();
+    showCalibrationIntro(() => {
+      const buttons = getCalibrationButtons();
       if (buttons.length < 2) {
         calibrating = false;
         // Not enough buttons — just go to idle
@@ -509,15 +512,16 @@ export function createQuizEngine(mode, container) {
         buttons: buttons,
         els: els,
         container: container,
-        onComplete: function(median) {
+        onComplete: (median) => {
           calibrating = false;
           calibrationCleanup = null;
-          if (median && median > 0) {
-            applyBaseline(median);
+          const baseline = Math.round(median);
+          if (baseline && baseline > 0) {
+            applyBaseline(baseline);
           }
           // Disable buttons while showing results
           setAnswerButtonsEnabled(false);
-          showCalibrationResults(median, function onDone() {
+          showCalibrationResults(baseline, () => {
             if (mode.onStop) mode.onStop();
             render();
             updateIdleMessage();
@@ -663,7 +667,7 @@ export function createQuizEngine(mode, container) {
    * Called by modes from their activate() hook.
    */
   function showCalibrationIfNeeded() {
-    if (!motorBaseline) {
+    if (!motorBaseline && !calibrating) {
       startCalibration();
     }
   }
@@ -678,7 +682,7 @@ export function createQuizEngine(mode, container) {
     attach,
     detach,
     updateIdleMessage,
-    get isActive() { return state.phase === 'active'; },
+    get isActive() { return state.phase === 'active' || calibrating; },
     get isAnswered() { return state.answered; },
     get baseline() { return motorBaseline; },
     selector,

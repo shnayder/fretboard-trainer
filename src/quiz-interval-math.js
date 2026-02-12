@@ -254,7 +254,7 @@ function createIntervalMathMode() {
     mode,
     engine,
     init,
-    activate() { engine.attach(); refreshUI(); },
+    activate() { engine.attach(); refreshUI(); engine.showCalibrationIfNeeded(); },
     deactivate() {
       if (engine.isActive) engine.stop();
       engine.detach();

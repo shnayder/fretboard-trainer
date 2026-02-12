@@ -8,7 +8,7 @@
  */
 export function initialEngineState() {
   return {
-    phase: 'idle',          // 'idle' | 'active'
+    phase: 'idle',          // 'idle' | 'active' | 'calibration-intro' | 'calibrating' | 'calibration-results'
     currentItemId: null,
     answered: false,
     questionStartTime: null,
@@ -22,6 +22,9 @@ export function initialEngineState() {
     // Mastery message
     masteryText: '',
     showMastery: false,
+
+    // Calibration
+    calibrationBaseline: null,
 
     // UI visibility
     showStartBtn: true,
@@ -90,7 +93,62 @@ export function engineSubmitAnswer(state, isCorrect, correctAnswer, responseTime
 }
 
 /**
+ * Transition: enter calibration intro screen.
+ * Shows explanation and a Start button; quiz controls are hidden.
+ */
+export function engineCalibrationIntro(state) {
+  return {
+    ...state,
+    phase: 'calibration-intro',
+    showStartBtn: false,
+    showStopBtn: false,
+    showHeatmapBtn: false,
+    showStatsControls: false,
+    showMastery: false,
+    quizActive: true,
+    answersEnabled: false,
+    feedbackText: 'Quick Calibration',
+    feedbackClass: 'feedback',
+    hintText: "We\u2019ll measure your tap/type speed to set personalized targets. Tap each highlighted button as fast as you can \u2014 10 taps total.",
+    timeDisplayText: '',
+    calibrationBaseline: null,
+  };
+}
+
+/**
+ * Transition: calibration trials are running.
+ * Buttons enabled for tapping; trial counter shown in timeDisplay.
+ */
+export function engineCalibrating(state) {
+  return {
+    ...state,
+    phase: 'calibrating',
+    answersEnabled: true,
+    feedbackText: 'Quick warm-up!',
+    hintText: 'Tap the highlighted button as fast as you can',
+  };
+}
+
+/**
+ * Transition: calibration complete, show results.
+ * @param {number} baseline - measured motor baseline in ms
+ */
+export function engineCalibrationResults(state, baseline) {
+  return {
+    ...state,
+    phase: 'calibration-results',
+    answersEnabled: false,
+    feedbackText: 'Calibration Complete',
+    feedbackClass: 'feedback',
+    hintText: '',
+    timeDisplayText: '',
+    calibrationBaseline: baseline,
+  };
+}
+
+/**
  * Transition: stop the quiz (return to idle).
+ * Works from any phase — quiz, calibration, or already idle.
  */
 export function engineStop(state) {
   return initialEngineState();
@@ -128,8 +186,9 @@ export function engineUpdateMasteryAfterAnswer(state, allMastered) {
  * @returns {{ action: string }} action is one of 'stop', 'next', 'delegate', 'ignore'
  */
 export function engineRouteKey(state, key) {
-  if (state.phase !== 'active') return { action: 'ignore' };
+  if (state.phase === 'idle') return { action: 'ignore' };
   if (key === 'Escape') return { action: 'stop' };
+  if (state.phase !== 'active') return { action: 'ignore' };
   if ((key === ' ' || key === 'Enter') && state.answered) return { action: 'next' };
   if (!state.answered) return { action: 'delegate' };
   return { action: 'ignore' };

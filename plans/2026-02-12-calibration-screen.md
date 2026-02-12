@@ -137,21 +137,34 @@ Bump from v3.1 → v3.2.
 
 ## Implementation Notes (post-implementation)
 
-Implemented as planned. Additional details:
+### Initial implementation
 
-- **`getCalibrationThresholds(baseline)`** — new exported helper in quiz-engine.js
-  with 5 tests in quiz-engine_test.ts (band count, scaling at 1000ms, scaling
-  at 500ms, rounding, meaning descriptions).
-- **`showCalibrationIfNeeded()`** — new engine method called from each mode's
-  `activate()` hook. All 8 standard quiz modes updated (speed-tap excluded as
-  it has its own custom config).
-- **`startCalibration()`** — self-contained flow: calls `mode.onStart()` to make
-  answer buttons visible, shows intro, runs trials, shows results, then calls
-  `mode.onStop()` and `render()` + `updateIdleMessage()` to return to idle.
-- **`stop()`** — updated to clean up dynamically-added calibration DOM elements
-  (`.calibration-action-btn`, `.calibration-results`) on early cancellation.
-- **CSS** — `.calibration-action-btn` (green button for Start/Done),
-  `.calibration-results`, `.calibration-baseline`, `.calibration-thresholds`
-  table styling.
-- **`start()`** — simplified: no longer checks for baseline or chains calibration.
-  Just starts the quiz directly.
+Used a `calibrating` boolean as a shadow state parallel to the engine's state
+machine. This caused multiple bug-prone patterns: `if (calibrating)` guards in
+`submitAnswer`, `handleKeydown`, `handleClick`; `isActive` needing
+`|| calibrating`; `stop()` needing DOM-query cleanup; imperative DOM
+manipulation bypassing `render()`.
+
+### Refactor: calibration as proper state machine phases
+
+After architectural review, refactored to add `calibration-intro`,
+`calibrating`, and `calibration-results` as proper phases in the engine state
+machine (`quiz-engine-state.js`). This eliminated:
+
+- The `calibrating` boolean — phase is the single source of truth
+- All `if (calibrating)` guards — state machine routing handles them
+- Imperative DOM manipulation — `render()` handles calibration UI declaratively
+- DOM-query cleanup in `stop()` — `render()` clears `calibrationContentEl`
+- `|| calibrating` in `isActive` — just `state.phase !== 'idle'`
+
+Key functions:
+- `engineCalibrationIntro(state)` — pure state transition
+- `engineCalibrating(state)` — pure state transition
+- `engineCalibrationResults(state, baseline)` — pure state transition
+- `beginCalibrationTrials()` — wired to Start button click
+- `finishCalibration()` — wired to Done button click, just calls `stop()`
+- `render()` creates/clears `calibrationContentEl` based on phase
+- `engineRouteKey` updated: Escape stops from any non-idle phase
+
+19 new tests for calibration state transitions and key routing in
+quiz-engine-state_test.ts. Total test count: 283.

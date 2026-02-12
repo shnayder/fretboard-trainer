@@ -232,6 +232,12 @@ Commit the plan as part of the feature branch before beginning implementation.
 After the feature is complete, update the plan to reflect what was actually
 done (any deviations, additions, or things dropped).
 
+During technical design, review architectural fit: new behavior should integrate
+with existing patterns (e.g., state machine phases, declarative `render()`)
+rather than introducing parallel mechanisms (shadow booleans, imperative DOM
+overrides). If the cleanest implementation means extending a shared abstraction,
+do that rather than working around it.
+
 ## GitHub API Access (Claude Code Web Environment)
 
 `gh` CLI is not authenticated in the web environment. Instead, use `curl`

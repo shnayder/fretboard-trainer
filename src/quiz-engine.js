@@ -6,7 +6,8 @@
 //
 // Depends on globals (from quiz-engine-state.js): initialEngineState,
 // engineStart, engineNextQuestion, engineSubmitAnswer, engineStop,
-// engineUpdateIdleMessage, engineUpdateMasteryAfterAnswer, engineRouteKey
+// engineUpdateIdleMessage, engineUpdateMasteryAfterAnswer, engineRouteKey,
+// engineCalibrationIntro, engineCalibrating, engineCalibrationResults
 
 /**
  * Create a keyboard handler for note input (C D E F G A B + #/b for accidentals).
@@ -139,14 +140,6 @@ function runCalibration(opts) {
   let canceled = false;
   let pendingTimeout = null;
 
-  // Show instructions
-  if (els.feedback) {
-    els.feedback.textContent = 'Quick warm-up!';
-    els.feedback.className = 'feedback';
-  }
-  if (els.hint) els.hint.textContent = 'Tap the highlighted button as fast as you can';
-  if (els.timeDisplay) els.timeDisplay.textContent = '';
-
   function startTrial() {
     if (canceled) return;
     if (trialIndex >= TRIAL_COUNT) {
@@ -248,8 +241,8 @@ export function createQuizEngine(mode, container) {
 
   const baselineKey = 'motorBaseline_' + mode.storageNamespace;
   let motorBaseline = null;
-  let calibrating = false;
-  let calibrationCleanup = null;
+  let calibrationCleanup = null;   // cancel function for running trials
+  let calibrationContentEl = null; // dynamically-created DOM for intro/results
 
   // Load stored baseline and apply to config at init time
   const storedBaseline = localStorage.getItem(baselineKey);
@@ -282,7 +275,92 @@ export function createQuizEngine(mode, container) {
 
   // --- Render: declaratively map state to DOM ---
 
+  function clearCalibrationContent() {
+    if (calibrationContentEl) {
+      calibrationContentEl.remove();
+      calibrationContentEl = null;
+    }
+  }
+
+  function insertAfterHint(el) {
+    if (els.hint && els.hint.parentNode) {
+      els.hint.parentNode.insertBefore(el, els.hint.nextSibling);
+    }
+  }
+
+  function renderCalibrationIntro() {
+    clearCalibrationContent();
+    const btn = document.createElement('button');
+    btn.textContent = 'Start';
+    btn.className = 'calibration-action-btn';
+    btn.addEventListener('click', beginCalibrationTrials);
+    calibrationContentEl = btn;
+    insertAfterHint(btn);
+  }
+
+  function renderCalibrationResults() {
+    clearCalibrationContent();
+    const baseline = state.calibrationBaseline;
+    const thresholds = getCalibrationThresholds(baseline);
+
+    const div = document.createElement('div');
+    div.className = 'calibration-results';
+
+    const baselineP = document.createElement('p');
+    baselineP.className = 'calibration-baseline';
+    baselineP.textContent = 'Your baseline response time: ' + formatMs(baseline);
+    div.appendChild(baselineP);
+
+    const table = document.createElement('table');
+    table.className = 'calibration-thresholds';
+
+    const thead = document.createElement('thead');
+    const headerRow = document.createElement('tr');
+    ['Speed', 'Response time', 'Meaning'].forEach((text) => {
+      const th = document.createElement('th');
+      th.textContent = text;
+      headerRow.appendChild(th);
+    });
+    thead.appendChild(headerRow);
+    table.appendChild(thead);
+
+    const tbody = document.createElement('tbody');
+    thresholds.forEach((t) => {
+      const tr = document.createElement('tr');
+      const tdLabel = document.createElement('td');
+      tdLabel.textContent = t.label;
+      tr.appendChild(tdLabel);
+
+      const tdTime = document.createElement('td');
+      tdTime.textContent = t.maxMs ? '< ' + formatMs(t.maxMs) : '> ' + formatMs(thresholds[thresholds.length - 2].maxMs);
+      tr.appendChild(tdTime);
+
+      const tdMeaning = document.createElement('td');
+      tdMeaning.textContent = t.meaning;
+      tr.appendChild(tdMeaning);
+
+      tbody.appendChild(tr);
+    });
+    table.appendChild(tbody);
+    div.appendChild(table);
+
+    const doneBtn = document.createElement('button');
+    doneBtn.textContent = 'Done';
+    doneBtn.className = 'calibration-action-btn';
+    doneBtn.addEventListener('click', finishCalibration);
+    div.appendChild(doneBtn);
+
+    calibrationContentEl = div;
+    insertAfterHint(div);
+  }
+
   function render() {
+    // Clear calibration content when leaving calibration phases
+    const inCalibUI = state.phase === 'calibration-intro' || state.phase === 'calibration-results';
+    if (!inCalibUI) {
+      clearCalibrationContent();
+    }
+
     if (els.startBtn)      els.startBtn.style.display     = state.showStartBtn ? 'inline' : 'none';
     if (els.stopBtn)       els.stopBtn.style.display      = state.showStopBtn ? 'inline' : 'none';
     if (els.heatmapBtn)    els.heatmapBtn.style.display   = state.showHeatmapBtn ? 'inline' : 'none';
@@ -301,7 +379,18 @@ export function createQuizEngine(mode, container) {
     if (els.recalibrateBtn) {
       els.recalibrateBtn.style.display = (state.phase === 'idle' && motorBaseline) ? 'inline' : 'none';
     }
+    if (els.countdownBar) {
+      els.countdownBar.classList.remove('expired');
+      if (state.phase !== 'active') els.countdownBar.style.width = '0%';
+    }
     setAnswerButtonsEnabled(state.answersEnabled);
+
+    // Create calibration content when entering those phases
+    if (state.phase === 'calibration-intro' && !calibrationContentEl) {
+      renderCalibrationIntro();
+    } else if (state.phase === 'calibration-results' && !calibrationContentEl) {
+      renderCalibrationResults();
+    }
   }
 
   // --- Countdown (purely DOM/timer — not part of state) ---
@@ -361,47 +450,6 @@ export function createQuizEngine(mode, container) {
   }
 
   /**
-   * Show calibration intro screen. User clicks "Start" to begin trials.
-   */
-  function showCalibrationIntro(onReady) {
-    // Hide start/stop/recalibrate buttons during calibration screens
-    if (els.startBtn) els.startBtn.style.display = 'none';
-    if (els.stopBtn) els.stopBtn.style.display = 'none';
-    if (els.recalibrateBtn) els.recalibrateBtn.style.display = 'none';
-    if (els.heatmapBtn) els.heatmapBtn.style.display = 'none';
-
-    if (els.feedback) {
-      els.feedback.textContent = 'Quick Calibration';
-      els.feedback.className = 'feedback';
-    }
-    if (els.hint) {
-      els.hint.textContent = "We'll measure your tap/type speed to set personalized targets. Tap each highlighted button as fast as you can — 10 taps total.";
-    }
-    if (els.timeDisplay) els.timeDisplay.textContent = '';
-    if (els.countdownBar) {
-      els.countdownBar.style.width = '0%';
-      els.countdownBar.classList.remove('expired');
-    }
-
-    // Show a "Start" button in the quiz area
-    if (els.quizArea) els.quizArea.classList.add('active');
-    setAnswerButtonsEnabled(false);
-
-    const calibStartBtn = document.createElement('button');
-    calibStartBtn.textContent = 'Start';
-    calibStartBtn.className = 'calibration-action-btn';
-    calibStartBtn.addEventListener('click', () => {
-      calibStartBtn.remove();
-      onReady();
-    });
-
-    // Insert after hint
-    if (els.hint && els.hint.parentNode) {
-      els.hint.parentNode.insertBefore(calibStartBtn, els.hint.nextSibling);
-    }
-  }
-
-  /**
    * Format milliseconds as a human-readable string (e.g., "0.9s" or "1.8s").
    */
   function formatMs(ms) {
@@ -409,126 +457,46 @@ export function createQuizEngine(mode, container) {
   }
 
   /**
-   * Show calibration results screen with threshold explanations.
+   * Enter the calibration intro screen.
    */
-  function showCalibrationResults(baseline, onDone) {
-    if (els.feedback) {
-      els.feedback.textContent = 'Calibration Complete';
-      els.feedback.className = 'feedback';
-    }
-    if (els.hint) els.hint.textContent = '';
-    if (els.timeDisplay) els.timeDisplay.textContent = '';
-
-    const thresholds = getCalibrationThresholds(baseline);
-
-    const resultsDiv = document.createElement('div');
-    resultsDiv.className = 'calibration-results';
-
-    const baselineP = document.createElement('p');
-    baselineP.className = 'calibration-baseline';
-    baselineP.textContent = 'Your baseline response time: ' + formatMs(baseline);
-    resultsDiv.appendChild(baselineP);
-
-    const table = document.createElement('table');
-    table.className = 'calibration-thresholds';
-
-    const thead = document.createElement('thead');
-    const headerRow = document.createElement('tr');
-    ['Speed', 'Response time', 'Meaning'].forEach((text) => {
-      const th = document.createElement('th');
-      th.textContent = text;
-      headerRow.appendChild(th);
-    });
-    thead.appendChild(headerRow);
-    table.appendChild(thead);
-
-    const tbody = document.createElement('tbody');
-    thresholds.forEach((t) => {
-      const tr = document.createElement('tr');
-      const tdLabel = document.createElement('td');
-      tdLabel.textContent = t.label;
-      tr.appendChild(tdLabel);
-
-      const tdTime = document.createElement('td');
-      tdTime.textContent = t.maxMs ? '< ' + formatMs(t.maxMs) : '> ' + formatMs(thresholds[thresholds.length - 2].maxMs);
-      tr.appendChild(tdTime);
-
-      const tdMeaning = document.createElement('td');
-      tdMeaning.textContent = t.meaning;
-      tr.appendChild(tdMeaning);
-
-      tbody.appendChild(tr);
-    });
-    table.appendChild(tbody);
-    resultsDiv.appendChild(table);
-
-    const doneBtn = document.createElement('button');
-    doneBtn.textContent = 'Done';
-    doneBtn.className = 'calibration-action-btn';
-    doneBtn.addEventListener('click', () => {
-      resultsDiv.remove();
-      onDone();
-    });
-    resultsDiv.appendChild(doneBtn);
-
-    // Insert into quiz area
-    if (els.hint && els.hint.parentNode) {
-      els.hint.parentNode.insertBefore(resultsDiv, els.hint.nextSibling);
-    }
+  function startCalibration() {
+    if (mode.onStart) mode.onStart();
+    state = engineCalibrationIntro(state);
+    render();
   }
 
   /**
-   * Run the full calibration flow: intro → trials → results → idle.
-   * Self-contained — no callback needed.
+   * Called when user clicks Start on the intro screen — begin trials.
    */
-  function startCalibration() {
-    calibrating = true;
+  function beginCalibrationTrials() {
+    const buttons = getCalibrationButtons();
+    if (buttons.length < 2) {
+      stop();
+      return;
+    }
 
-    // Ensure mode's onStart is called so answer buttons are visible
-    if (mode.onStart) mode.onStart();
+    state = engineCalibrating(state);
+    render();
 
-    showCalibrationIntro(() => {
-      const buttons = getCalibrationButtons();
-      if (buttons.length < 2) {
-        calibrating = false;
-        // Not enough buttons — just go to idle
-        if (mode.onStop) mode.onStop();
+    calibrationCleanup = runCalibration({
+      buttons,
+      els,
+      container,
+      onComplete: (median) => {
+        calibrationCleanup = null;
+        const baseline = Math.round(median);
+        if (baseline > 0) applyBaseline(baseline);
+        state = engineCalibrationResults(state, baseline);
         render();
-        updateIdleMessage();
-        return;
-      }
-
-      // Clear intro text, show trial instructions
-      if (els.feedback) {
-        els.feedback.textContent = 'Quick warm-up!';
-        els.feedback.className = 'feedback';
-      }
-      if (els.hint) els.hint.textContent = 'Tap the highlighted button as fast as you can';
-
-      // Enable buttons for tapping
-      setAnswerButtonsEnabled(true);
-
-      calibrationCleanup = runCalibration({
-        buttons: buttons,
-        els: els,
-        container: container,
-        onComplete: (median) => {
-          calibrating = false;
-          calibrationCleanup = null;
-          const baseline = Math.round(median);
-          if (baseline && baseline > 0) {
-            applyBaseline(baseline);
-          }
-          // Disable buttons while showing results
-          setAnswerButtonsEnabled(false);
-          showCalibrationResults(baseline, () => {
-            if (mode.onStop) mode.onStop();
-            render();
-            updateIdleMessage();
-          });
-        },
-      });
+      },
     });
+  }
+
+  /**
+   * Called when user clicks Done on the results screen — return to idle.
+   */
+  function finishCalibration() {
+    stop();
   }
 
   // --- Engine lifecycle ---
@@ -545,7 +513,6 @@ export function createQuizEngine(mode, container) {
   }
 
   function submitAnswer(input) {
-    if (calibrating) return;
     if (state.phase !== 'active' || state.answered) return;
 
     const responseTime = Date.now() - state.questionStartTime;
@@ -597,30 +564,22 @@ export function createQuizEngine(mode, container) {
   }
 
   function stop() {
-    if (calibrating) {
-      calibrating = false;
-      if (calibrationCleanup) {
-        calibrationCleanup();
-        calibrationCleanup = null;
-      }
-      // Remove any dynamically-added calibration UI
-      container.querySelectorAll('.calibration-action-btn, .calibration-results').forEach(function(el) {
-        el.remove();
-      });
+    if (calibrationCleanup) {
+      calibrationCleanup();
+      calibrationCleanup = null;
     }
     if (countdownInterval) {
       clearInterval(countdownInterval);
       countdownInterval = null;
     }
     state = engineStop(state);
-    render();
+    render();   // render() clears calibrationContentEl when phase is idle
     if (mode.onStop) mode.onStop();
     updateIdleMessage();
   }
 
   // Keyboard handler — uses pure routing, delegates mode-specific keys
   function handleKeydown(e) {
-    if (calibrating) return; // calibration has its own key handler
     const routed = engineRouteKey(state, e.key);
     switch (routed.action) {
       case 'stop':
@@ -640,7 +599,6 @@ export function createQuizEngine(mode, container) {
 
   // Tap-to-advance handler
   function handleClick(e) {
-    if (calibrating) return; // calibration handles its own clicks
     if (state.phase !== 'active' || !state.answered) return;
     if (e.target.closest('.answer-btn, .note-btn, .quiz-controls, .string-toggle')) return;
     nextQuestion();
@@ -667,7 +625,7 @@ export function createQuizEngine(mode, container) {
    * Called by modes from their activate() hook.
    */
   function showCalibrationIfNeeded() {
-    if (!motorBaseline && !calibrating) {
+    if (!motorBaseline && state.phase === 'idle') {
       startCalibration();
     }
   }
@@ -682,7 +640,7 @@ export function createQuizEngine(mode, container) {
     attach,
     detach,
     updateIdleMessage,
-    get isActive() { return state.phase === 'active' || calibrating; },
+    get isActive() { return state.phase !== 'idle'; },
     get isAnswered() { return state.answered; },
     get baseline() { return motorBaseline; },
     selector,

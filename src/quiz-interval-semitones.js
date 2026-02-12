@@ -22,7 +22,6 @@ function createIntervalSemitonesMode() {
   }
 
   let currentItem = null;
-  let statsMode = null; // null | 'retention' | 'speed'
 
   function getTableRows() {
     return INTERVALS.map(interval => ({
@@ -34,32 +33,14 @@ function createIntervalSemitonesMode() {
     }));
   }
 
-  function showStats(mode) {
-    statsMode = mode;
-    const statsContainer = container.querySelector('.stats-container');
-    const btn = container.querySelector('.heatmap-btn');
-    statsContainer.innerHTML = '';
+  const statsControls = createStatsControls(container, function(mode, el) {
     const tableDiv = document.createElement('div');
-    statsContainer.appendChild(tableDiv);
+    el.appendChild(tableDiv);
     renderStatsTable(engine.selector, getTableRows(), 'I\u2192#', '#\u2192I', mode, tableDiv, engine.baseline);
     const legendDiv = document.createElement('div');
     legendDiv.innerHTML = buildStatsLegend(mode, engine.baseline);
-    statsContainer.appendChild(legendDiv);
-    statsContainer.style.display = '';
-    btn.textContent = mode === 'retention' ? 'Show Speed' : 'Show Recall';
-  }
-
-  function hideStats() {
-    statsMode = null;
-    const statsContainer = container.querySelector('.stats-container');
-    statsContainer.style.display = 'none';
-    statsContainer.innerHTML = '';
-  }
-
-  function toggleStats() {
-    if (statsMode === 'retention') showStats('speed');
-    else showStats('retention');
-  }
+    el.appendChild(legendDiv);
+  });
 
   const mode = {
     id: 'intervalSemitones',
@@ -103,7 +84,7 @@ function createIntervalSemitonesMode() {
       if (pendingDigitTimeout) clearTimeout(pendingDigitTimeout);
       pendingDigit = null;
       pendingDigitTimeout = null;
-      hideStats();
+      statsControls.hide();
       updateModeStats(engine.selector, ALL_ITEMS, engine.els.stats);
     },
 
@@ -112,7 +93,7 @@ function createIntervalSemitonesMode() {
       pendingDigit = null;
       pendingDigitTimeout = null;
       updateModeStats(engine.selector, ALL_ITEMS, engine.els.stats);
-      showStats('retention');
+      statsControls.show('retention');
     },
 
     handleKey(e, { submitAnswer }) {
@@ -176,13 +157,12 @@ function createIntervalSemitonesMode() {
       });
     });
 
-    // Start/stop/stats
+    // Start/stop
     container.querySelector('.start-btn').addEventListener('click', () => engine.start());
     container.querySelector('.stop-btn').addEventListener('click', () => engine.stop());
-    container.querySelector('.heatmap-btn').addEventListener('click', toggleStats);
 
     updateModeStats(engine.selector, ALL_ITEMS, engine.els.stats);
-    showStats('retention');
+    statsControls.show('retention');
   }
 
   return {

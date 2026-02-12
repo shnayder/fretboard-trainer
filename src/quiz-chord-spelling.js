@@ -116,7 +116,6 @@ function createChordSpellingMode() {
 
   let currentItem = null;
   let enteredTones = [];
-  let statsMode = null;
 
   function renderSlots() {
     const slotsDiv = container.querySelector('.chord-slots');
@@ -159,41 +158,19 @@ function createChordSpellingMode() {
 
   // --- Stats ---
 
-  function showStats(mode) {
-    statsMode = mode;
-    const statsContainer = container.querySelector('.stats-container');
-    const btn = container.querySelector('.heatmap-btn');
-    statsContainer.innerHTML = '';
-
-    // Show ALL chord types, not just enabled ones, for a complete progress view
+  const statsControls = createStatsControls(container, (mode, el) => {
     const colLabels = CHORD_TYPES.map(t => t.symbol || 'maj');
     const gridDiv = document.createElement('div');
     gridDiv.className = 'stats-grid-wrapper';
-    statsContainer.appendChild(gridDiv);
-
+    el.appendChild(gridDiv);
     const rootNotes = CHORD_ROOTS.map(r => ({ name: r, displayName: r }));
     renderStatsGrid(engine.selector, colLabels, (rootName, colIdx) => {
       return rootName + ':' + CHORD_TYPES[colIdx].name;
     }, mode, gridDiv, rootNotes, engine.baseline);
-
     const legendDiv = document.createElement('div');
     legendDiv.innerHTML = buildStatsLegend(mode, engine.baseline);
-    statsContainer.appendChild(legendDiv);
-    statsContainer.style.display = '';
-    btn.textContent = mode === 'retention' ? 'Show Speed' : 'Show Recall';
-  }
-
-  function hideStats() {
-    statsMode = null;
-    const statsContainer = container.querySelector('.stats-container');
-    statsContainer.style.display = 'none';
-    statsContainer.innerHTML = '';
-  }
-
-  function toggleStats() {
-    if (statsMode === 'retention') showStats('speed');
-    else showStats('retention');
-  }
+    el.appendChild(legendDiv);
+  });
 
   // --- Quiz mode interface ---
 
@@ -227,7 +204,7 @@ function createChordSpellingMode() {
     onStart() {
       noteKeyHandler.reset();
       enteredTones = [];
-      hideStats();
+      statsControls.hide();
       updateModeStats(engine.selector, ALL_ITEMS, engine.els.stats);
     },
 
@@ -237,7 +214,7 @@ function createChordSpellingMode() {
       const slotsDiv = container.querySelector('.chord-slots');
       slotsDiv.innerHTML = '';
       updateModeStats(engine.selector, ALL_ITEMS, engine.els.stats);
-      showStats('retention');
+      statsControls.show('retention');
       refreshUI();
     },
 
@@ -289,11 +266,10 @@ function createChordSpellingMode() {
 
     container.querySelector('.start-btn').addEventListener('click', () => engine.start());
     container.querySelector('.stop-btn').addEventListener('click', () => engine.stop());
-    container.querySelector('.heatmap-btn').addEventListener('click', toggleStats);
 
     applyRecommendations(engine.selector);
     updateModeStats(engine.selector, ALL_ITEMS, engine.els.stats);
-    showStats('retention');
+    statsControls.show('retention');
   }
 
   return {

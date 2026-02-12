@@ -329,9 +329,11 @@ button {
 .mode-screen.calibrating .note-buttons:not(.calibration-active) {
   display: none !important;
 }
-.mode-screen.calibrating .answer-buttons.calibration-active,
-.mode-screen.calibrating .note-buttons.calibration-active {
+.mode-screen.calibrating .answer-buttons.calibration-active {
   display: grid !important;
+}
+.mode-screen.calibrating .note-buttons.calibration-active {
+  display: flex !important;
 }
 .mode-screen.calibrating .speed-tap-prompt,
 .mode-screen.calibrating .speed-tap-status {

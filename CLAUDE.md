@@ -35,7 +35,12 @@ src/
   *_test.ts              # Tests (node:test)
 scripts/take-screenshots.ts  # Playwright screenshots
 guides/                  # Detailed developer guides (see below)
-plans/                   # Implementation plans (checked in before work)
+plans/                   # Design docs, product specs, execution plans
+  design-docs/           #   Architectural explorations and design reviews
+  product-specs/         #   What to build and why (user-facing specs)
+  exec-plans/            #   Implementation plans (active/ and completed/)
+  generated/             #   Generated artifacts
+  references/            #   Reference material
 docs/                    # Built output for GitHub Pages
 ```
 
@@ -99,6 +104,7 @@ Bidirectional modes track each direction as a separate item.
 | [development.md](guides/development.md) | Commands, testing, versioning, branching, deployment, GitHub API |
 | [feature-process.md](guides/feature-process.md) | When/how to write plans, design spec + implementation plan templates |
 | [vision.md](guides/vision.md) | Product vision, design principles, roadmap |
+| [tech-debt-tracker.md](plans/exec-plans/tech-debt-tracker.md) | Technical debt tracking |
 
 The review checklist (`.claude/commands/review-checklist.md`) verifies these
 conventions — use `/review` to run it.

@@ -6,7 +6,7 @@ Day-to-day workflow reference for building, testing, and deploying.
 
 - **Deno** (preferred) or **Node.js** with `npx`
 - No `npm install` needed for build/test — the app has zero runtime dependencies
-- Playwright required for screenshots only: `npm install && npx playwright install chromium`
+- Playwright required for screenshots only: `npm install && npx playwright install chromium`. Only works locally, when `CLAUDE_CODE_REMOTE` is not set to `true`.
 
 ## Commands
 
@@ -64,12 +64,15 @@ Write tests as you go, not just at the end.
 
 A version number is displayed top-right (`<div class="version">`). Increment it
 (e.g., v3.5 → v3.6) with every change so the user can confirm they have the
-latest build. The version appears in both `main.ts` and `build.ts`.
+latest build. The version appears in both `main.ts` and `build.ts`. Increment 
+the major version number after major changes.
 
 ## Branching
 
 Always start from the latest `main` branch unless told otherwise. Fetch and
-merge/rebase from `origin/main` before beginning any new feature work.
+merge/rebase from `origin/main` after the feature design is finalized, before
+beginning implementation.
+
 
 ## Deployment
 

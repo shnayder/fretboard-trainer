@@ -2,6 +2,11 @@
 
 How to plan, design, implement, and document changes.
 
+## Context when 
+- vision.md describes the long-term vision for the app. Relevant when making major design decisions, rarely relevant when following existing patterns.
+- ux-principles.md
+- 
+
 ## When to Write What
 
 ### Design spec
@@ -10,24 +15,31 @@ Write when there are **open design questions** about what to build. Typical
 for new quiz modes, new UX patterns, or features where the question format,
 item structure, or interaction model needs to be worked out.
 
-Example: `plans/2026-02-11-new-quiz-modes-spec.md` — designed question
-formats, item ID schemes, grouping, and answer input for 4 new modes.
+Example: `plans/product-specs/2026-02-11-new-quiz-modes-spec.md` — designed
+question formats, item ID schemes, grouping, and answer input for 4 new modes.
 
 ### Implementation plan
 
 Write when the **design is settled** but the technical approach has options,
 touches multiple systems, or benefits from a written walkthrough.
 
-Example: `plans/2026-02-11-architecture-review.md` — phased refactoring plan
-with code samples for each extraction step.
+Example: `plans/design-docs/2026-02-11-architecture-review.md` — phased
+refactoring plan with code samples for each extraction step.
 
 ### Bug fix plan
 
 Write for **non-trivial bugs** affecting multiple files or shared systems.
 Skip for obvious single-file fixes.
 
-Example: `plans/2026-02-12-fix-chord-spelling-bugs.md` — diagnosed 3 related
-enharmonic bugs, documented root causes, and planned fixes.
+Example: `plans/exec-plans/completed/2026-02-12-fix-chord-spelling-bugs.md` —
+diagnosed 3 related enharmonic bugs, documented root causes, and planned fixes.
+
+### Skip the spec
+
+- small, straightfoward tweaks to existing features.
+- bug fixes
+- version bumps
+- Significant technical improvements should get a spec, even if they're not user-facing. 
 
 ### Skip the plan
 
@@ -39,19 +51,25 @@ enharmonic bugs, documented root causes, and planned fixes.
 ## Plan File Naming
 
 ```
-plans/YYYY-MM-DD-{short-description}.md
+plans/product-specs/YYYY-MM-DD-{short-description}-spec.md  -- goals, functional design, UX notes
+plans/design-docs/YYYY-MM-DD-{short-description}.md         -- architectural explorations
+plans/exec-plans/active/YYYY-MM-DD-{short-description}.md   -- implementation plans (in progress)
+plans/exec-plans/completed/                                  -- move here when done
 ```
 
 Use the date you start the work. Use kebab-case for the description.
 
 ## Plan Lifecycle
 
-1. **Create** the plan on the feature branch BEFORE starting implementation.
-2. **Commit** the plan as the first commit on the branch.
+1. **Create** the spec and/or plan on the feature branch BEFORE starting
+   implementation. Place in the appropriate subdirectory (`product-specs/`,
+   `design-docs/`, or `exec-plans/active/`).
+2. **Commit** the spec and plan as the first commit on the branch.
 3. **Implement** the feature, referring to the plan.
 4. **Update** the plan: add an "Implementation Notes" section documenting
    deviations, additions, or dropped scope.
-5. **Commit** the updated plan alongside the implementation.
+5. **Move** exec plans from `active/` to `completed/` when the branch merges.
+6. **Commit** the updated plan alongside the implementation.
 
 ## Architectural Review (Before Implementing)
 
@@ -203,3 +221,9 @@ Include:
 - **Deviations from plan**: what changed and why
 - **Test counts**: how many tests were added
 - **Files modified**: final table (if it differs from the plan)
+
+## Updating tech-debt-tracker
+
+- If the implementation created any new technical debt, add it to
+  `plans/exec-plans/tech-debt-tracker.md`.
+- If code review or bug fixes identified untracked existing debt, add it too.

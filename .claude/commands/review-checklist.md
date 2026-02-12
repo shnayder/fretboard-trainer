@@ -101,7 +101,7 @@ or N/A. Do not skip items — mark N/A explicitly if a category does not apply.
 ## Documentation
 <!-- Full explanation: guides/feature-process.md -->
 
-- [ ] Implementation plan exists in `plans/` for non-trivial changes
+- [ ] Implementation plan exists in `plans/exec-plans/` for non-trivial changes
 - [ ] Plan updated after completion if implementation deviated
 - [ ] CLAUDE.md updated if architecture, modes, or conventions changed
 - [ ] New quiz mode: item ID format, item count, and answer type documented in

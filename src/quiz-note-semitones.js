@@ -200,7 +200,7 @@ function createNoteSemitonesMode() {
     mode,
     engine,
     init,
-    activate() { engine.attach(); engine.updateIdleMessage(); },
+    activate() { engine.attach(); engine.updateIdleMessage(); engine.showCalibrationIfNeeded(); },
     deactivate() {
       if (engine.isActive) engine.stop();
       engine.detach();

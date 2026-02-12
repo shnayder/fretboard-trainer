@@ -303,6 +303,7 @@ function createFretboardMode() {
     activate() {
       engine.attach();
       refreshUI();
+      engine.showCalibrationIfNeeded();
     },
     deactivate() {
       if (engine.isActive) engine.stop();

@@ -78,6 +78,24 @@ export function createNoteKeyHandler(submitAnswer, allowAccidentals = () => true
 }
 
 /**
+ * Build human-readable threshold descriptions from a motor baseline.
+ * Returns an array of { label, maxMs, meaning } objects describing the
+ * heatmap speed bands. Used by the calibration results screen.
+ *
+ * @param {number} baseline - Motor baseline in ms
+ * @returns {{ label: string, maxMs: number|null, meaning: string }[]}
+ */
+export function getCalibrationThresholds(baseline) {
+  return [
+    { label: 'Automatic', maxMs: Math.round(baseline * 1.5), meaning: 'Fully memorized — instant recall' },
+    { label: 'Good',      maxMs: Math.round(baseline * 3.0), meaning: 'Solid recall, minor hesitation' },
+    { label: 'Developing', maxMs: Math.round(baseline * 4.5), meaning: 'Working on it — needs practice' },
+    { label: 'Slow',      maxMs: Math.round(baseline * 6.0), meaning: 'Significant hesitation' },
+    { label: 'Very slow', maxMs: null,                        meaning: 'Not yet learned' },
+  ];
+}
+
+/**
  * Update aggregate stats display for a set of item IDs.
  * Currently a no-op (median display was removed).
  */
@@ -342,30 +360,170 @@ export function createQuizEngine(mode, container) {
     return Array.from(container.querySelectorAll('.note-btn:not(.hidden), .answer-btn'));
   }
 
-  function startCalibration(onComplete) {
-    calibrating = true;
-    const buttons = getCalibrationButtons();
-    if (buttons.length < 2) {
-      calibrating = false;
-      onComplete();
-      return;
+  /**
+   * Show calibration intro screen. User clicks "Start" to begin trials.
+   */
+  function showCalibrationIntro(onReady) {
+    // Hide start/stop/recalibrate buttons during calibration screens
+    if (els.startBtn) els.startBtn.style.display = 'none';
+    if (els.stopBtn) els.stopBtn.style.display = 'none';
+    if (els.recalibrateBtn) els.recalibrateBtn.style.display = 'none';
+    if (els.heatmapBtn) els.heatmapBtn.style.display = 'none';
+
+    if (els.feedback) {
+      els.feedback.textContent = 'Quick Calibration';
+      els.feedback.className = 'feedback';
     }
+    if (els.hint) {
+      els.hint.textContent = "We'll measure your tap/type speed to set personalized targets. Tap each highlighted button as fast as you can — 10 taps total.";
+    }
+    if (els.timeDisplay) els.timeDisplay.textContent = '';
+    if (els.countdownBar) els.countdownBar.style.width = '0%';
 
-    // Enable buttons for tapping during calibration
-    setAnswerButtonsEnabled(true);
+    // Show a "Start" button in the quiz area
+    if (els.quizArea) els.quizArea.classList.add('active');
+    setAnswerButtonsEnabled(false);
 
-    calibrationCleanup = runCalibration({
-      buttons,
-      els,
-      container,
-      onComplete: function(median) {
+    var calibStartBtn = document.createElement('button');
+    calibStartBtn.textContent = 'Start';
+    calibStartBtn.className = 'calibration-action-btn';
+    calibStartBtn.addEventListener('click', function() {
+      calibStartBtn.remove();
+      onReady();
+    });
+
+    // Insert after hint
+    if (els.hint && els.hint.parentNode) {
+      els.hint.parentNode.insertBefore(calibStartBtn, els.hint.nextSibling);
+    }
+  }
+
+  /**
+   * Format milliseconds as a human-readable string (e.g., "0.9s" or "1.8s").
+   */
+  function formatMs(ms) {
+    return (ms / 1000).toFixed(1) + 's';
+  }
+
+  /**
+   * Show calibration results screen with threshold explanations.
+   */
+  function showCalibrationResults(baseline, onDone) {
+    if (els.feedback) {
+      els.feedback.textContent = 'Calibration Complete';
+      els.feedback.className = 'feedback';
+    }
+    if (els.hint) els.hint.textContent = '';
+    if (els.timeDisplay) els.timeDisplay.textContent = '';
+
+    var thresholds = getCalibrationThresholds(baseline);
+
+    var resultsDiv = document.createElement('div');
+    resultsDiv.className = 'calibration-results';
+
+    var baselineP = document.createElement('p');
+    baselineP.className = 'calibration-baseline';
+    baselineP.textContent = 'Your baseline response time: ' + formatMs(baseline);
+    resultsDiv.appendChild(baselineP);
+
+    var table = document.createElement('table');
+    table.className = 'calibration-thresholds';
+
+    var thead = document.createElement('thead');
+    var headerRow = document.createElement('tr');
+    ['Speed', 'Response time', 'Meaning'].forEach(function(text) {
+      var th = document.createElement('th');
+      th.textContent = text;
+      headerRow.appendChild(th);
+    });
+    thead.appendChild(headerRow);
+    table.appendChild(thead);
+
+    var tbody = document.createElement('tbody');
+    thresholds.forEach(function(t) {
+      var tr = document.createElement('tr');
+      var tdLabel = document.createElement('td');
+      tdLabel.textContent = t.label;
+      tr.appendChild(tdLabel);
+
+      var tdTime = document.createElement('td');
+      tdTime.textContent = t.maxMs ? '< ' + formatMs(t.maxMs) : '> ' + formatMs(thresholds[thresholds.length - 2].maxMs);
+      tr.appendChild(tdTime);
+
+      var tdMeaning = document.createElement('td');
+      tdMeaning.textContent = t.meaning;
+      tr.appendChild(tdMeaning);
+
+      tbody.appendChild(tr);
+    });
+    table.appendChild(tbody);
+    resultsDiv.appendChild(table);
+
+    var doneBtn = document.createElement('button');
+    doneBtn.textContent = 'Done';
+    doneBtn.className = 'calibration-action-btn';
+    doneBtn.addEventListener('click', function() {
+      resultsDiv.remove();
+      onDone();
+    });
+    resultsDiv.appendChild(doneBtn);
+
+    // Insert into quiz area
+    if (els.hint && els.hint.parentNode) {
+      els.hint.parentNode.insertBefore(resultsDiv, els.hint.nextSibling);
+    }
+  }
+
+  /**
+   * Run the full calibration flow: intro → trials → results → idle.
+   * Self-contained — no callback needed.
+   */
+  function startCalibration() {
+    calibrating = true;
+
+    // Ensure mode's onStart is called so answer buttons are visible
+    if (mode.onStart) mode.onStart();
+
+    showCalibrationIntro(function onReady() {
+      var buttons = getCalibrationButtons();
+      if (buttons.length < 2) {
         calibrating = false;
-        calibrationCleanup = null;
-        if (median && median > 0) {
-          applyBaseline(median);
-        }
-        onComplete();
-      },
+        // Not enough buttons — just go to idle
+        if (mode.onStop) mode.onStop();
+        render();
+        updateIdleMessage();
+        return;
+      }
+
+      // Clear intro text, show trial instructions
+      if (els.feedback) {
+        els.feedback.textContent = 'Quick warm-up!';
+        els.feedback.className = 'feedback';
+      }
+      if (els.hint) els.hint.textContent = 'Tap the highlighted button as fast as you can';
+
+      // Enable buttons for tapping
+      setAnswerButtonsEnabled(true);
+
+      calibrationCleanup = runCalibration({
+        buttons: buttons,
+        els: els,
+        container: container,
+        onComplete: function(median) {
+          calibrating = false;
+          calibrationCleanup = null;
+          if (median && median > 0) {
+            applyBaseline(median);
+          }
+          // Disable buttons while showing results
+          setAnswerButtonsEnabled(false);
+          showCalibrationResults(median, function onDone() {
+            if (mode.onStop) mode.onStop();
+            render();
+            updateIdleMessage();
+          });
+        },
+      });
     });
   }
 
@@ -416,24 +574,11 @@ export function createQuizEngine(mode, container) {
     // before the engine renders the quiz UI state.
     if (mode.onStart) mode.onStart();
     render();
-
-    if (!motorBaseline) {
-      // Run calibration before first quiz question
-      startCalibration(function() {
-        nextQuestion();
-      });
-    } else {
-      nextQuestion();
-    }
+    nextQuestion();
   }
 
   function recalibrate() {
-    state = engineStart(state);
-    if (mode.onStart) mode.onStart();
-    render();
-    startCalibration(function() {
-      nextQuestion();
-    });
+    startCalibration();
   }
 
   function updateIdleMessage() {
@@ -454,6 +599,10 @@ export function createQuizEngine(mode, container) {
         calibrationCleanup();
         calibrationCleanup = null;
       }
+      // Remove any dynamically-added calibration UI
+      container.querySelectorAll('.calibration-action-btn, .calibration-results').forEach(function(el) {
+        el.remove();
+      });
     }
     if (countdownInterval) {
       clearInterval(countdownInterval);
@@ -509,10 +658,21 @@ export function createQuizEngine(mode, container) {
     els.recalibrateBtn.addEventListener('click', recalibrate);
   }
 
+  /**
+   * If no baseline exists, show the calibration intro screen.
+   * Called by modes from their activate() hook.
+   */
+  function showCalibrationIfNeeded() {
+    if (!motorBaseline) {
+      startCalibration();
+    }
+  }
+
   return {
     start,
     stop,
     recalibrate,
+    showCalibrationIfNeeded,
     submitAnswer,
     nextQuestion,
     attach,

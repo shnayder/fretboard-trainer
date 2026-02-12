@@ -1,6 +1,6 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
-import { createNoteKeyHandler, updateModeStats } from "./quiz-engine.js";
+import { createNoteKeyHandler, updateModeStats, getCalibrationThresholds } from "./quiz-engine.js";
 import { DEFAULT_CONFIG, createMemoryStorage, createAdaptiveSelector } from "./adaptive.js";
 
 describe("quiz-engine defaults", () => {
@@ -84,6 +84,50 @@ describe("updateModeStats", () => {
     const selector = createAdaptiveSelector(storage);
     // Should not throw
     updateModeStats(selector, ["x", "y"], null as any);
+  });
+});
+
+describe("getCalibrationThresholds", () => {
+  it("returns 5 threshold bands", () => {
+    const thresholds = getCalibrationThresholds(600);
+    assert.equal(thresholds.length, 5);
+  });
+
+  it("scales thresholds from baseline at 1000ms", () => {
+    const thresholds = getCalibrationThresholds(1000);
+    assert.equal(thresholds[0].label, "Automatic");
+    assert.equal(thresholds[0].maxMs, 1500);  // 1.5x
+    assert.equal(thresholds[1].label, "Good");
+    assert.equal(thresholds[1].maxMs, 3000);  // 3.0x
+    assert.equal(thresholds[2].label, "Developing");
+    assert.equal(thresholds[2].maxMs, 4500);  // 4.5x
+    assert.equal(thresholds[3].label, "Slow");
+    assert.equal(thresholds[3].maxMs, 6000);  // 6.0x
+    assert.equal(thresholds[4].label, "Very slow");
+    assert.equal(thresholds[4].maxMs, null);
+  });
+
+  it("scales proportionally for faster baseline", () => {
+    const thresholds = getCalibrationThresholds(500);
+    assert.equal(thresholds[0].maxMs, 750);   // 500 * 1.5
+    assert.equal(thresholds[1].maxMs, 1500);  // 500 * 3.0
+    assert.equal(thresholds[2].maxMs, 2250);  // 500 * 4.5
+    assert.equal(thresholds[3].maxMs, 3000);  // 500 * 6.0
+  });
+
+  it("rounds to whole milliseconds", () => {
+    const thresholds = getCalibrationThresholds(333);
+    // 333 * 1.5 = 499.5 → 500
+    assert.equal(thresholds[0].maxMs, 500);
+    // 333 * 3.0 = 999
+    assert.equal(thresholds[1].maxMs, 999);
+  });
+
+  it("includes meaning descriptions for all bands", () => {
+    const thresholds = getCalibrationThresholds(600);
+    thresholds.forEach((t) => {
+      assert.ok(t.meaning.length > 0, `${t.label} should have a meaning`);
+    });
   });
 });
 

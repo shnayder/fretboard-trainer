@@ -33,10 +33,7 @@ jobs:
       - name: Stash build output
         run: |
           mkdir -p /tmp/preview-build
-          cp docs/index.html /tmp/preview-build/
-          cp docs/sw.js /tmp/preview-build/ 2>/dev/null || true
-          cp docs/favicon-32x32.png /tmp/preview-build/ 2>/dev/null || true
-          cp docs/apple-touch-icon.png /tmp/preview-build/ 2>/dev/null || true
+          cp docs/* /tmp/preview-build/ 2>/dev/null || true
 
       - name: Deploy to preview directory on main
         run: |

@@ -87,6 +87,11 @@ function createSpeedTapMode() {
     return naturalsOnly ? NATURAL_NOTES.slice() : NOTES.map(n => n.name);
   }
 
+  // --- Colors (from CSS custom properties, cached once) ---
+  const _cs = getComputedStyle(document.documentElement);
+  const COLOR_SUCCESS = _cs.getPropertyValue('--color-success').trim();
+  const COLOR_ERROR = _cs.getPropertyValue('--color-error').trim();
+
   // --- SVG helpers ---
 
   function highlightCircle(string, fret, color) {
@@ -139,18 +144,7 @@ function createSpeedTapMode() {
     }
     html += '</tr></tbody></table>';
 
-    if (mode === 'speed') {
-      html += '<div class="heatmap-legend active">'
-        + '<div class="legend-item"><div class="legend-swatch" style="background:#ddd"></div>No data</div>'
-        + '<div class="legend-item"><div class="legend-swatch" style="background:hsl(120,60%,65%)"></div>&lt; 1.5s/pos</div>'
-        + '<div class="legend-item"><div class="legend-swatch" style="background:hsl(80,60%,65%)"></div>1.5\u20133s/pos</div>'
-        + '<div class="legend-item"><div class="legend-swatch" style="background:hsl(50,60%,65%)"></div>3\u20134.5s/pos</div>'
-        + '<div class="legend-item"><div class="legend-swatch" style="background:hsl(30,60%,65%)"></div>4.5\u20136s/pos</div>'
-        + '<div class="legend-item"><div class="legend-swatch" style="background:hsl(0,60%,65%)"></div>&gt; 6s/pos</div>'
-        + '</div>';
-    } else {
-      html += buildStatsLegend(mode);
-    }
+    html += buildStatsLegend(mode);
 
     el.innerHTML = html;
   });
@@ -568,7 +562,7 @@ function createSpeedTapMode() {
 
     if (tappedNote === currentNote) {
       foundPositions.add(key);
-      highlightCircle(string, fret, '#4CAF50');
+      highlightCircle(string, fret, COLOR_SUCCESS);
       showNoteText(string, fret);
       updateProgress();
 
@@ -577,7 +571,7 @@ function createSpeedTapMode() {
       }
     } else {
       // Wrong tap — flash red, show actual note, then reset
-      highlightCircle(string, fret, '#f44336');
+      highlightCircle(string, fret, COLOR_ERROR);
       showNoteText(string, fret);
 
       const timeout = setTimeout(() => {

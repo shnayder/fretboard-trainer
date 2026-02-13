@@ -12,13 +12,18 @@ npx tsx build.ts                                    # Build (Node)
 npx tsx --test src/*_test.ts                        # Run tests
 ```
 
-**Both `main.ts` and `build.ts` contain the HTML template — update both.**
+**Both `main.ts` and `build.ts` use the same HTML template via shared helpers
+in `src/html-helpers.ts`.** Mode-specific content is passed as arguments to
+`modeScreen()`. Only the nav/header chrome and mode-specific quiz-area content
+live directly in the build scripts.
 
 ## Structure
 
 ```
 main.ts / build.ts       # Dual build scripts (Deno + Node), must stay in sync
 src/
+  html-helpers.ts        # Build-time HTML: mode scaffold, button blocks (TS)
+  fretboard.ts           # Build-time SVG: fret/string/note generation (TS)
   adaptive.js            # Adaptive question selector (ES module)
   music-data.js          # Shared music theory data (ES module)
   quiz-engine-state.js   # Pure engine state transitions (ES module)
@@ -66,6 +71,9 @@ at build time — no framework, no bundler. Key patterns:
   time. All timing thresholds scale proportionally (1x–9x baseline).
 - **Consolidate Before Expanding** — shared `computeRecommendations()` gates
   progression to new item groups behind mastery of existing ones.
+- **CSS Custom Properties** — color palette, heatmap scale, and semantic tokens
+  defined as `--color-*` and `--heatmap-*` variables in `:root`. JS reads
+  heatmap colors via `getComputedStyle` with hardcoded fallbacks for tests.
 - **Build System** — `readModule()` strips `export` for browser; `read()` for
   plain scripts. Concatenation order = dependency order.
 

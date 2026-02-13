@@ -21,6 +21,12 @@ function createFretboardMode() {
     noteMatchesInput,
   });
 
+  // --- Colors (from CSS custom properties, cached once) ---
+  const _cs = getComputedStyle(document.documentElement);
+  const COLOR_HIGHLIGHT = _cs.getPropertyValue('--color-highlight').trim();
+  const COLOR_SUCCESS = _cs.getPropertyValue('--color-success').trim();
+  const COLOR_ERROR = _cs.getPropertyValue('--color-error').trim();
+
   // --- SVG helpers ---
 
   function highlightCircle(string, fret, color) {
@@ -170,7 +176,7 @@ function createFretboardMode() {
       currentString = q.currentString;
       currentFret = q.currentFret;
       currentNote = q.currentNote;
-      highlightCircle(q.currentString, q.currentFret, '#FFD700');
+      highlightCircle(q.currentString, q.currentFret, COLOR_HIGHLIGHT);
     },
 
     checkAnswer(itemId, input) {
@@ -179,9 +185,9 @@ function createFretboardMode() {
 
     onAnswer(itemId, result, responseTime) {
       if (result.correct) {
-        highlightCircle(currentString, currentFret, '#4CAF50');
+        highlightCircle(currentString, currentFret, COLOR_SUCCESS);
       } else {
-        highlightCircle(currentString, currentFret, '#f44336');
+        highlightCircle(currentString, currentFret, COLOR_ERROR);
       }
       showNoteText(currentString, currentFret);
     },

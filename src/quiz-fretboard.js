@@ -187,12 +187,14 @@ function createFretboardMode() {
     },
 
     onStart() {
+      container.classList.add('quiz-active');
       noteKeyHandler.reset();
       if (statsControls.mode) hideHeatmap();
       updateStats(engine.selector);
     },
 
     onStop() {
+      container.classList.remove('quiz-active');
       noteKeyHandler.reset();
       clearAll();
       updateStats(engine.selector);

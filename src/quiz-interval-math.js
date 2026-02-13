@@ -5,9 +5,9 @@
 // Grouped by interval pair into 6 distance groups for progressive unlocking.
 //
 // Depends on globals: NOTES, INTERVALS, noteAdd, noteSub,
-// noteMatchesInput, createQuizEngine, createNoteKeyHandler, updateModeStats,
-// renderStatsGrid, buildStatsLegend, DEFAULT_CONFIG,
-// computeRecommendations
+// noteMatchesInput, pickAccidentalName, createQuizEngine,
+// createNoteKeyHandler, updateModeStats, renderStatsGrid,
+// buildStatsLegend, DEFAULT_CONFIG, computeRecommendations
 
 function createIntervalMathMode() {
   const container = document.getElementById('mode-intervalMath');
@@ -154,13 +154,19 @@ function createIntervalMathMode() {
 
     presentQuestion(itemId) {
       currentItem = parseItem(itemId);
+      currentItem.useFlats = Math.random() < 0.5;
       const prompt = container.querySelector('.quiz-prompt');
-      prompt.textContent = currentItem.note.displayName + ' ' + currentItem.op + ' ' + currentItem.interval.abbrev + ' = ?';
+      const noteName = pickAccidentalName(currentItem.note.displayName, currentItem.useFlats);
+      prompt.textContent = noteName + ' ' + currentItem.op + ' ' + currentItem.interval.abbrev + ' = ?';
+      container.querySelectorAll('.answer-btn-note').forEach(btn => {
+        const note = NOTES.find(n => n.name === btn.dataset.note);
+        if (note) btn.textContent = pickAccidentalName(note.displayName, currentItem.useFlats);
+      });
     },
 
     checkAnswer(itemId, input) {
       const correct = noteMatchesInput(currentItem.answer, input);
-      return { correct, correctAnswer: currentItem.answer.displayName };
+      return { correct, correctAnswer: pickAccidentalName(currentItem.answer.displayName, currentItem.useFlats) };
     },
 
     onStart() {
@@ -171,6 +177,10 @@ function createIntervalMathMode() {
 
     onStop() {
       noteKeyHandler.reset();
+      container.querySelectorAll('.answer-btn-note').forEach(btn => {
+        const note = NOTES.find(n => n.name === btn.dataset.note);
+        if (note) btn.textContent = note.displayName;
+      });
       updateModeStats(engine.selector, ALL_ITEMS, engine.els.stats);
       statsControls.show('retention');
       refreshUI();

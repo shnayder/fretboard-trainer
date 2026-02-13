@@ -67,6 +67,8 @@ baseline calibration.
 
 <!-- [NEEDS INPUT] Prioritize these or replace with your actual plans. -->
 
+- Adaptive time pressure — per-item deadlines that tighten as the user
+  improves, pushing from slow calculation to automatic recall
 - Minor keys for Key Signatures, Scale Degrees, Diatonic Chords, Chord Spelling
 - Chord spelling reverse direction (notes → chord name)
 

@@ -31,6 +31,17 @@ These are inferred from the existing codebase and design decisions:
   service worker. No login, no cloud sync, no setup. Open the page and start
   drilling.
 
+- **Short-session friendly.** Users often practice in free moments — a few
+  minutes between activities. Every session should be productive without
+  warm-up overhead. State that matters (item deadlines, mastery data) persists
+  across sessions so progress carries over even when sessions are brief.
+
+- **Fewer options.** Prefer smart defaults over user-facing toggles. Every
+  option adds cognitive overhead ("should I turn this on?") and creates
+  configurations to test. If the system can adapt automatically — via generous
+  cold starts, staircase adjustments, or baseline scaling — do that instead
+  of adding a setting.
+
 - **Personalized timing.** Motor baseline calibration means thresholds adapt
   to each user's device and physical response speed. A phone user and a
   desktop keyboard user get equivalently challenging targets.

@@ -22,7 +22,6 @@ toward direct memory retrieval.
 - Set per-item time limits that target ~75% success rate — challenging enough
   to force retrieval, generous enough that most attempts involve genuine recall
   (not just passively seeing the answer)
-- Track and display the user's timed success rate within a session
 - Auto-reveal the correct answer on timeout so the user always sees it
 
 ## Non-Goals
@@ -30,11 +29,11 @@ toward direct memory retrieval.
 - Per-item response-time prediction model that estimates P(correct | time).
   A model-free adaptive approach (adjust deadline up/down based on outcomes)
   is simpler and sufficient.
-- Persisting timer deadlines across sessions (session-scoped for now; the
-  adaptive selector's EWMA already persists long-term speed data)
 - Changing the adaptive selector's item-selection weights based on timer
   outcomes (the existing recordResponse path handles that)
 - Gamification or streak mechanics around the timer
+- Separate "speed" vs "accuracy" metrics visible to the user — a single
+  correct/incorrect outcome is enough
 
 ## Cognitive Science Rationale
 
@@ -53,21 +52,22 @@ continue driving improvement.
 
 ### Timer behavior
 
-The spaced repetition timer replaces the existing visual-only countdown with a
-consequential countdown. When the timer expires, the question is auto-answered
-as a miss.
+The existing visual-only countdown becomes a consequential countdown. When
+the timer expires, the question is auto-answered as a miss. The timer is
+always active — no toggle or setting needed.
 
 **Per-question flow:**
 
 1. Question appears, countdown starts from the item's current deadline
 2. User answers before timer expires → normal correct/incorrect handling
-3. Timer expires before answer → auto-reveal correct answer, count as timeout
+3. Timer expires before answer → auto-reveal correct answer, count as miss
 
 **After timeout:**
 
-- Show the correct answer using the existing feedback display ("Time's up — C")
-- Record the attempt as incorrect via `recordResponse(itemId, deadline, false)`
-  so the adaptive selector treats it as a miss (stability decay, etc.)
+- Show the correct answer using the existing feedback display
+  ("Time's up — C")
+- Record as incorrect so the adaptive selector treats it as a miss
+  (stability decay, etc.)
 - User taps/presses Space to advance, same as after a normal answer
 
 ### Deadline model
@@ -75,10 +75,6 @@ as a miss.
 Use a **model-free staircase** approach per item. Each item starts with a
 generous default deadline and adjusts up or down based on outcomes:
 
-- **Starting deadline**: Use the item's EWMA from the adaptive selector if
-  available (the user's actual average speed), with a generous multiplier.
-  For unseen items or items with no EWMA, use the `automaticityTarget` from
-  the adaptive config (which is already scaled by motor baseline).
 - **After correct answer within deadline**: Decrease deadline by a factor
   (e.g. multiply by 0.85) — push harder
 - **After timeout (or incorrect)**: Increase deadline by a factor (e.g.
@@ -92,10 +88,9 @@ starting points.
 
 **Floor and ceiling:**
 
-- Minimum deadline: `minTime` from adaptive config (motor baseline floor —
-  can't respond faster than physical reaction time)
-- Maximum deadline: `maxResponseTime` from adaptive config (no point waiting
-  longer than the clamp)
+- Minimum deadline: motor baseline floor (can't respond faster than physical
+  reaction time)
+- Maximum deadline: max response time clamp (no point waiting longer)
 
 **Cold start strategy:**
 
@@ -111,91 +106,53 @@ For an item's first appearance with the timer:
 This avoids punishing users on unfamiliar items while still providing
 meaningful time pressure on items they've practiced.
 
-### Session success rate
+### Deadline persistence
 
-Track and display what fraction of answers were submitted before the timer
-expired (whether correct or incorrect — the timer metric is specifically
-about speed, not accuracy):
+Deadlines are **persisted across sessions**. Users often practice in short
+bursts (a few minutes between activities), so a session may only present each
+item once or twice — not enough for the staircase to converge. Persisting
+deadlines means progress carries over and the timer gets appropriately
+challenging without a slow warm-up every session.
 
-- **Numerator**: answers submitted before timeout (correct or incorrect)
-- **Denominator**: total questions presented
-- **Display**: Show as a percentage in the session stats area, e.g. "Timer:
-  72%"
-- **Update**: After every question (timeout or answered)
-
-This gives the user a single number representing how well they're keeping up
-with the time pressure. The 75% target means this number should hover around
-75% when the staircase has converged.
-
-### Opt-in activation
-
-The timer is **off by default**. Users opt in via a toggle in the quiz
-controls area (alongside existing controls like string selection, naturals
-only, etc.).
-
-- **Toggle label**: "Timer" with on/off state
-- **Persistence**: Save the toggle state per mode in localStorage
-  (key: `timerEnabled_{storageNamespace}`)
-- **Mid-quiz toggle**: The timer can be toggled during a quiz session.
-  Turning it on mid-session starts the countdown on the next question.
-  Turning it off mid-session stops the countdown immediately and hides the
-  success rate display.
+Storage is per-item, alongside the adaptive selector's existing per-item
+stats.
 
 ### Visual design
 
-**Countdown bar changes:**
+**Countdown bar:**
 
-When the timer is active, the existing countdown bar gains real consequence:
-- Shrinks from 100% to 0% over the item's deadline (same animation as today)
-- On expiration: auto-submits as timeout (new behavior)
+The existing countdown bar already shrinks from 100% to 0% and adds an
+`.expired` class. The new behavior: on expiration, auto-submit as timeout
+(currently no action is taken).
 
-When the timer is off, the countdown bar works exactly as it does today
-(visual-only, no auto-submit on expiration).
+The countdown duration becomes the item's current deadline (currently it
+uses a fixed `automaticityTarget`).
 
 **Timeout feedback:**
 
 - Feedback text: "Time's up — {correctAnswer}"
-- Feedback class: `feedback incorrect` (same red styling as wrong answers)
+- Same red styling as wrong answers
 - Time display: show the deadline that was active, e.g. "limit: 2.1s"
 
-**Success rate display:**
+**Answer outcomes — single metric:**
 
-- Location: in the session stats row, after question count and elapsed time
-- Format: "Timer: 72%" (or similar compact format)
-- Only visible when timer is enabled
-
-**Timer toggle:**
-
-- A small toggle/checkbox in the quiz controls area
-- Styled consistently with existing controls (string toggles, naturals-only)
+From the user's perspective, there is one outcome per question: correct or
+incorrect. A timeout is simply a kind of incorrect answer. No separate
+"timed out" vs "wrong answer" distinction is shown — the user sees
+"Time's up — C" (timeout) or "Incorrect — C" (wrong answer), but both
+count as misses for mastery tracking. This keeps the mental model simple:
+did I get it right, or not?
 
 ## Cross-cutting Design Notes
 
-### Integration with existing countdown
-
-The current `startCountdown()` in quiz-engine.js runs the bar animation and
-adds an `.expired` class when time runs out, but takes no action on expiry.
-The timer feature adds an expiry callback that auto-submits a timeout answer.
-When the timer is disabled, the existing visual-only behavior is preserved.
-
 ### Integration with adaptive selector
 
-Timer outcomes feed into the existing `recordResponse` path:
-- Correct within deadline: `recordResponse(id, responseTime, true)` — same
-  as today
-- Incorrect within deadline: `recordResponse(id, responseTime, false)` — same
-  as today
-- Timeout: `recordResponse(id, deadline, false)` — treated as wrong answer
-  with response time = deadline. This causes stability decay, which is the
-  right behavior (the user couldn't recall in time).
-
-### Per-item deadlines are session-scoped
-
-Deadlines live in an in-memory map during the quiz session, initialized on
-first appearance from EWMA or defaults. They are not persisted to localStorage.
-This keeps the implementation simple and avoids stale deadline data. The
-adaptive selector's EWMA (which is persisted) provides the warm-start data
-for future sessions.
+Timer outcomes feed into the existing recording path:
+- Correct within deadline: recorded as correct with actual response time
+- Incorrect within deadline: recorded as incorrect with actual response time
+- Timeout: recorded as incorrect with response time = deadline. This causes
+  stability decay, which is the right behavior (the user couldn't recall in
+  time).
 
 ### Motor baseline scaling
 
@@ -205,23 +162,9 @@ baseline handling is needed.
 
 ### Applicability across modes
 
-The timer is a quiz-engine-level feature, available to all quiz modes. The
-toggle and success rate display are part of the shared quiz scaffold. No
-mode-specific changes are needed — every mode that uses `createQuizEngine`
-gets the timer capability.
-
-## State shape additions
-
-```
-EngineState additions:
-  timerEnabled: boolean           // user preference (persisted per mode)
-  timerSuccessCount: number       // answers submitted before timeout
-  timerTotalCount: number         // total questions presented
-  timedOut: boolean               // true if current question timed out
-
-Session-scoped (in-memory, not in EngineState):
-  itemDeadlines: Map<itemId, number>   // current deadline per item in ms
-```
+The timer is a quiz-engine-level feature, available to all quiz modes. No
+mode-specific changes are needed — every mode that uses the quiz engine gets
+the timer capability.
 
 ## Resolved Decisions
 
@@ -236,26 +179,27 @@ Session-scoped (in-memory, not in EngineState):
   difficulty research. The factors (0.85 down, 1.4 up) produce approximately
   this ratio at equilibrium.
 
-- **Off by default** — Users should build accuracy before adding time
-  pressure. Forcing the timer on new users who are still learning item
-  identities would cause frustrating timeout cascades. The existing
-  "mastered" indicators help users know when they're ready for the timer.
+- **Always on, no toggle** — Fewer user-facing options is better when we can
+  get away with it. The generous cold start (maxResponseTime for unseen, 2x
+  EWMA for seen) means the timer is unobtrusive for new items and only
+  becomes challenging as the user improves. No need to burden the user with
+  a decision about when to turn it on.
 
-- **Session-scoped deadlines** — Persisting deadlines adds storage complexity
-  and risks stale data (a deadline from a week ago doesn't reflect current
-  skill). Starting fresh from EWMA each session is simpler and the staircase
-  converges quickly (a few presentations per item).
+- **Persist deadlines across sessions** — Sessions are often short (a few
+  minutes in free moments). Without persistence, the staircase restarts from
+  a generous default every time — the user never reaches meaningful time
+  pressure on items they see infrequently. Persistence lets challenge level
+  carry over.
 
-- **Timeout counts as incorrect for adaptive selector** — Even though the
-  user didn't answer "wrong", they failed to recall in time, which should
-  decay stability. This is consistent with the spaced repetition principle
-  that failed retrieval = weaker memory trace.
+- **Timeout counts as incorrect** — Even though the user didn't answer
+  "wrong", they failed to recall in time, which should decay stability.
+  Consistent with the spaced repetition principle that failed retrieval =
+  weaker memory trace.
 
-- **Success rate tracks speed, not accuracy** — The timer success rate counts
-  any answer submitted before timeout as a "timer success", regardless of
-  whether the answer was correct. This separates the speed metric (am I fast
-  enough?) from the accuracy metric (do I know it?). The existing progress
-  bar already tracks accuracy/mastery.
+- **Single user-facing outcome metric** — Correct or incorrect, period.
+  Timeouts are just a kind of incorrect. No separate speed/accuracy metrics
+  — that adds cognitive overhead for the user without clear benefit. The
+  staircase handles the speed progression internally.
 
 - **Unseen items start at maxResponseTime, not automaticityTarget** —
   `automaticityTarget` (3s) is calibrated as the midpoint for *learned* items

@@ -105,6 +105,16 @@ body {
 }
 
 /* --- Fretboard --- */
+#mode-fretboard {
+  display: flex;
+  flex-direction: column;
+}
+#mode-fretboard .fretboard-wrapper {
+  order: -1;
+}
+#mode-fretboard.quiz-active .fretboard-wrapper {
+  order: 0;
+}
 .fretboard-wrapper {
   display: flex;
   flex-direction: column;
@@ -5221,6 +5231,13 @@ function noteSub(noteNum, semitones) {
   return noteByNum(noteNum - semitones);
 }
 
+/** Pick a single accidental spelling from a displayName like 'C#/Db'. */
+function pickAccidentalName(displayName, useFlats) {
+  if (!displayName.includes('/')) return displayName;
+  const [sharp, flat] = displayName.split('/');
+  return useFlats ? flat : sharp;
+}
+
 /** Check if a user input matches any accepted answer for a note. */
 function noteMatchesInput(note, input) {
   return note.accepts.includes(input.toLowerCase());
@@ -7008,12 +7025,14 @@ function createFretboardMode() {
     },
 
     onStart() {
+      container.classList.add('quiz-active');
       noteKeyHandler.reset();
       if (statsControls.mode) hideHeatmap();
       updateStats(engine.selector);
     },
 
     onStop() {
+      container.classList.remove('quiz-active');
       noteKeyHandler.reset();
       clearAll();
       updateStats(engine.selector);
@@ -8233,8 +8252,8 @@ function createIntervalSemitonesMode() {
 // Grouped by semitone count into 6 distance groups for progressive unlocking.
 //
 // Depends on globals: NOTES, noteAdd, noteSub, noteMatchesInput,
-// createQuizEngine, createNoteKeyHandler, updateModeStats,
-// renderStatsGrid, buildStatsLegend, DEFAULT_CONFIG,
+// pickAccidentalName, createQuizEngine, createNoteKeyHandler,
+// updateModeStats, renderStatsGrid, buildStatsLegend, DEFAULT_CONFIG,
 // computeRecommendations
 
 function createSemitoneMathMode() {
@@ -8379,13 +8398,19 @@ function createSemitoneMathMode() {
 
     presentQuestion(itemId) {
       currentItem = parseItem(itemId);
+      currentItem.useFlats = Math.random() < 0.5;
       const prompt = container.querySelector('.quiz-prompt');
-      prompt.textContent = currentItem.note.displayName + ' ' + currentItem.op + ' ' + currentItem.semitones + ' = ?';
+      const noteName = pickAccidentalName(currentItem.note.displayName, currentItem.useFlats);
+      prompt.textContent = noteName + ' ' + currentItem.op + ' ' + currentItem.semitones + ' = ?';
+      container.querySelectorAll('.answer-btn-note').forEach(btn => {
+        const note = NOTES.find(n => n.name === btn.dataset.note);
+        if (note) btn.textContent = pickAccidentalName(note.displayName, currentItem.useFlats);
+      });
     },
 
     checkAnswer(itemId, input) {
       const correct = noteMatchesInput(currentItem.answer, input);
-      return { correct, correctAnswer: currentItem.answer.displayName };
+      return { correct, correctAnswer: pickAccidentalName(currentItem.answer.displayName, currentItem.useFlats) };
     },
 
     onStart() {
@@ -8469,9 +8494,9 @@ function createSemitoneMathMode() {
 // Grouped by interval pair into 6 distance groups for progressive unlocking.
 //
 // Depends on globals: NOTES, INTERVALS, noteAdd, noteSub,
-// noteMatchesInput, createQuizEngine, createNoteKeyHandler, updateModeStats,
-// renderStatsGrid, buildStatsLegend, DEFAULT_CONFIG,
-// computeRecommendations
+// noteMatchesInput, pickAccidentalName, createQuizEngine,
+// createNoteKeyHandler, updateModeStats, renderStatsGrid,
+// buildStatsLegend, DEFAULT_CONFIG, computeRecommendations
 
 function createIntervalMathMode() {
   const container = document.getElementById('mode-intervalMath');
@@ -8618,13 +8643,19 @@ function createIntervalMathMode() {
 
     presentQuestion(itemId) {
       currentItem = parseItem(itemId);
+      currentItem.useFlats = Math.random() < 0.5;
       const prompt = container.querySelector('.quiz-prompt');
-      prompt.textContent = currentItem.note.displayName + ' ' + currentItem.op + ' ' + currentItem.interval.abbrev + ' = ?';
+      const noteName = pickAccidentalName(currentItem.note.displayName, currentItem.useFlats);
+      prompt.textContent = noteName + ' ' + currentItem.op + ' ' + currentItem.interval.abbrev + ' = ?';
+      container.querySelectorAll('.answer-btn-note').forEach(btn => {
+        const note = NOTES.find(n => n.name === btn.dataset.note);
+        if (note) btn.textContent = pickAccidentalName(note.displayName, currentItem.useFlats);
+      });
     },
 
     checkAnswer(itemId, input) {
       const correct = noteMatchesInput(currentItem.answer, input);
-      return { correct, correctAnswer: currentItem.answer.displayName };
+      return { correct, correctAnswer: pickAccidentalName(currentItem.answer.displayName, currentItem.useFlats) };
     },
 
     onStart() {

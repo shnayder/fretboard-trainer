@@ -4,8 +4,8 @@
 // Grouped by semitone count into 6 distance groups for progressive unlocking.
 //
 // Depends on globals: NOTES, noteAdd, noteSub, noteMatchesInput,
-// createQuizEngine, createNoteKeyHandler, updateModeStats,
-// renderStatsGrid, buildStatsLegend, DEFAULT_CONFIG,
+// pickAccidentalName, createQuizEngine, createNoteKeyHandler,
+// updateModeStats, renderStatsGrid, buildStatsLegend, DEFAULT_CONFIG,
 // computeRecommendations
 
 function createSemitoneMathMode() {
@@ -150,13 +150,19 @@ function createSemitoneMathMode() {
 
     presentQuestion(itemId) {
       currentItem = parseItem(itemId);
+      currentItem.useFlats = Math.random() < 0.5;
       const prompt = container.querySelector('.quiz-prompt');
-      prompt.textContent = currentItem.note.displayName + ' ' + currentItem.op + ' ' + currentItem.semitones + ' = ?';
+      const noteName = pickAccidentalName(currentItem.note.displayName, currentItem.useFlats);
+      prompt.textContent = noteName + ' ' + currentItem.op + ' ' + currentItem.semitones + ' = ?';
+      container.querySelectorAll('.answer-btn-note').forEach(btn => {
+        const note = NOTES.find(n => n.name === btn.dataset.note);
+        if (note) btn.textContent = pickAccidentalName(note.displayName, currentItem.useFlats);
+      });
     },
 
     checkAnswer(itemId, input) {
       const correct = noteMatchesInput(currentItem.answer, input);
-      return { correct, correctAnswer: currentItem.answer.displayName };
+      return { correct, correctAnswer: pickAccidentalName(currentItem.answer.displayName, currentItem.useFlats) };
     },
 
     onStart() {

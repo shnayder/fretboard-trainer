@@ -5,15 +5,19 @@ on:
   pull_request:
     types: [closed]
 
+concurrency:
+  group: preview-deploy
+  cancel-in-progress: false
+
 jobs:
   cleanup:
     runs-on: ubuntu-latest
     permissions:
       contents: write
-    # Only run for claude/* branches
+    # Only run for claude/* branches in this repo (not forks)
     if: >-
       (github.event_name == 'delete' && startsWith(github.event.ref, 'claude/')) ||
-      (github.event_name == 'pull_request' && startsWith(github.event.pull_request.head.ref, 'claude/'))
+      (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && startsWith(github.event.pull_request.head.ref, 'claude/'))
     steps:
       - name: Checkout main
         uses: actions/checkout@v4

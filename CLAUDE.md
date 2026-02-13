@@ -37,7 +37,7 @@ scripts/take-screenshots.ts  # Playwright screenshots
 guides/                  # Detailed developer guides (see below)
 plans/                   # Design docs, product specs, execution plans
   design-docs/           #   Architectural explorations and design reviews
-  product-specs/         #   What to build and why (user-facing specs)
+  product-specs/         #   What to build and why (active/ and completed/)
   exec-plans/            #   Implementation plans (active/ and completed/)
   generated/             #   Generated artifacts
   references/            #   Reference material

@@ -15,8 +15,9 @@ Write when there are **open design questions** about what to build. Typical
 for new quiz modes, new UX patterns, or features where the question format,
 item structure, or interaction model needs to be worked out.
 
-Example: `plans/product-specs/2026-02-11-new-quiz-modes-spec.md` — designed
-question formats, item ID schemes, grouping, and answer input for 4 new modes.
+Example: `plans/product-specs/completed/2026-02-11-new-quiz-modes-spec.md` —
+designed question formats, item ID schemes, grouping, and answer input for 4 new
+modes.
 
 When reviewing specs, focus on requirements, goals, scope, phasing. Do not bring up code-level concerns unless they're have significant impact on scope, performance, etc. It is expected that new code will be necessary -- no need to bring it up at this stage.
 
@@ -55,10 +56,11 @@ diagnosed 3 related enharmonic bugs, documented root causes, and planned fixes.
 ## Plan File Naming
 
 ```
-plans/product-specs/YYYY-MM-DD-{short-description}-spec.md  -- goals, functional design, UX notes
-plans/design-docs/YYYY-MM-DD-{short-description}.md         -- architectural explorations
-plans/exec-plans/active/YYYY-MM-DD-{short-description}.md   -- implementation plans (in progress)
-plans/exec-plans/completed/                                  -- move here when done
+plans/product-specs/active/YYYY-MM-DD-{short-description}-spec.md  -- goals, functional design, UX notes
+plans/product-specs/completed/                                     -- move here when done, tested, signed off
+plans/design-docs/YYYY-MM-DD-{short-description}.md               -- architectural explorations
+plans/exec-plans/active/YYYY-MM-DD-{short-description}.md         -- implementation plans (in progress)
+plans/exec-plans/completed/                                        -- move here when done
 ```
 
 Use the date you start the work. Use kebab-case for the description.
@@ -66,14 +68,16 @@ Use the date you start the work. Use kebab-case for the description.
 ## Plan Lifecycle
 
 1. **Create** the spec and/or plan on the feature branch BEFORE starting
-   implementation. Place in the appropriate subdirectory (`product-specs/`,
+   implementation. Place in the appropriate subdirectory (`product-specs/active/`,
    `design-docs/`, or `exec-plans/active/`).
 2. **Commit** the spec and plan as the first commit on the branch.
 3. **Implement** the feature, referring to the plan.
 4. **Update** the plan: add an "Implementation Notes" section documenting
    deviations, additions, or dropped scope.
 5. **Move** exec plans from `active/` to `completed/` when the branch merges.
-6. **Commit** the updated plan alongside the implementation.
+6. **Move** product specs from `active/` to `completed/` when the feature is
+   done, tested, and signed off on.
+7. **Commit** the updated plan alongside the implementation.
 
 ## Architectural Review (Before Implementing)
 

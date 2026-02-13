@@ -119,9 +119,8 @@ stats.
 
 **Countdown bar:**
 
-Set countdown duration to be the item's current deadline (currently it
-uses a fixed `automaticityTarget`). On expiration, auto-submit as timeout
-(currently no action is taken).
+Countdown duration is the item's current deadline. On expiration,
+auto-submit as timeout.
 
 Show the deadline next to the timer, rounded to tenth of a second (e.g. 2.4s). If it's positioned right next to the timer bar, it shouldn't need a label.
 
@@ -143,9 +142,8 @@ Timeout counts as incorrect. Show "Time's up — C" for timeout, keep "Incorrect
 Timer outcomes feed into the existing recording path:
 - Correct within deadline: recorded as correct with actual response time
 - Incorrect within deadline: recorded as incorrect with actual response time
-- Timeout: recorded as incorrect with response time = deadline. This causes
-  stability decay, which is the right behavior (the user couldn't recall in
-  time).
+- Timeout: recorded as incorrect. This causes stability decay, which is
+  the right behavior (the user couldn't recall in time).
 
 ### Motor baseline scaling
 

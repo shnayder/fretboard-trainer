@@ -225,7 +225,6 @@ button {
 }
 /* --- Quiz header (shown during quiz) --- */
 .quiz-header {
-  display: none;
   align-items: center;
   padding: 0.4rem 0;
   border-bottom: 1px solid #eee;
@@ -253,7 +252,6 @@ button {
 
 /* --- Session stats (question count + elapsed time) --- */
 .session-stats {
-  display: none;
   justify-content: center;
   gap: 1.5rem;
   font-size: 0.85rem;
@@ -266,7 +264,6 @@ button {
 
 /* --- Progress bar --- */
 .progress-bar {
-  display: none;
   width: 100%;
   max-width: 300px;
   height: 20px;

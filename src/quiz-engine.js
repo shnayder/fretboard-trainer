@@ -420,8 +420,8 @@ export function createQuizEngine(mode, container) {
 
     if (els.startBtn)      els.startBtn.style.display     = state.showStartBtn ? 'inline' : 'none';
     if (els.stopBtn)       els.stopBtn.style.display      = state.showStopBtn ? 'inline' : 'none';
-    if (els.statsToggle)   els.statsToggle.style.display   = state.showHeatmapBtn ? '' : 'none';
-    if (els.statsControls) els.statsControls.style.display = state.showStatsControls ? '' : 'none';
+    if (els.statsToggle)   els.statsToggle.style.display   = state.showHeatmapBtn ? 'inline-flex' : 'none';
+    if (els.statsControls) els.statsControls.style.display = state.showStatsControls ? 'block' : 'none';
     if (els.quizArea)      els.quizArea.classList.toggle('active', state.quizActive);
     if (els.feedback) {
       els.feedback.textContent = state.feedbackText;

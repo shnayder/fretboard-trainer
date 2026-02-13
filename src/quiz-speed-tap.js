@@ -481,7 +481,7 @@ function createSpeedTapMode() {
     if (els.hint) els.hint.textContent = '';
     if (els.timeDisplay) els.timeDisplay.textContent = '';
     if (els.fretboardWrapper) els.fretboardWrapper.style.display = 'none';
-    if (els.statsControls) els.statsControls.style.display = '';
+    if (els.statsControls) els.statsControls.style.display = 'block';
     if (els.startBtn) els.startBtn.style.display = 'inline';
     if (els.stopBtn) els.stopBtn.style.display = 'none';
     if (els.recalibrateBtn) {
@@ -649,7 +649,7 @@ function createSpeedTapMode() {
     if (els.quizArea) els.quizArea.classList.add('active');
     if (els.quizHeader) els.quizHeader.style.display = 'flex';
     if (els.sessionStats) els.sessionStats.style.display = 'flex';
-    if (els.progressBar) els.progressBar.style.display = '';
+    if (els.progressBar) els.progressBar.style.display = 'block';
     startSessionTimer();
     renderProgress();
     nextRound();
@@ -677,7 +677,7 @@ function createSpeedTapMode() {
     if (els.hint) els.hint.textContent = '';
 
     if (els.fretboardWrapper) els.fretboardWrapper.style.display = 'none';
-    if (els.statsControls) els.statsControls.style.display = '';
+    if (els.statsControls) els.statsControls.style.display = 'block';
     if (els.startBtn) els.startBtn.style.display = 'inline';
     if (els.stopBtn) els.stopBtn.style.display = 'none';
     if (els.recalibrateBtn) {

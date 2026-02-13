@@ -16,3 +16,4 @@
 ## The list
 1. LOW - `gh` doesn't work in Claude web environment, so we have to curl instead (appears fixable now: https://dev.to/oikon/run-gh-command-in-claude-code-on-the-web-2kp3)
 1. LOW — `deno` isn't set up in the Claude web environment, so we have to support `node` too.
+1. LOW — `formatElapsedTime` is duplicated in `quiz-engine.js` and `quiz-speed-tap.js`. Extract to a shared utility to prevent future divergence.

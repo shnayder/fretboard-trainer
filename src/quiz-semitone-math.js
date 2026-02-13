@@ -173,6 +173,10 @@ function createSemitoneMathMode() {
 
     onStop() {
       noteKeyHandler.reset();
+      container.querySelectorAll('.answer-btn-note').forEach(btn => {
+        const note = NOTES.find(n => n.name === btn.dataset.note);
+        if (note) btn.textContent = note.displayName;
+      });
       updateModeStats(engine.selector, ALL_ITEMS, engine.els.stats);
       statsControls.show('retention');
       refreshUI();

@@ -58,7 +58,8 @@ always active — no toggle or setting needed.
 
 **Per-question flow:**
 
-1. Question appears, countdown starts from the item's current deadline
+1. Question appears, countdown starts from the item's current deadline. 
+  - the starting value should be shown next to the timer, rounded to tenth of a second (e.g. 2.4s)
 2. User answers before timer expires → normal correct/incorrect handling
 3. Timer expires before answer → auto-reveal correct answer, count as miss
 
@@ -89,7 +90,7 @@ starting points.
 **Floor and ceiling:**
 
 - Minimum deadline: motor baseline floor (can't respond faster than physical
-  reaction time)
+  reaction time), multiplied by a margin factor (set to 1.3 to start) to leave room for calibration noise, differences between calibration task and the actual task.
 - Maximum deadline: max response time clamp (no point waiting longer)
 
 **Cold start strategy:**
@@ -98,10 +99,7 @@ For an item's first appearance with the timer:
 - If the adaptive selector has an EWMA for the item: start at `ewma * 2.0`
   (generous — ~2x their average speed gives lots of room)
 - If no EWMA (unseen item): start at `maxResponseTime` (9s default,
-  baseline-scaled). Unseen items require working out the answer from scratch,
-  not recall — `automaticityTarget` (3s) would be far too aggressive since
-  that's calibrated for the midpoint of *learned* items. Starting at the
-  generous ceiling lets the staircase tighten naturally as the user learns.
+  baseline-scaled). Unseen items require working out the answer from scratch
 
 This avoids punishing users on unfamiliar items while still providing
 meaningful time pressure on items they've practiced.
@@ -121,27 +119,22 @@ stats.
 
 **Countdown bar:**
 
-The existing countdown bar already shrinks from 100% to 0% and adds an
-`.expired` class. The new behavior: on expiration, auto-submit as timeout
+Set countdown duration to be the item's current deadline (currently it
+uses a fixed `automaticityTarget`). On expiration, auto-submit as timeout
 (currently no action is taken).
 
-The countdown duration becomes the item's current deadline (currently it
-uses a fixed `automaticityTarget`).
+Show the deadline next to the timer, rounded to tenth of a second (e.g. 2.4s). If it's positioned right next to the timer bar, it shouldn't need a label.
 
 **Timeout feedback:**
 
 - Feedback text: "Time's up — {correctAnswer}"
 - Same red styling as wrong answers
-- Time display: show the deadline that was active, e.g. "limit: 2.1s"
+- Time display: if the user answers before the deadline, their actual response time, rounded to nearest 0.1. e.g. "Response time: 1.2s"
 
-**Answer outcomes — single metric:**
+**Answer outcomes:**
 
-From the user's perspective, there is one outcome per question: correct or
-incorrect. A timeout is simply a kind of incorrect answer. No separate
-"timed out" vs "wrong answer" distinction is shown — the user sees
-"Time's up — C" (timeout) or "Incorrect — C" (wrong answer), but both
-count as misses for mastery tracking. This keeps the mental model simple:
-did I get it right, or not?
+Timeout counts as incorrect. Show "Time's up — C" for timeout, keep "Incorrect — C" for wrong answer. Use the same "incorrect" styling for both.
+
 
 ## Cross-cutting Design Notes
 

@@ -79,11 +79,31 @@ beginning implementation.
 Build output goes to `docs/` (GitHub Pages source directory):
 - `docs/index.html` — the single-page app
 - `docs/sw.js` — service worker (network-first cache strategy)
+- `docs/favicon-32x32.png` — browser tab icon
+- `docs/apple-touch-icon.png` — iOS home screen icon
 
-After building, commit both files. The service worker ensures users get the
-latest version on next load.
+After building, commit the changed files. The service worker ensures users get
+the latest version on next load.
+
+**If you add new files to `docs/`**, no workflow changes are needed — the preview
+deploy workflow copies all files from `docs/` automatically.
+
+## Preview Deploys
+
+Pushes to `claude/*` branches automatically deploy a preview build via GitHub
+Actions. The workflow (`.github/workflows/deploy-preview.yml`) builds the app
+and commits the output to `docs/preview/<branch-name>/` on main.
+
+- **Preview URL:** `shnayder.github.io/fretboard-trainer/preview/<branch-name>/`
+- **Cleanup:** `.github/workflows/cleanup-preview.yml` removes the preview
+  directory when the branch is deleted or PR is closed.
+- **PR comment:** the deploy workflow posts the preview URL on any associated PR.
 
 ## Code Review
+
+Run `/review` **before pushing final changes** on every branch. This is not
+optional — it catches template sync issues, architecture violations, missing
+tests, and convention drift that are easy to miss during implementation.
 
 Use the `/review` slash command to run the code-reviewer subagent, which
 applies the checklist in `.claude/commands/review-checklist.md`. The reviewer

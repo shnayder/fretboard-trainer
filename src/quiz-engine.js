@@ -474,7 +474,7 @@ export function createQuizEngine(mode, container) {
       els.progressFill.style.width = pct + '%';
     }
     if (els.progressText) {
-      els.progressText.textContent = state.masteredCount + ' / ' + state.totalEnabledCount;
+      els.progressText.textContent = state.masteredCount + ' / ' + state.totalEnabledCount + ' mastered';
     }
 
     setAnswerButtonsEnabled(state.answersEnabled);

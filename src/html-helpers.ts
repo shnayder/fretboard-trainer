@@ -128,7 +128,7 @@ export function modeScreen(id: string, opts: ModeScreenOptions): string {
       </div>
     </div>
     <div class="quiz-header" style="display: none;">
-      <span class="quiz-header-title">Practicing</span>
+      <span class="quiz-header-title"></span>
       <button class="quiz-header-close" aria-label="Stop quiz">\u00D7</button>
     </div>
     <div class="session-stats" style="display: none;">
@@ -137,7 +137,7 @@ export function modeScreen(id: string, opts: ModeScreenOptions): string {
     </div>
     <div class="progress-bar" style="display: none;">
       <div class="progress-fill" style="width: 0%"></div>
-      <div class="progress-text">0 / 0</div>
+      <div class="progress-text">0 / 0 mastered</div>
     </div>${beforeQuizArea}
     <div class="quiz-area">
       ${opts.quizAreaContent}

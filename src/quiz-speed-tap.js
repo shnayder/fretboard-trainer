@@ -243,7 +243,7 @@ function createSpeedTapMode() {
       els.progressFill.style.width = pct + '%';
     }
     if (els.progressText) {
-      els.progressText.textContent = progress.masteredCount + ' / ' + progress.totalEnabledCount;
+      els.progressText.textContent = progress.masteredCount + ' / ' + progress.totalEnabledCount + ' mastered';
     }
   }
 

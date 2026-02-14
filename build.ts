@@ -164,11 +164,9 @@ ${modeScreen("speedTap", {
           <input type="checkbox" id="speed-tap-naturals-only" checked>
           Natural only
         </label>`,
-  sessionUnit: "rounds",
-  quizAreaContent: `<div class="speed-tap-prompt"></div>
+  quizAreaContent: `${countdownAndPrompt()}
       <div class="speed-tap-status">
         <span class="speed-tap-progress"></span>
-        <span class="speed-tap-timer"></span>
       </div>
       ${fretboardSVG()}
       ${noteAnswerButtons('display: none;')}

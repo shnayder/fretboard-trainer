@@ -625,8 +625,8 @@ button {
 .mode-screen.calibrating .note-buttons.calibration-active {
   display: flex !important;
 }
-.mode-screen.calibrating .speed-tap-prompt,
-.mode-screen.calibrating .speed-tap-status {
+.mode-screen.calibrating .speed-tap-status,
+.mode-screen.calibrating .fretboard-wrapper {
   display: none !important;
 }
 .mode-screen.calibrating .countdown-container,
@@ -850,11 +850,6 @@ button {
 }
 
 /* --- Speed Tap mode --- */
-.speed-tap-prompt {
-  font-size: var(--text-2xl);
-  font-weight: 600;
-  margin: var(--space-5) 0 var(--space-3);
-}
 .speed-tap-status {
   display: flex;
   justify-content: center;
@@ -864,10 +859,6 @@ button {
 }
 .speed-tap-progress {
   font-weight: 500;
-}
-.speed-tap-timer {
-  color: var(--color-text-muted);
-  font-variant-numeric: tabular-nums;
 }
 .speed-tap-stats {
   font-size: var(--text-xs);

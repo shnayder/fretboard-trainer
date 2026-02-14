@@ -240,7 +240,10 @@ function runCalibration(opts) {
  */
 export function createQuizEngine(mode, container) {
   const storage = createLocalStorageAdapter(mode.storageNamespace);
-  const selector = createAdaptiveSelector(storage);
+  const responseCountFn = mode.getExpectedResponseCount
+    ? (itemId) => mode.getExpectedResponseCount(itemId)
+    : null;
+  const selector = createAdaptiveSelector(storage, DEFAULT_CONFIG, Math.random, responseCountFn);
   const deadlineTracker = createDeadlineTracker(storage, selector.getConfig());
 
   const provider = mode.calibrationProvider || 'button';
@@ -518,6 +521,10 @@ export function createQuizEngine(mode, container) {
 
   let currentDeadline = null; // deadline for the current question (ms)
 
+  function getResponseCount(itemId) {
+    return mode.getExpectedResponseCount ? mode.getExpectedResponseCount(itemId) : 1;
+  }
+
   /**
    * Get the per-item deadline for the current question.
    * Uses the deadline tracker (persistent staircase) with EWMA cold start.
@@ -525,7 +532,8 @@ export function createQuizEngine(mode, container) {
   function getItemDeadline(itemId) {
     const stats = selector.getStats(itemId);
     const ewma = stats ? stats.ewma : null;
-    return deadlineTracker.getDeadline(itemId, ewma);
+    const rc = getResponseCount(itemId);
+    return deadlineTracker.getDeadline(itemId, ewma, rc);
   }
 
   function startCountdown() {
@@ -567,8 +575,9 @@ export function createQuizEngine(mode, container) {
     const result = mode.checkAnswer(itemId, '');
 
     // Record as incorrect in both systems
+    const rc = getResponseCount(itemId);
     selector.recordResponse(itemId, deadline, false);
-    deadlineTracker.recordOutcome(itemId, false);
+    deadlineTracker.recordOutcome(itemId, false, rc);
 
     state = engineTimedOut(state, result.correctAnswer, deadline);
 
@@ -711,8 +720,9 @@ export function createQuizEngine(mode, container) {
     }
 
     const result = mode.checkAnswer(state.currentItemId, input);
+    const rc = getResponseCount(state.currentItemId);
     selector.recordResponse(state.currentItemId, responseTime, result.correct);
-    deadlineTracker.recordOutcome(state.currentItemId, result.correct);
+    deadlineTracker.recordOutcome(state.currentItemId, result.correct, rc);
 
     state = engineSubmitAnswer(state, result.correct, result.correctAnswer, responseTime);
 

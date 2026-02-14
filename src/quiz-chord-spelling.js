@@ -187,6 +187,11 @@ function createChordSpellingMode() {
       return items;
     },
 
+    getExpectedResponseCount(itemId) {
+      const parsed = parseItem(itemId);
+      return parsed.tones.length;
+    },
+
     presentQuestion(itemId) {
       currentItem = parseItem(itemId);
       enteredTones = [];

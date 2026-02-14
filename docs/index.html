@@ -1014,7 +1014,8 @@ button {
   <div class="nav-overlay"></div>
   <div class="nav-drawer" id="nav-drawer">
     <div class="nav-group-label">Fretboard</div>
-    <button data-mode="fretboard">Fretboard</button>
+    <button data-mode="fretboard">Guitar Fretboard</button>
+    <button data-mode="ukulele">Ukulele Fretboard</button>
     <button data-mode="speedTap">Speed Tap</button>
     <div class="nav-group-label">Theory Lookup</div>
     <button data-mode="noteSemitones">Note ↔ Semitones</button>
@@ -1031,11 +1032,11 @@ button {
 
   <div class="top-bar">
     <button class="hamburger" type="button" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="nav-drawer">☰</button>
-    <h1 id="mode-title">Fretboard</h1>
-    <div class="version">v3.8</div>
+    <h1 id="mode-title">Guitar Fretboard</h1>
+    <div class="version">v3.9</div>
   </div>
 
-  <!-- Fretboard mode -->
+  <!-- Guitar Fretboard mode -->
   <div class="mode-screen phase-idle" id="mode-fretboard">
     <div class="fretboard-wrapper">
       <div class="fretboard-container">
@@ -2723,7 +2724,7 @@ button {
       <div class="settings-row">
         <div class="toggle-group">
           <span class="toggle-group-label">Strings</span>
-          <div class="string-toggles" id="string-toggles">
+          <div class="string-toggles">
             <button class="string-toggle" data-string="0">e</button>
             <button class="string-toggle" data-string="1">B</button>
             <button class="string-toggle" data-string="2">G</button>
@@ -2733,7 +2734,1202 @@ button {
           </div>
         </div>
         <label class="setting-group">
-          <input type="checkbox" id="naturals-only" checked>
+          <input type="checkbox" id="fretboard-naturals-only" checked>
+          Natural only
+        </label>
+      </div>
+      <div class="mastery-message" style="display: none;">Looks like you've got this!</div>
+      <div>
+        <button class="start-btn">Start Quiz</button>
+        <button class="recalibrate-btn" style="display: none;">Redo speed check</button>
+      </div>
+    </div>
+    <div class="quiz-session">
+      <div class="quiz-header">
+        <span class="quiz-header-title"></span>
+        <button class="quiz-header-close" aria-label="Stop quiz">×</button>
+      </div>
+      <div class="session-stats">
+        <span><span class="question-count">0</span> questions</span>
+      </div>
+      <div class="progress-bar">
+        <div class="progress-fill" style="width: 0%"></div>
+        <div class="progress-text">0 / 0 mastered</div>
+      </div>
+    </div>
+    <div class="quiz-area">
+      <div class="countdown-container">
+        <div class="countdown-track"><div class="countdown-bar"></div></div><span class="deadline-display"></span>
+      </div>
+      <div class="note-buttons">
+        <button class="note-btn" data-note="C">C</button>
+        <button class="note-btn accidental" data-note="C#">C#</button>
+        <button class="note-btn" data-note="D">D</button>
+        <button class="note-btn accidental" data-note="D#">D#</button>
+        <button class="note-btn" data-note="E">E</button>
+        <button class="note-btn" data-note="F">F</button>
+        <button class="note-btn accidental" data-note="F#">F#</button>
+        <button class="note-btn" data-note="G">G</button>
+        <button class="note-btn accidental" data-note="G#">G#</button>
+        <button class="note-btn" data-note="A">A</button>
+        <button class="note-btn accidental" data-note="A#">A#</button>
+        <button class="note-btn" data-note="B">B</button>
+      </div>
+      <div class="feedback"></div>
+      <div class="time-display"></div>
+      <div class="hint"></div>
+    </div>
+  </div>
+
+  <!-- Ukulele Fretboard mode -->
+  <div class="mode-screen phase-idle" id="mode-ukulele">
+    <div class="fretboard-wrapper">
+      <div class="fretboard-container">
+        <svg class="fretboard" id="ukulele-fretboard" viewBox="0 0 600 160">
+          <!-- Nut (thick line at fret 0) -->
+          <line x1="65" y1="0" x2="65" y2="160" stroke="#333" stroke-width="4"/>
+          <!-- Frets (vertical lines) -->
+          <line x1="65" y1="0" x2="65" y2="160" stroke="#333" stroke-width="1"/>
+      <line x1="126" y1="0" x2="126" y2="160" stroke="#333" stroke-width="1"/>
+      <line x1="183" y1="0" x2="183" y2="160" stroke="#333" stroke-width="1"/>
+      <line x1="237" y1="0" x2="237" y2="160" stroke="#333" stroke-width="1"/>
+      <line x1="288" y1="0" x2="288" y2="160" stroke="#333" stroke-width="1"/>
+      <line x1="336" y1="0" x2="336" y2="160" stroke="#333" stroke-width="1"/>
+      <line x1="381" y1="0" x2="381" y2="160" stroke="#333" stroke-width="1"/>
+      <line x1="423" y1="0" x2="423" y2="160" stroke="#333" stroke-width="1"/>
+      <line x1="463" y1="0" x2="463" y2="160" stroke="#333" stroke-width="1"/>
+      <line x1="500" y1="0" x2="500" y2="160" stroke="#333" stroke-width="1"/>
+      <line x1="535" y1="0" x2="535" y2="160" stroke="#333" stroke-width="1"/>
+      <line x1="568" y1="0" x2="568" y2="160" stroke="#333" stroke-width="1"/>
+      <line x1="600" y1="0" x2="600" y2="160" stroke="#333" stroke-width="1"/>
+          <!-- Strings (horizontal lines) -->
+          <line x1="0" y1="20" x2="600" y2="20" stroke="#333" stroke-width="1"/>
+      <line x1="0" y1="60" x2="600" y2="60" stroke="#333" stroke-width="1.5"/>
+      <line x1="0" y1="100" x2="600" y2="100" stroke="#333" stroke-width="2"/>
+      <line x1="0" y1="140" x2="600" y2="140" stroke="#333" stroke-width="2.5"/>
+          <!-- Note circles -->
+          <circle
+      class="note-circle"
+      data-string="0"
+      data-fret="0"
+      cx="32.5"
+      cy="20"
+      r="14"
+      fill="white"
+      stroke="#333"
+      stroke-width="1"
+    /><text
+      class="note-text"
+      data-string="0"
+      data-fret="0"
+      x="32.5"
+      y="20"
+      text-anchor="middle"
+      dominant-baseline="central"
+      font-size="11"
+      fill="#333"
+    ></text>
+      <circle
+      class="note-circle"
+      data-string="0"
+      data-fret="1"
+      cx="95.5"
+      cy="20"
+      r="14"
+      fill="white"
+      stroke="#333"
+      stroke-width="1"
+    /><text
+      class="note-text"
+      data-string="0"
+      data-fret="1"
+      x="95.5"
+      y="20"
+      text-anchor="middle"
+      dominant-baseline="central"
+      font-size="11"
+      fill="#333"
+    ></text>
+      <circle
+      class="note-circle"
+      data-string="0"
+      data-fret="2"
+      cx="154.5"
+      cy="20"
+      r="14"
+      fill="white"
+      stroke="#333"
+      stroke-width="1"
+    /><text
+      class="note-text"
+      data-string="0"
+      data-fret="2"
+      x="154.5"
+      y="20"
+      text-anchor="middle"
+      dominant-baseline="central"
+      font-size="11"
+      fill="#333"
+    ></text>
+      <circle
+      class="note-circle"
+      data-string="0"
+      data-fret="3"
+      cx="210"
+      cy="20"
+      r="14"
+      fill="white"
+      stroke="#333"
+      stroke-width="1"
+    /><text
+      class="note-text"
+      data-string="0"
+      data-fret="3"
+      x="210"
+      y="20"
+      text-anchor="middle"
+      dominant-baseline="central"
+      font-size="11"
+      fill="#333"
+    ></text>
+      <circle
+      class="note-circle"
+      data-string="0"
+      data-fret="4"
+      cx="262.5"
+      cy="20"
+      r="14"
+      fill="white"
+      stroke="#333"
+      stroke-width="1"
+    /><text
+      class="note-text"
+      data-string="0"
+      data-fret="4"
+      x="262.5"
+      y="20"
+      text-anchor="middle"
+      dominant-baseline="central"
+      font-size="11"
+      fill="#333"
+    ></text>
+      <circle
+      class="note-circle"
+      data-string="0"
+      data-fret="5"
+      cx="312"
+      cy="20"
+      r="14"
+      fill="white"
+      stroke="#333"
+      stroke-width="1"
+    /><text
+      class="note-text"
+      data-string="0"
+      data-fret="5"
+      x="312"
+      y="20"
+      text-anchor="middle"
+      dominant-baseline="central"
+      font-size="11"
+      fill="#333"
+    ></text>
+      <circle
+      class="note-circle"
+      data-string="0"
+      data-fret="6"
+      cx="358.5"
+      cy="20"
+      r="14"
+      fill="white"
+      stroke="#333"
+      stroke-width="1"
+    /><text
+      class="note-text"
+      data-string="0"
+      data-fret="6"
+      x="358.5"
+      y="20"
+      text-anchor="middle"
+      dominant-baseline="central"
+      font-size="11"
+      fill="#333"
+    ></text>
+      <circle
+      class="note-circle"
+      data-string="0"
+      data-fret="7"
+      cx="402"
+      cy="20"
+      r="14"
+      fill="white"
+      stroke="#333"
+      stroke-width="1"
+    /><text
+      class="note-text"
+      data-string="0"
+      data-fret="7"
+      x="402"
+      y="20"
+      text-anchor="middle"
+      dominant-baseline="central"
+      font-size="11"
+      fill="#333"
+    ></text>
+      <circle
+      class="note-circle"
+      data-string="0"
+      data-fret="8"
+      cx="443"
+      cy="20"
+      r="14"
+      fill="white"
+      stroke="#333"
+      stroke-width="1"
+    /><text
+      class="note-text"
+      data-string="0"
+      data-fret="8"
+      x="443"
+      y="20"
+      text-anchor="middle"
+      dominant-baseline="central"
+      font-size="11"
+      fill="#333"
+    ></text>
+      <circle
+      class="note-circle"
+      data-string="0"
+      data-fret="9"
+      cx="481.5"
+      cy="20"
+      r="14"
+      fill="white"
+      stroke="#333"
+      stroke-width="1"
+    /><text
+      class="note-text"
+      data-string="0"
+      data-fret="9"
+      x="481.5"
+      y="20"
+      text-anchor="middle"
+      dominant-baseline="central"
+      font-size="11"
+      fill="#333"
+    ></text>
+      <circle
+      class="note-circle"
+      data-string="0"
+      data-fret="10"
+      cx="517.5"
+      cy="20"
+      r="14"
+      fill="white"
+      stroke="#333"
+      stroke-width="1"
+    /><text
+      class="note-text"
+      data-string="0"
+      data-fret="10"
+      x="517.5"
+      y="20"
+      text-anchor="middle"
+      dominant-baseline="central"
+      font-size="11"
+      fill="#333"
+    ></text>
+      <circle
+      class="note-circle"
+      data-string="0"
+      data-fret="11"
+      cx="551.5"
+      cy="20"
+      r="14"
+      fill="white"
+      stroke="#333"
+      stroke-width="1"
+    /><text
+      class="note-text"
+      data-string="0"
+      data-fret="11"
+      x="551.5"
+      y="20"
+      text-anchor="middle"
+      dominant-baseline="central"
+      font-size="11"
+      fill="#333"
+    ></text>
+      <circle
+      class="note-circle"
+      data-string="0"
+      data-fret="12"
+      cx="584"
+      cy="20"
+      r="14"
+      fill="white"
+      stroke="#333"
+      stroke-width="1"
+    /><text
+      class="note-text"
+      data-string="0"
+      data-fret="12"
+      x="584"
+      y="20"
+      text-anchor="middle"
+      dominant-baseline="central"
+      font-size="11"
+      fill="#333"
+    ></text>
+      <circle
+      class="note-circle"
+      data-string="1"
+      data-fret="0"
+      cx="32.5"
+      cy="60"
+      r="14"
+      fill="white"
+      stroke="#333"
+      stroke-width="1"
+    /><text
+      class="note-text"
+      data-string="1"
+      data-fret="0"
+      x="32.5"
+      y="60"
+      text-anchor="middle"
+      dominant-baseline="central"
+      font-size="11"
+      fill="#333"
+    ></text>
+      <circle
+      class="note-circle"
+      data-string="1"
+      data-fret="1"
+      cx="95.5"
+      cy="60"
+      r="14"
+      fill="white"
+      stroke="#333"
+      stroke-width="1"
+    /><text
+      class="note-text"
+      data-string="1"
+      data-fret="1"
+      x="95.5"
+      y="60"
+      text-anchor="middle"
+      dominant-baseline="central"
+      font-size="11"
+      fill="#333"
+    ></text>
+      <circle
+      class="note-circle"
+      data-string="1"
+      data-fret="2"
+      cx="154.5"
+      cy="60"
+      r="14"
+      fill="white"
+      stroke="#333"
+      stroke-width="1"
+    /><text
+      class="note-text"
+      data-string="1"
+      data-fret="2"
+      x="154.5"
+      y="60"
+      text-anchor="middle"
+      dominant-baseline="central"
+      font-size="11"
+      fill="#333"
+    ></text>
+      <circle
+      class="note-circle"
+      data-string="1"
+      data-fret="3"
+      cx="210"
+      cy="60"
+      r="14"
+      fill="white"
+      stroke="#333"
+      stroke-width="1"
+    /><text
+      class="note-text"
+      data-string="1"
+      data-fret="3"
+      x="210"
+      y="60"
+      text-anchor="middle"
+      dominant-baseline="central"
+      font-size="11"
+      fill="#333"
+    ></text>
+      <circle
+      class="note-circle"
+      data-string="1"
+      data-fret="4"
+      cx="262.5"
+      cy="60"
+      r="14"
+      fill="white"
+      stroke="#333"
+      stroke-width="1"
+    /><text
+      class="note-text"
+      data-string="1"
+      data-fret="4"
+      x="262.5"
+      y="60"
+      text-anchor="middle"
+      dominant-baseline="central"
+      font-size="11"
+      fill="#333"
+    ></text>
+      <circle
+      class="note-circle"
+      data-string="1"
+      data-fret="5"
+      cx="312"
+      cy="60"
+      r="14"
+      fill="white"
+      stroke="#333"
+      stroke-width="1"
+    /><text
+      class="note-text"
+      data-string="1"
+      data-fret="5"
+      x="312"
+      y="60"
+      text-anchor="middle"
+      dominant-baseline="central"
+      font-size="11"
+      fill="#333"
+    ></text>
+      <circle
+      class="note-circle"
+      data-string="1"
+      data-fret="6"
+      cx="358.5"
+      cy="60"
+      r="14"
+      fill="white"
+      stroke="#333"
+      stroke-width="1"
+    /><text
+      class="note-text"
+      data-string="1"
+      data-fret="6"
+      x="358.5"
+      y="60"
+      text-anchor="middle"
+      dominant-baseline="central"
+      font-size="11"
+      fill="#333"
+    ></text>
+      <circle
+      class="note-circle"
+      data-string="1"
+      data-fret="7"
+      cx="402"
+      cy="60"
+      r="14"
+      fill="white"
+      stroke="#333"
+      stroke-width="1"
+    /><text
+      class="note-text"
+      data-string="1"
+      data-fret="7"
+      x="402"
+      y="60"
+      text-anchor="middle"
+      dominant-baseline="central"
+      font-size="11"
+      fill="#333"
+    ></text>
+      <circle
+      class="note-circle"
+      data-string="1"
+      data-fret="8"
+      cx="443"
+      cy="60"
+      r="14"
+      fill="white"
+      stroke="#333"
+      stroke-width="1"
+    /><text
+      class="note-text"
+      data-string="1"
+      data-fret="8"
+      x="443"
+      y="60"
+      text-anchor="middle"
+      dominant-baseline="central"
+      font-size="11"
+      fill="#333"
+    ></text>
+      <circle
+      class="note-circle"
+      data-string="1"
+      data-fret="9"
+      cx="481.5"
+      cy="60"
+      r="14"
+      fill="white"
+      stroke="#333"
+      stroke-width="1"
+    /><text
+      class="note-text"
+      data-string="1"
+      data-fret="9"
+      x="481.5"
+      y="60"
+      text-anchor="middle"
+      dominant-baseline="central"
+      font-size="11"
+      fill="#333"
+    ></text>
+      <circle
+      class="note-circle"
+      data-string="1"
+      data-fret="10"
+      cx="517.5"
+      cy="60"
+      r="14"
+      fill="white"
+      stroke="#333"
+      stroke-width="1"
+    /><text
+      class="note-text"
+      data-string="1"
+      data-fret="10"
+      x="517.5"
+      y="60"
+      text-anchor="middle"
+      dominant-baseline="central"
+      font-size="11"
+      fill="#333"
+    ></text>
+      <circle
+      class="note-circle"
+      data-string="1"
+      data-fret="11"
+      cx="551.5"
+      cy="60"
+      r="14"
+      fill="white"
+      stroke="#333"
+      stroke-width="1"
+    /><text
+      class="note-text"
+      data-string="1"
+      data-fret="11"
+      x="551.5"
+      y="60"
+      text-anchor="middle"
+      dominant-baseline="central"
+      font-size="11"
+      fill="#333"
+    ></text>
+      <circle
+      class="note-circle"
+      data-string="1"
+      data-fret="12"
+      cx="584"
+      cy="60"
+      r="14"
+      fill="white"
+      stroke="#333"
+      stroke-width="1"
+    /><text
+      class="note-text"
+      data-string="1"
+      data-fret="12"
+      x="584"
+      y="60"
+      text-anchor="middle"
+      dominant-baseline="central"
+      font-size="11"
+      fill="#333"
+    ></text>
+      <circle
+      class="note-circle"
+      data-string="2"
+      data-fret="0"
+      cx="32.5"
+      cy="100"
+      r="14"
+      fill="white"
+      stroke="#333"
+      stroke-width="1"
+    /><text
+      class="note-text"
+      data-string="2"
+      data-fret="0"
+      x="32.5"
+      y="100"
+      text-anchor="middle"
+      dominant-baseline="central"
+      font-size="11"
+      fill="#333"
+    ></text>
+      <circle
+      class="note-circle"
+      data-string="2"
+      data-fret="1"
+      cx="95.5"
+      cy="100"
+      r="14"
+      fill="white"
+      stroke="#333"
+      stroke-width="1"
+    /><text
+      class="note-text"
+      data-string="2"
+      data-fret="1"
+      x="95.5"
+      y="100"
+      text-anchor="middle"
+      dominant-baseline="central"
+      font-size="11"
+      fill="#333"
+    ></text>
+      <circle
+      class="note-circle"
+      data-string="2"
+      data-fret="2"
+      cx="154.5"
+      cy="100"
+      r="14"
+      fill="white"
+      stroke="#333"
+      stroke-width="1"
+    /><text
+      class="note-text"
+      data-string="2"
+      data-fret="2"
+      x="154.5"
+      y="100"
+      text-anchor="middle"
+      dominant-baseline="central"
+      font-size="11"
+      fill="#333"
+    ></text>
+      <circle
+      class="note-circle"
+      data-string="2"
+      data-fret="3"
+      cx="210"
+      cy="100"
+      r="14"
+      fill="white"
+      stroke="#333"
+      stroke-width="1"
+    /><text
+      class="note-text"
+      data-string="2"
+      data-fret="3"
+      x="210"
+      y="100"
+      text-anchor="middle"
+      dominant-baseline="central"
+      font-size="11"
+      fill="#333"
+    ></text>
+      <circle
+      class="note-circle"
+      data-string="2"
+      data-fret="4"
+      cx="262.5"
+      cy="100"
+      r="14"
+      fill="white"
+      stroke="#333"
+      stroke-width="1"
+    /><text
+      class="note-text"
+      data-string="2"
+      data-fret="4"
+      x="262.5"
+      y="100"
+      text-anchor="middle"
+      dominant-baseline="central"
+      font-size="11"
+      fill="#333"
+    ></text>
+      <circle
+      class="note-circle"
+      data-string="2"
+      data-fret="5"
+      cx="312"
+      cy="100"
+      r="14"
+      fill="white"
+      stroke="#333"
+      stroke-width="1"
+    /><text
+      class="note-text"
+      data-string="2"
+      data-fret="5"
+      x="312"
+      y="100"
+      text-anchor="middle"
+      dominant-baseline="central"
+      font-size="11"
+      fill="#333"
+    ></text>
+      <circle
+      class="note-circle"
+      data-string="2"
+      data-fret="6"
+      cx="358.5"
+      cy="100"
+      r="14"
+      fill="white"
+      stroke="#333"
+      stroke-width="1"
+    /><text
+      class="note-text"
+      data-string="2"
+      data-fret="6"
+      x="358.5"
+      y="100"
+      text-anchor="middle"
+      dominant-baseline="central"
+      font-size="11"
+      fill="#333"
+    ></text>
+      <circle
+      class="note-circle"
+      data-string="2"
+      data-fret="7"
+      cx="402"
+      cy="100"
+      r="14"
+      fill="white"
+      stroke="#333"
+      stroke-width="1"
+    /><text
+      class="note-text"
+      data-string="2"
+      data-fret="7"
+      x="402"
+      y="100"
+      text-anchor="middle"
+      dominant-baseline="central"
+      font-size="11"
+      fill="#333"
+    ></text>
+      <circle
+      class="note-circle"
+      data-string="2"
+      data-fret="8"
+      cx="443"
+      cy="100"
+      r="14"
+      fill="white"
+      stroke="#333"
+      stroke-width="1"
+    /><text
+      class="note-text"
+      data-string="2"
+      data-fret="8"
+      x="443"
+      y="100"
+      text-anchor="middle"
+      dominant-baseline="central"
+      font-size="11"
+      fill="#333"
+    ></text>
+      <circle
+      class="note-circle"
+      data-string="2"
+      data-fret="9"
+      cx="481.5"
+      cy="100"
+      r="14"
+      fill="white"
+      stroke="#333"
+      stroke-width="1"
+    /><text
+      class="note-text"
+      data-string="2"
+      data-fret="9"
+      x="481.5"
+      y="100"
+      text-anchor="middle"
+      dominant-baseline="central"
+      font-size="11"
+      fill="#333"
+    ></text>
+      <circle
+      class="note-circle"
+      data-string="2"
+      data-fret="10"
+      cx="517.5"
+      cy="100"
+      r="14"
+      fill="white"
+      stroke="#333"
+      stroke-width="1"
+    /><text
+      class="note-text"
+      data-string="2"
+      data-fret="10"
+      x="517.5"
+      y="100"
+      text-anchor="middle"
+      dominant-baseline="central"
+      font-size="11"
+      fill="#333"
+    ></text>
+      <circle
+      class="note-circle"
+      data-string="2"
+      data-fret="11"
+      cx="551.5"
+      cy="100"
+      r="14"
+      fill="white"
+      stroke="#333"
+      stroke-width="1"
+    /><text
+      class="note-text"
+      data-string="2"
+      data-fret="11"
+      x="551.5"
+      y="100"
+      text-anchor="middle"
+      dominant-baseline="central"
+      font-size="11"
+      fill="#333"
+    ></text>
+      <circle
+      class="note-circle"
+      data-string="2"
+      data-fret="12"
+      cx="584"
+      cy="100"
+      r="14"
+      fill="white"
+      stroke="#333"
+      stroke-width="1"
+    /><text
+      class="note-text"
+      data-string="2"
+      data-fret="12"
+      x="584"
+      y="100"
+      text-anchor="middle"
+      dominant-baseline="central"
+      font-size="11"
+      fill="#333"
+    ></text>
+      <circle
+      class="note-circle"
+      data-string="3"
+      data-fret="0"
+      cx="32.5"
+      cy="140"
+      r="14"
+      fill="white"
+      stroke="#333"
+      stroke-width="1"
+    /><text
+      class="note-text"
+      data-string="3"
+      data-fret="0"
+      x="32.5"
+      y="140"
+      text-anchor="middle"
+      dominant-baseline="central"
+      font-size="11"
+      fill="#333"
+    ></text>
+      <circle
+      class="note-circle"
+      data-string="3"
+      data-fret="1"
+      cx="95.5"
+      cy="140"
+      r="14"
+      fill="white"
+      stroke="#333"
+      stroke-width="1"
+    /><text
+      class="note-text"
+      data-string="3"
+      data-fret="1"
+      x="95.5"
+      y="140"
+      text-anchor="middle"
+      dominant-baseline="central"
+      font-size="11"
+      fill="#333"
+    ></text>
+      <circle
+      class="note-circle"
+      data-string="3"
+      data-fret="2"
+      cx="154.5"
+      cy="140"
+      r="14"
+      fill="white"
+      stroke="#333"
+      stroke-width="1"
+    /><text
+      class="note-text"
+      data-string="3"
+      data-fret="2"
+      x="154.5"
+      y="140"
+      text-anchor="middle"
+      dominant-baseline="central"
+      font-size="11"
+      fill="#333"
+    ></text>
+      <circle
+      class="note-circle"
+      data-string="3"
+      data-fret="3"
+      cx="210"
+      cy="140"
+      r="14"
+      fill="white"
+      stroke="#333"
+      stroke-width="1"
+    /><text
+      class="note-text"
+      data-string="3"
+      data-fret="3"
+      x="210"
+      y="140"
+      text-anchor="middle"
+      dominant-baseline="central"
+      font-size="11"
+      fill="#333"
+    ></text>
+      <circle
+      class="note-circle"
+      data-string="3"
+      data-fret="4"
+      cx="262.5"
+      cy="140"
+      r="14"
+      fill="white"
+      stroke="#333"
+      stroke-width="1"
+    /><text
+      class="note-text"
+      data-string="3"
+      data-fret="4"
+      x="262.5"
+      y="140"
+      text-anchor="middle"
+      dominant-baseline="central"
+      font-size="11"
+      fill="#333"
+    ></text>
+      <circle
+      class="note-circle"
+      data-string="3"
+      data-fret="5"
+      cx="312"
+      cy="140"
+      r="14"
+      fill="white"
+      stroke="#333"
+      stroke-width="1"
+    /><text
+      class="note-text"
+      data-string="3"
+      data-fret="5"
+      x="312"
+      y="140"
+      text-anchor="middle"
+      dominant-baseline="central"
+      font-size="11"
+      fill="#333"
+    ></text>
+      <circle
+      class="note-circle"
+      data-string="3"
+      data-fret="6"
+      cx="358.5"
+      cy="140"
+      r="14"
+      fill="white"
+      stroke="#333"
+      stroke-width="1"
+    /><text
+      class="note-text"
+      data-string="3"
+      data-fret="6"
+      x="358.5"
+      y="140"
+      text-anchor="middle"
+      dominant-baseline="central"
+      font-size="11"
+      fill="#333"
+    ></text>
+      <circle
+      class="note-circle"
+      data-string="3"
+      data-fret="7"
+      cx="402"
+      cy="140"
+      r="14"
+      fill="white"
+      stroke="#333"
+      stroke-width="1"
+    /><text
+      class="note-text"
+      data-string="3"
+      data-fret="7"
+      x="402"
+      y="140"
+      text-anchor="middle"
+      dominant-baseline="central"
+      font-size="11"
+      fill="#333"
+    ></text>
+      <circle
+      class="note-circle"
+      data-string="3"
+      data-fret="8"
+      cx="443"
+      cy="140"
+      r="14"
+      fill="white"
+      stroke="#333"
+      stroke-width="1"
+    /><text
+      class="note-text"
+      data-string="3"
+      data-fret="8"
+      x="443"
+      y="140"
+      text-anchor="middle"
+      dominant-baseline="central"
+      font-size="11"
+      fill="#333"
+    ></text>
+      <circle
+      class="note-circle"
+      data-string="3"
+      data-fret="9"
+      cx="481.5"
+      cy="140"
+      r="14"
+      fill="white"
+      stroke="#333"
+      stroke-width="1"
+    /><text
+      class="note-text"
+      data-string="3"
+      data-fret="9"
+      x="481.5"
+      y="140"
+      text-anchor="middle"
+      dominant-baseline="central"
+      font-size="11"
+      fill="#333"
+    ></text>
+      <circle
+      class="note-circle"
+      data-string="3"
+      data-fret="10"
+      cx="517.5"
+      cy="140"
+      r="14"
+      fill="white"
+      stroke="#333"
+      stroke-width="1"
+    /><text
+      class="note-text"
+      data-string="3"
+      data-fret="10"
+      x="517.5"
+      y="140"
+      text-anchor="middle"
+      dominant-baseline="central"
+      font-size="11"
+      fill="#333"
+    ></text>
+      <circle
+      class="note-circle"
+      data-string="3"
+      data-fret="11"
+      cx="551.5"
+      cy="140"
+      r="14"
+      fill="white"
+      stroke="#333"
+      stroke-width="1"
+    /><text
+      class="note-text"
+      data-string="3"
+      data-fret="11"
+      x="551.5"
+      y="140"
+      text-anchor="middle"
+      dominant-baseline="central"
+      font-size="11"
+      fill="#333"
+    ></text>
+      <circle
+      class="note-circle"
+      data-string="3"
+      data-fret="12"
+      cx="584"
+      cy="140"
+      r="14"
+      fill="white"
+      stroke="#333"
+      stroke-width="1"
+    /><text
+      class="note-text"
+      data-string="3"
+      data-fret="12"
+      x="584"
+      y="140"
+      text-anchor="middle"
+      dominant-baseline="central"
+      font-size="11"
+      fill="#333"
+    ></text>
+        </svg>
+        <div class="fret-numbers">
+          <div class="fret-number" style="left: 35%">3</div>
+    <div class="fret-number" style="left: 52%">5</div>
+    <div class="fret-number" style="left: 67%">7</div>
+    <div class="fret-number" style="left: 86.25%">10</div>
+    <div class="fret-number" style="left: 97.33333333333334%">12</div>
+        </div>
+      </div>
+    </div>
+    <div class="stats-section">
+      <div class="stats-container"></div>
+      <div class="stats-controls">
+        <div class="stats-toggle"><button class="stats-toggle-btn active" data-mode="retention">Recall</button><button class="stats-toggle-btn" data-mode="speed">Speed</button></div>
+        <span class="stats"></span>
+      </div>
+    </div>
+    <div class="quiz-config">
+      <div class="settings-row">
+        <div class="toggle-group">
+          <span class="toggle-group-label">Strings</span>
+          <div class="string-toggles">
+            <button class="string-toggle" data-string="0">A</button>
+            <button class="string-toggle" data-string="1">E</button>
+            <button class="string-toggle active" data-string="2">C</button>
+            <button class="string-toggle" data-string="3">G</button>
+          </div>
+        </div>
+        <label class="setting-group">
+          <input type="checkbox" id="ukulele-naturals-only" checked>
           Natural only
         </label>
       </div>
@@ -5773,9 +6969,37 @@ function spelledNoteMatchesSemitone(expectedName, input) {
   return spelledNoteSemitone(expectedName) === spelledNoteSemitone(input);
 }
 
-// Guitar-specific data
-const STRING_NAMES = ['e', 'B', 'G', 'D', 'A', 'E'];
-const STRING_OFFSETS = [4, 11, 7, 2, 9, 4]; // semitones from C
+// ---------------------------------------------------------------------------
+// Instrument configurations
+// ---------------------------------------------------------------------------
+
+const GUITAR = {
+  id: 'fretboard',            // mode ID (preserved for backward compat)
+  name: 'Guitar Fretboard',
+  storageNamespace: 'fretboard',
+  stringCount: 6,
+  fretCount: 13,              // frets 0–12
+  stringNames: ['e', 'B', 'G', 'D', 'A', 'E'],
+  stringOffsets: [4, 11, 7, 2, 9, 4],   // semitones from C per string
+  defaultString: 5,           // low E
+  fretMarkers: [3, 5, 7, 9, 12],
+};
+
+const UKULELE = {
+  id: 'ukulele',
+  name: 'Ukulele Fretboard',
+  storageNamespace: 'ukulele',
+  stringCount: 4,
+  fretCount: 13,              // frets 0–12
+  stringNames: ['A', 'E', 'C', 'G'],    // 1st (top) to 4th (bottom)
+  stringOffsets: [9, 4, 0, 7],           // A=9, E=4, C=0, G=7
+  defaultString: 2,           // C string (lowest pitch)
+  fretMarkers: [3, 5, 7, 10, 12],
+};
+
+// Legacy exports (used by Speed Tap)
+const STRING_NAMES = GUITAR.stringNames;
+const STRING_OFFSETS = GUITAR.stringOffsets;
 
 // Pure state transitions for the quiz engine.
 // No DOM, no timers, no side effects — just data in, data out.
@@ -7229,11 +8453,11 @@ function computeRecommendations(selector, allIndices, getItemIds, config, option
   return { recommended, enabled };
 }
 
-// Pure state and helpers for the fretboard quiz mode.
+// Pure state and helpers for fretboard quiz modes (guitar, ukulele, etc.).
 // No DOM, no side effects — testable logic extracted from quiz-fretboard.js.
 // ES module — exports stripped for browser inlining.
 //
-// In browser, depends on globals: NOTES, NATURAL_NOTES, STRING_OFFSETS,
+// In browser, depends on globals: NOTES, NATURAL_NOTES,
 // noteMatchesInput (from music-data.js, concatenated before this file).
 // Tests import these from music-data.js directly.
 
@@ -7241,7 +8465,7 @@ function computeRecommendations(selector, allIndices, getItemIds, config, option
  * Toggle a string in the enabled set. Returns a new Set.
  * Ensures at least one string is always enabled.
  * @param {Set<number>} enabledStrings
- * @param {number} string - 0-5
+ * @param {number} string
  * @returns {Set<number>}
  */
 function toggleFretboardString(enabledStrings, string) {
@@ -7255,20 +8479,21 @@ function toggleFretboardString(enabledStrings, string) {
 }
 
 /**
- * Create fretboard helpers bound to music data.
+ * Create fretboard helpers bound to music data and instrument config.
  * The factory pattern avoids import/global issues — in browser the globals
  * are passed in; in tests the imported values are passed.
  *
  * @param {{ notes: Array, naturalNotes: string[], stringOffsets: number[],
- *           noteMatchesInput: function }} musicData
+ *           fretCount?: number, noteMatchesInput: function }} musicData
  */
 function createFretboardHelpers(musicData) {
   const noteNames = musicData.notes.map(n => n.name);
+  const fretCount = musicData.fretCount || 13;
 
   /**
    * Compute the note name at a given fretboard position.
-   * @param {number} string - 0-5
-   * @param {number} fret - 0-12
+   * @param {number} string
+   * @param {number} fret
    * @returns {string} note name (e.g. 'C#')
    */
   function getNoteAtPosition(string, fret) {
@@ -7311,7 +8536,7 @@ function createFretboardHelpers(musicData) {
   function getFretboardEnabledItems(enabledStrings, naturalsOnly) {
     const items = [];
     for (const s of enabledStrings) {
-      for (let f = 0; f < 13; f++) {
+      for (let f = 0; f < fretCount; f++) {
         const note = getNoteAtPosition(s, f);
         if (!naturalsOnly || musicData.naturalNotes.includes(note)) {
           items.push(s + '-' + f);
@@ -7323,13 +8548,13 @@ function createFretboardHelpers(musicData) {
 
   /**
    * Compute item IDs for a specific string (used for recommendations).
-   * @param {number} string - 0-5
+   * @param {number} string
    * @param {boolean} naturalsOnly
    * @returns {string[]}
    */
   function getItemIdsForString(string, naturalsOnly) {
     const items = [];
-    for (let f = 0; f < 13; f++) {
+    for (let f = 0; f < fretCount; f++) {
       const note = getNoteAtPosition(string, f);
       if (!naturalsOnly || musicData.naturalNotes.includes(note)) {
         items.push(string + '-' + f);
@@ -7339,6 +8564,7 @@ function createFretboardHelpers(musicData) {
   }
 
   return {
+    fretCount,
     getNoteAtPosition,
     parseFretboardItem,
     checkFretboardAnswer,
@@ -7348,25 +8574,29 @@ function createFretboardHelpers(musicData) {
 }
 
 // Fretboard quiz mode: identify the note at a highlighted fretboard position.
+// Parameterized factory supports any fretted instrument (guitar, ukulele, etc.).
 // Plugs into the shared quiz engine via the mode interface.
 //
-// Depends on globals: NOTES, NATURAL_NOTES, STRING_OFFSETS,
+// Depends on globals: NOTES, NATURAL_NOTES, GUITAR, UKULELE,
 // noteMatchesInput, createQuizEngine, createNoteKeyHandler, DEFAULT_CONFIG,
 // getAutomaticityColor, getSpeedHeatmapColor, buildStatsLegend,
 // computeRecommendations, createFretboardHelpers, toggleFretboardString
 
-function createFretboardMode() {
-  const container = document.getElementById('mode-fretboard');
-  const STRINGS_KEY = 'fretboard_enabledStrings';
-  let enabledStrings = new Set([5]); // Default: low E only
+function createFrettedInstrumentMode(instrument) {
+  const container = document.getElementById('mode-' + instrument.id);
+  const STRINGS_KEY = instrument.storageNamespace + '_enabledStrings';
+  let enabledStrings = new Set([instrument.defaultString]);
   let naturalsOnly = true;
   let recommendedStrings = new Set();
+  const allStrings = Array.from({length: instrument.stringCount}, (_, i) => i);
+
   // --- Pure helpers (from quiz-fretboard-state.js) ---
 
   const fb = createFretboardHelpers({
     notes: NOTES,
     naturalNotes: NATURAL_NOTES,
-    stringOffsets: STRING_OFFSETS,
+    stringOffsets: instrument.stringOffsets,
+    fretCount: instrument.fretCount,
     noteMatchesInput,
   });
 
@@ -7426,21 +8656,20 @@ function createFretboardMode() {
   }
 
   // --- Heatmap ---
-  // Color functions: getAutomaticityColor, getSpeedHeatmapColor from stats-display.js
 
   const statsControls = createStatsControls(container, (mode, el) => {
     el.innerHTML = buildStatsLegend(mode, engine.baseline);
     if (mode === 'retention') {
-      for (let s = 0; s <= 5; s++) {
-        for (let f = 0; f < 13; f++) {
+      for (const s of allStrings) {
+        for (let f = 0; f < instrument.fretCount; f++) {
           const auto = engine.selector.getAutomaticity(`${s}-${f}`);
           highlightCircle(s, f, getAutomaticityColor(auto));
           showNoteText(s, f);
         }
       }
     } else {
-      for (let s = 0; s <= 5; s++) {
-        for (let f = 0; f < 13; f++) {
+      for (const s of allStrings) {
+        for (let f = 0; f < instrument.fretCount; f++) {
           const stats = engine.selector.getStats(`${s}-${f}`);
           const ewma = stats ? stats.ewma : null;
           highlightCircle(s, f, getSpeedHeatmapColor(ewma, engine.baseline));
@@ -7465,7 +8694,6 @@ function createFretboardMode() {
   // --- Recommendations ---
 
   function updateRecommendations(selector) {
-    const allStrings = [0, 1, 2, 3, 4, 5];
     const result = computeRecommendations(
       selector, allStrings,
       (s) => fb.getItemIdsForString(s, naturalsOnly),
@@ -7476,7 +8704,6 @@ function createFretboardMode() {
   }
 
   function applyRecommendations(selector) {
-    const allStrings = [0, 1, 2, 3, 4, 5];
     const result = computeRecommendations(
       selector, allStrings,
       (s) => fb.getItemIdsForString(s, naturalsOnly),
@@ -7505,15 +8732,14 @@ function createFretboardMode() {
 
   // --- Quiz mode interface ---
 
-  // Track current question for answer checking
   let currentString = null;
   let currentFret = null;
   let currentNote = null;
 
   const mode = {
-    id: 'fretboard',
-    name: 'Fretboard',
-    storageNamespace: 'fretboard',
+    id: instrument.id,
+    name: instrument.name,
+    storageNamespace: instrument.storageNamespace,
 
     getEnabledItems() {
       return fb.getFretboardEnabledItems(enabledStrings, naturalsOnly);
@@ -7560,7 +8786,6 @@ function createFretboardMode() {
     },
 
     getCalibrationButtons() {
-      // Use only visible note buttons (respects naturals-only setting)
       return Array.from(container.querySelectorAll('.note-btn:not(.hidden)'));
     },
   };
@@ -7568,7 +8793,7 @@ function createFretboardMode() {
   // Create engine
   const engine = createQuizEngine(mode, container);
 
-  // Keyboard handler via shared helper (replaces inline state machine)
+  // Keyboard handler
   const noteKeyHandler = createNoteKeyHandler(
     (input) => engine.submitAnswer(input),
     () => !naturalsOnly
@@ -7576,8 +8801,8 @@ function createFretboardMode() {
 
   // Pre-cache all positions
   const allItemIds = [];
-  for (let s = 0; s < 6; s++) {
-    for (let f = 0; f < 13; f++) {
+  for (const s of allStrings) {
+    for (let f = 0; f < instrument.fretCount; f++) {
       allItemIds.push(`${s}-${f}`);
     }
   }
@@ -7588,14 +8813,12 @@ function createFretboardMode() {
   function init() {
     loadEnabledStrings();
 
-    // String toggle handlers
     container.querySelectorAll('.string-toggle').forEach(btn => {
       btn.addEventListener('click', () => {
         toggleString(parseInt(btn.dataset.string));
       });
     });
 
-    // Note button handlers
     container.querySelectorAll('.note-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         if (!engine.isActive || engine.isAnswered) return;
@@ -7603,8 +8826,7 @@ function createFretboardMode() {
       });
     });
 
-    // Naturals-only toggle
-    const naturalsCheckbox = container.querySelector('#naturals-only');
+    const naturalsCheckbox = container.querySelector('#' + instrument.id + '-naturals-only');
     if (naturalsCheckbox) {
       naturalsCheckbox.addEventListener('change', (e) => {
         naturalsOnly = e.target.checked;
@@ -7613,7 +8835,6 @@ function createFretboardMode() {
       });
     }
 
-    // Start/stop buttons
     container.querySelector('.start-btn').addEventListener('click', () => engine.start());
 
     applyRecommendations(engine.selector);
@@ -7637,6 +8858,14 @@ function createFretboardMode() {
       noteKeyHandler.reset();
     },
   };
+}
+
+function createGuitarFretboardMode() {
+  return createFrettedInstrumentMode(GUITAR);
+}
+
+function createUkuleleFretboardMode() {
+  return createFrettedInstrumentMode(UKULELE);
 }
 
 // Speed Tap quiz mode: tap all positions of a given note as fast as possible.
@@ -9991,13 +11220,22 @@ function createNavigation() {
 (function () {
   const nav = createNavigation();
 
-  // Register fretboard mode
-  const fretboard = createFretboardMode();
+  // Register guitar fretboard mode
+  const guitar = createGuitarFretboardMode();
   nav.registerMode('fretboard', {
-    name: 'Fretboard',
-    init: fretboard.init,
-    activate: fretboard.activate,
-    deactivate: fretboard.deactivate,
+    name: 'Guitar Fretboard',
+    init: guitar.init,
+    activate: guitar.activate,
+    deactivate: guitar.deactivate,
+  });
+
+  // Register ukulele fretboard mode
+  const ukulele = createUkuleleFretboardMode();
+  nav.registerMode('ukulele', {
+    name: 'Ukulele Fretboard',
+    init: ukulele.init,
+    activate: ukulele.activate,
+    deactivate: ukulele.deactivate,
   });
 
   // Speed Tap mode

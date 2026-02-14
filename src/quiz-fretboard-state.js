@@ -1,8 +1,8 @@
-// Pure state and helpers for the fretboard quiz mode.
+// Pure state and helpers for fretboard quiz modes (guitar, ukulele, etc.).
 // No DOM, no side effects — testable logic extracted from quiz-fretboard.js.
 // ES module — exports stripped for browser inlining.
 //
-// In browser, depends on globals: NOTES, NATURAL_NOTES, STRING_OFFSETS,
+// In browser, depends on globals: NOTES, NATURAL_NOTES,
 // noteMatchesInput (from music-data.js, concatenated before this file).
 // Tests import these from music-data.js directly.
 
@@ -10,7 +10,7 @@
  * Toggle a string in the enabled set. Returns a new Set.
  * Ensures at least one string is always enabled.
  * @param {Set<number>} enabledStrings
- * @param {number} string - 0-5
+ * @param {number} string
  * @returns {Set<number>}
  */
 export function toggleFretboardString(enabledStrings, string) {
@@ -24,20 +24,21 @@ export function toggleFretboardString(enabledStrings, string) {
 }
 
 /**
- * Create fretboard helpers bound to music data.
+ * Create fretboard helpers bound to music data and instrument config.
  * The factory pattern avoids import/global issues — in browser the globals
  * are passed in; in tests the imported values are passed.
  *
  * @param {{ notes: Array, naturalNotes: string[], stringOffsets: number[],
- *           noteMatchesInput: function }} musicData
+ *           fretCount?: number, noteMatchesInput: function }} musicData
  */
 export function createFretboardHelpers(musicData) {
   const noteNames = musicData.notes.map(n => n.name);
+  const fretCount = musicData.fretCount || 13;
 
   /**
    * Compute the note name at a given fretboard position.
-   * @param {number} string - 0-5
-   * @param {number} fret - 0-12
+   * @param {number} string
+   * @param {number} fret
    * @returns {string} note name (e.g. 'C#')
    */
   function getNoteAtPosition(string, fret) {
@@ -80,7 +81,7 @@ export function createFretboardHelpers(musicData) {
   function getFretboardEnabledItems(enabledStrings, naturalsOnly) {
     const items = [];
     for (const s of enabledStrings) {
-      for (let f = 0; f < 13; f++) {
+      for (let f = 0; f < fretCount; f++) {
         const note = getNoteAtPosition(s, f);
         if (!naturalsOnly || musicData.naturalNotes.includes(note)) {
           items.push(s + '-' + f);
@@ -92,13 +93,13 @@ export function createFretboardHelpers(musicData) {
 
   /**
    * Compute item IDs for a specific string (used for recommendations).
-   * @param {number} string - 0-5
+   * @param {number} string
    * @param {boolean} naturalsOnly
    * @returns {string[]}
    */
   function getItemIdsForString(string, naturalsOnly) {
     const items = [];
-    for (let f = 0; f < 13; f++) {
+    for (let f = 0; f < fretCount; f++) {
       const note = getNoteAtPosition(string, f);
       if (!naturalsOnly || musicData.naturalNotes.includes(note)) {
         items.push(string + '-' + f);
@@ -108,6 +109,7 @@ export function createFretboardHelpers(musicData) {
   }
 
   return {
+    fretCount,
     getNoteAtPosition,
     parseFretboardItem,
     checkFretboardAnswer,

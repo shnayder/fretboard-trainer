@@ -92,7 +92,7 @@ export function engineSubmitAnswer(state, isCorrect, correctAnswer, responseTime
     answersEnabled: false,
     feedbackText: isCorrect ? 'Correct!' : 'Incorrect \u2014 ' + correctAnswer,
     feedbackClass: isCorrect ? 'feedback correct' : 'feedback incorrect',
-    timeDisplayText: (responseTimeMs / 1000).toFixed(1) + 's',
+    timeDisplayText: '',
     hintText: 'Tap anywhere or press Space for next',
     timedOut: false,
   };

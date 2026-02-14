@@ -203,6 +203,7 @@ export function modeScreen(id: string, opts: ModeScreenOptions): string {
       </div>
     </div>
     <div class="quiz-area">
+      <div class="practicing-label"></div>
       ${opts.quizAreaContent}
     </div>
   </div>`;

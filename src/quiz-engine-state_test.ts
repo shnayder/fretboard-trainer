@@ -134,9 +134,9 @@ describe("engineSubmitAnswer", () => {
     assert.equal(s.answersEnabled, false);
   });
 
-  it("shows response time", () => {
+  it("clears time display (timing visible on countdown bar)", () => {
     const s = engineSubmitAnswer(active, true, "C", 1234);
-    assert.equal(s.timeDisplayText, "1.2s");
+    assert.equal(s.timeDisplayText, "");
   });
 
   it("shows hint text", () => {
@@ -418,14 +418,9 @@ describe("engineTimedOut", () => {
 describe("engineSubmitAnswer time format", () => {
   const active = engineNextQuestion(engineStart(initialEngineState()), "item-1", 1000);
 
-  it("formats response time in seconds", () => {
+  it("clears time display (response visible on countdown bar)", () => {
     const s = engineSubmitAnswer(active, true, "C", 1234);
-    assert.equal(s.timeDisplayText, "1.2s");
-  });
-
-  it("formats fast response time", () => {
-    const s = engineSubmitAnswer(active, true, "C", 800);
-    assert.equal(s.timeDisplayText, "0.8s");
+    assert.equal(s.timeDisplayText, "");
   });
 
   it("sets timedOut to false on normal answer", () => {

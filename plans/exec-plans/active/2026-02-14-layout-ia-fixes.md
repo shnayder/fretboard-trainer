@@ -19,6 +19,12 @@ toggles, CSS class cascades, and inline `style="display: none"` — makes
 per-state layout changes awkward. Fixing the layout issues properly requires
 first cleaning up this mechanism.
 
+Additionally, Speed Tap mode manages its own lifecycle outside the shared
+engine, duplicating ~400 of its ~740 lines. Migrating it to use
+`createQuizEngine` (following the Chord Spelling pattern for multi-element
+answers) eliminates this duplication and is a prerequisite for the state-driven
+CSS cleanup — otherwise Phase 4 would need parallel implementations.
+
 ## Identified Issues
 
 ### Mid-quiz state (all modes)
@@ -65,11 +71,64 @@ format), `styles.css` (label styling)
 
 **Risk:** Low. Additive only.
 
-### Phase 2: Group and reorder DOM (template restructure)
+### Phase 2: Migrate Speed Tap to shared engine
+
+**Goal:** Eliminate ~400 lines of duplicated lifecycle code by migrating Speed
+Tap from its custom lifecycle to `createQuizEngine`, following the Chord
+Spelling pattern for multi-element answers.
+
+**The Chord Spelling pattern:**
+1. `presentQuestion(itemId)` — set up the question UI
+2. Mode-internal `submitTone(input)` — collect inputs incrementally
+3. When all inputs collected → `engine.submitAnswer('__correct__')`
+4. `checkAnswer()` — validate the synthetic flag
+5. Engine handles everything else: calibration, chrome, session stats, progress
+
+**Speed Tap migration (same pattern):**
+1. `presentQuestion(noteName)` — show "Tap all C", prepare `targetPositions`
+2. Mode-internal `handleCircleTap()` — track found positions, flash green/red
+3. When all positions found → `engine.submitAnswer('complete')`
+4. `checkAnswer()` → `{ correct: true }` (round already validated)
+5. Fretboard show/hide via `onStart()`/`onStop()` hooks
+
+**Three small engine extensions needed:**
+
+| Extension | Why | Change |
+|-----------|-----|--------|
+| `mode.baseConfig` | Speed Tap needs different timing (minTime: 4000, target: 12000) | Engine passes `mode.baseConfig \|\| DEFAULT_CONFIG` to `createAdaptiveSelector` and `deriveScaledConfig` |
+| `mode.useCountdown` | Speed Tap has open-ended rounds with upward timer, not countdown | Engine skips `startCountdown()` when `mode.useCountdown === false` |
+| Speed Tap upward timer | Needs a visible elapsed-time display during rounds | Use Speed Tap's own `speed-tap-timer` element, managed by mode (not engine) |
+
+**What gets eliminated (~400 lines):**
+- Motor baseline load/save/apply (duplicated from engine)
+- Entire calibration flow: intro → trials → results → stop
+- Session timer + elapsed time tracking
+- Progress computation + render
+- Chrome show/hide in start() and stop()
+- Keyboard routing (Escape, Space for next)
+- `formatElapsedTime` (tech debt item: duplicated utility)
+
+**What remains (~250 lines):**
+- Note/position helpers (getNoteAtPosition, getPositionsForNote)
+- SVG helpers (highlightCircle, showNoteText, clearAll)
+- Round logic (nextRound, completeRound, handleCircleTap)
+- Fretboard click handler
+- Stats display callback
+- Mode interface + init
+
+**Files:** `quiz-speed-tap.js` (rewrite to use engine), `quiz-engine.js`
+(add baseConfig + useCountdown support), `quiz-engine-state.js` (no changes
+expected — state transitions already generic)
+
+**Risk:** Medium. Functional rewrite of one mode, but the target pattern is
+well-established (Chord Spelling). Test: idle, quiz, calibration, round
+completion, wrong taps, Escape to stop, Space to advance.
+
+### Phase 3: Group and reorder DOM (template restructure)
 
 **Goal:** Wrap related controls in semantic containers. Reorder elements to
 match idle-state priority. This is the DOM-only foundation for per-state
-layouts in Phase 4.
+layouts in Phase 5.
 
 **Changes to `modeScreen()` scaffold:**
 ```
@@ -101,10 +160,9 @@ Key moves:
 wrappers), `quiz-engine.js` (DOM queries for new structure)
 
 **Risk:** Medium. Template change touches all modes. Test all 10 modes
-idle + quiz states. Speed Tap mode has its own lifecycle — needs careful
-attention.
+idle + quiz states.
 
-### Phase 3: State-driven CSS (architectural cleanup)
+### Phase 4: State-driven CSS (architectural cleanup)
 
 **Goal:** Replace per-element JS display toggles with a single phase class
 on the container, and CSS rules keyed off that class.
@@ -137,7 +195,7 @@ on the container, and CSS rules keyed off that class.
 | Field | Replacement |
 |-------|-------------|
 | `showStartBtn` | CSS: `.phase-idle .start-btn { display: inline }` |
-| `showStopBtn` | Removed entirely (button removed in Phase 2) |
+| `showStopBtn` | Removed entirely (button removed in Phase 3) |
 | `showHeatmapBtn` | CSS: `.phase-idle .stats-toggle { display: inline-flex }` |
 | `showStatsControls` | CSS: `.phase-idle .stats-controls { display: block }` |
 
@@ -146,20 +204,20 @@ render, add phase class), `styles.css` (add phase rules, remove `!important`
 calibration hacks), `html-helpers.ts` (remove inline display:none)
 
 **Risk:** Medium-high. Touches the engine's core state/render cycle. Every mode
-must be tested in all states. Speed Tap's custom lifecycle needs special
-handling.
+must be tested in all states. With Speed Tap migrated (Phase 2), all 10 modes
+now use the engine — no special cases.
 
 **Testing:** All 10 modes × 3 states (idle, active, calibration). Verify
 keyboard shortcuts still work. Verify bidirectional modes swap button groups
 correctly (this is per-mode, not engine-level — should be unaffected).
 
-### Phase 4: Per-state layout polish (builds on Phases 2-3)
+### Phase 5: Per-state layout polish (builds on Phases 3-4)
 
 **Goal:** Now that we have grouped DOM and state-driven CSS, tune each state's
 layout.
 
 **Quiz state:**
-- Quiz-config hidden (automatic from Phase 3 CSS)
+- Quiz-config hidden (automatic from Phase 4 CSS)
 - Content order: question → countdown → answers → feedback (may need CSS
   `order` or DOM reorder within quiz-area for some modes)
 - Quiz area card boundary: extend to include quiz-session elements, or remove
@@ -180,7 +238,7 @@ layout.
 
 **Risk:** Low-medium. Mostly CSS. Visual verification needed.
 
-### Phase 5: Stats improvements
+### Phase 6: Stats improvements
 
 **Goal:** Make stats displays more useful and less noisy.
 
@@ -193,7 +251,7 @@ layout.
 - **Stats scoping:** Visually dim grid cells for items outside the enabled
   groups. Add `opacity: 0.3` to cells not in the current quiz scope. Requires
   passing enabled item set to `renderStatsGrid()`.
-- **Legend proximity:** With Phase 2 grouping, legend lives inside
+- **Legend proximity:** With Phase 3 grouping, legend lives inside
   stats-section adjacent to the visualization. Verify this works for fretboard
   (where the "visualization" is the SVG, which is outside stats-section).
 
@@ -207,45 +265,32 @@ is a special case (SVG-based, not table-based).
 ## Phase Dependencies
 
 ```
-Phase 1 (labels) ──────────────────────────── standalone
-Phase 2 (DOM grouping) ───┐
-                           ├── Phase 4 (per-state polish)
-Phase 3 (state-driven CSS) ┘
-Phase 5 (stats) ───────────────────────────── standalone (after Phase 2)
+Phase 1 (labels) ────────────────────────── standalone
+Phase 2 (Speed Tap migration) ──┐
+Phase 3 (DOM grouping) ─────────┤
+                                 ├── Phase 5 (per-state polish)
+Phase 4 (state-driven CSS) ─────┘
+Phase 6 (stats) ─────────────────────────── standalone (after Phase 3)
 ```
 
-Phases 1, 2, 3 are sequential. Phase 4 requires both 2 and 3. Phase 5 can
-happen anytime after Phase 2.
-
-## Speed Tap Special Handling
-
-Speed Tap mode (`quiz-speed-tap.js`) manages its own quiz lifecycle outside
-the shared engine — it has custom session start/stop, its own timer, and
-direct DOM manipulation of ~10 elements. All phases need to account for this:
-
-- **Phase 2:** Speed Tap's DOM queries must be updated for new wrapper
-  structure.
-- **Phase 3:** Speed Tap doesn't use the engine's render() for most
-  visibility. Either migrate it to use phase classes, or keep its existing
-  approach and ensure the two don't conflict.
-- **Phase 4-5:** Speed Tap's idle/stats state should follow the same layout
-  principles as other modes.
+Phases 1-4 are sequential (each builds on the previous). Phase 5 requires
+3 + 4. Phase 6 can happen anytime after Phase 3.
 
 ## Files Modified (all phases)
 
 | File | Phases | Changes |
 |------|--------|---------|
-| `src/html-helpers.ts` | 1,2,3 | Labels, DOM restructure, remove inline display:none |
-| `build.ts` | 1,2,3 | Mirror template changes |
-| `main.ts` | 1,2,3 | Mirror template changes |
-| `src/styles.css` | 1,2,3,4 | Label styles, wrapper styles, phase rules, layout |
-| `src/quiz-engine-state.js` | 3 | Remove visibility flags |
-| `src/quiz-engine.js` | 1,2,3 | Progress text, DOM queries, phase class, simplify render |
-| `src/stats-display.js` | 5 | Grid axis labels, summary, scoping |
-| `src/quiz-fretboard.js` | 2 | DOM query updates |
-| `src/quiz-speed-tap.js` | 2,3 | DOM query updates, lifecycle alignment |
-| All other `quiz-*.js` | 2 | DOM query updates (if any) |
-| `src/quiz-engine-state_test.ts` | 3 | Remove visibility flag assertions |
+| `src/html-helpers.ts` | 1,3,4 | Labels, DOM restructure, remove inline display:none |
+| `build.ts` | 1,3,4 | Mirror template changes |
+| `main.ts` | 1,3,4 | Mirror template changes |
+| `src/styles.css` | 1,3,4,5 | Label styles, wrapper styles, phase rules, layout |
+| `src/quiz-engine.js` | 1,2,3,4 | Progress text, baseConfig/useCountdown, DOM queries, phase class, simplify render |
+| `src/quiz-engine-state.js` | 4 | Remove visibility flags |
+| `src/quiz-speed-tap.js` | 2 | Rewrite to use createQuizEngine |
+| `src/stats-display.js` | 6 | Grid axis labels, summary, scoping |
+| `src/quiz-fretboard.js` | 3 | DOM query updates |
+| All other `quiz-*.js` | 3 | DOM query updates (if any) |
+| `src/quiz-engine-state_test.ts` | 4 | Remove visibility flag assertions |
 
 ## Testing
 

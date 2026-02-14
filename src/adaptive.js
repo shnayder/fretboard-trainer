@@ -311,8 +311,7 @@ export function createAdaptiveSelector(
     const stats = storage.getStats(itemId);
     if (!stats) return null;
     const recall = getRecall(itemId);
-    const rc = getResponseCount(itemId);
-    const speed = computeSpeedScore(stats.ewma, cfg, rc);
+    const speed = computeSpeedScore(stats.ewma, scaledConfig(itemId));
     return computeAutomaticityForDisplay(recall, speed, true);
   }
 
@@ -386,7 +385,8 @@ export function createAdaptiveSelector(
     for (const id of items) {
       const stats = storage.getStats(id);
       if (!stats || stats.lastCorrectAt == null || stats.sampleCount < 2) return false;
-      const speed = computeSpeedScore(stats.ewma, cfg);
+      const rc = getResponseCount(id);
+      const speed = computeSpeedScore(stats.ewma, cfg, rc);
       if (speed == null || speed < 0.5) return false;
       const recall = getRecall(id);
       if (recall !== null && recall < cfg.recallThreshold) hasDueItem = true;

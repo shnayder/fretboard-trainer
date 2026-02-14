@@ -4,6 +4,9 @@ Reference document for Fretboard Trainer's visual design system. All values
 are defined as CSS custom properties in `src/styles.css` `:root`. See the live
 color reference at `guides/design/colors.html`.
 
+**Related:** [layout-and-ia.md](layout-and-ia.md) covers screen layout,
+content hierarchy, and information architecture — *where things go and why*.
+
 ---
 
 ## Design Principles

@@ -92,6 +92,11 @@ Before considering a spec ready for review, verify:
 - [ ] **Single user-facing metric where possible.** Avoid exposing internal
   distinctions (speed vs accuracy, timeout vs wrong) unless they're genuinely
   useful to the user.
+- [ ] **Screen states described.** For UI features, describe what each screen
+  state looks like (idle, quizzing, etc.) and the content priority order. See
+  [layout-and-ia.md](design/layout-and-ia.md).
+- [ ] **Labels and grouping specified.** New toggles, indicators, or data
+  displays have labels. Related controls are grouped. No unlabeled elements.
 - [ ] **Scope is clear.** Goals and non-goals are explicit. No feature creep
   disguised as "cross-cutting notes."
 - [ ] **Decisions are resolved.** Each decision states the chosen option and
@@ -113,6 +118,9 @@ Before writing code, verify that your design:
 - **Reuses shared helpers**: `computeRecommendations()` for progression,
   `createStatsControls()` for stats display, `createNoteKeyHandler()` for
   keyboard input, `deriveScaledConfig()` for timing thresholds.
+- **Follows layout/IA principles**: content ordered by interaction priority
+  per screen state, controls grouped and labeled, no redundant affordances.
+  See [layout-and-ia.md](design/layout-and-ia.md).
 
 ## Templates
 

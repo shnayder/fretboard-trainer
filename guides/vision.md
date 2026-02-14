@@ -46,6 +46,15 @@ These are inferred from the existing codebase and design decisions:
   to each user's device and physical response speed. A phone user and a
   desktop keyboard user get equivalently challenging targets.
 
+- **Clear screen states.** Each mode has distinct states (idle/stats, quizzing,
+  calibrating). Each state should have its own clear layout — elements
+  irrelevant to the current state hidden, content ordered by interaction
+  priority. See [layout-and-ia.md](design/layout-and-ia.md) for details.
+
+- **Label over inference.** Toggles, progress indicators, and data displays
+  need text labels. Users shouldn't have to guess what `e B G D A E` means
+  or what "3 / 13" represents.
+
 ## Current State
 
 v3.5 with 10 quiz modes:

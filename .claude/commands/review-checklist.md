@@ -98,6 +98,32 @@ or N/A. Do not skip items — mark N/A explicitly if a category does not apply.
 - [ ] No unused code left behind (no `_unusedVar` renames, no `// removed`
       comments — just delete it)
 
+## Layout & information architecture
+<!-- Full explanation: guides/design/layout-and-ia.md -->
+
+- [ ] Each screen state (idle, quizzing, calibrating) has a distinct layout —
+      not just toggled visibility of a universal element list
+- [ ] Top-to-bottom content order matches interaction priority for each state
+      (during quiz: question → countdown → answers → feedback; during idle:
+      stats → config → actions)
+- [ ] Related controls are visually grouped (e.g., all "what to practice"
+      settings together) with labels or headings
+- [ ] All toggles, progress indicators, and data displays have text labels —
+      no bare numbers or unlabeled button groups
+- [ ] No redundant affordances for the same action (e.g., two different
+      "stop quiz" controls)
+- [ ] Quiz-configuration settings hidden during active quiz unless needed
+      mid-quiz
+- [ ] Visual containers (cards, sections) align with logical groupings — no
+      partial containment splitting a logical group
+- [ ] Stats heatmaps/grids have axis labels on both dimensions
+- [ ] Stats legends are adjacent to their visualizations, not separated by
+      unrelated elements
+- [ ] Stats displays include an aggregate summary (e.g., "48 / 78 mastered")
+      above detailed heatmaps
+- [ ] Stats data scopes to the user's current configuration, or visually
+      distinguishes enabled vs. disabled items
+
 ## Visual design consistency
 <!-- Full explanation: guides/design/visual-design.md -->
 

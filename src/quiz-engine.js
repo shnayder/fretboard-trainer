@@ -290,6 +290,7 @@ export function createQuizEngine(mode, container) {
     progressFill: container.querySelector('.progress-fill'),
     progressText: container.querySelector('.progress-text'),
     deadlineDisplay: container.querySelector('.deadline-display'),
+    quizHeaderTitle: container.querySelector('.quiz-header-title'),
   };
 
   // --- Render: declaratively map state to DOM ---
@@ -457,7 +458,7 @@ export function createQuizEngine(mode, container) {
       els.progressFill.style.width = pct + '%';
     }
     if (els.progressText) {
-      els.progressText.textContent = state.masteredCount + ' / ' + state.totalEnabledCount + ' mastered';
+      els.progressText.textContent = state.masteredCount + ' / ' + state.totalEnabledCount + ' fluent';
     }
 
     setAnswerButtonsEnabled(state.answersEnabled);
@@ -701,6 +702,12 @@ export function createQuizEngine(mode, container) {
     // before the engine renders the quiz UI state.
     if (mode.onStart) mode.onStart();
 
+    // Set quiz header title (e.g. "Practicing E, A strings")
+    if (els.quizHeaderTitle) {
+      const label = mode.getPracticingLabel ? mode.getPracticingLabel() : '';
+      els.quizHeaderTitle.textContent = label ? 'Practicing ' + label : '';
+    }
+
     // Compute initial progress
     const progress = computeProgress();
     state = engineUpdateProgress(state, progress.masteredCount, progress.totalEnabledCount);
@@ -734,6 +741,7 @@ export function createQuizEngine(mode, container) {
       countdownInterval = null;
     }
     currentDeadline = null;
+    if (els.quizHeaderTitle) els.quizHeaderTitle.textContent = '';
     state = engineStop(state);
     render();   // render() clears calibrationContentEl when phase is idle
     if (mode.onStop) mode.onStop();

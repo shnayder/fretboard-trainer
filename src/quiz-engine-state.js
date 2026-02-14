@@ -111,7 +111,7 @@ export function engineTimedOut(state, correctAnswer, deadlineMs) {
     answersEnabled: false,
     feedbackText: 'Time\u2019s up \u2014 ' + correctAnswer,
     feedbackClass: 'feedback incorrect',
-    timeDisplayText: 'limit: ' + (deadlineMs / 1000).toFixed(1) + 's',
+    timeDisplayText: '',
     hintText: 'Tap anywhere or press Space for next',
     timedOut: true,
   };

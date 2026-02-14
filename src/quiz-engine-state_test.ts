@@ -398,14 +398,14 @@ describe("engineTimedOut", () => {
     assert.equal(s.feedbackClass, "feedback incorrect");
   });
 
-  it("shows deadline in time display", () => {
+  it("clears time display on timeout (deadline shown on countdown bar)", () => {
     const s = engineTimedOut(active, "C", 3000);
-    assert.equal(s.timeDisplayText, "limit: 3.0s");
+    assert.equal(s.timeDisplayText, "");
   });
 
-  it("formats fractional deadline correctly", () => {
+  it("clears time display regardless of deadline value", () => {
     const s = engineTimedOut(active, "D#", 2450);
-    assert.equal(s.timeDisplayText, "limit: 2.5s");
+    assert.equal(s.timeDisplayText, "");
     assert.equal(s.feedbackText, "Time\u2019s up \u2014 D#");
   });
 

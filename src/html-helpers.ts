@@ -195,11 +195,11 @@ export function modeScreen(id: string, opts: ModeScreenOptions): string {
         <button class="quiz-header-close" aria-label="Stop quiz">\u00D7</button>
       </div>
       <div class="session-stats">
-        <span><span class="question-count">0</span> questions</span>
+        <span>#<span class="question-count">0</span></span>
       </div>
       <div class="progress-bar">
         <div class="progress-fill" style="width: 0%"></div>
-        <div class="progress-text">0 / 0 mastered</div>
+        <div class="progress-text">0 / 0 fluent</div>
       </div>
     </div>
     <div class="quiz-area">

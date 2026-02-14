@@ -1,23 +1,27 @@
 // Fretboard quiz mode: identify the note at a highlighted fretboard position.
+// Parameterized factory supports any fretted instrument (guitar, ukulele, etc.).
 // Plugs into the shared quiz engine via the mode interface.
 //
-// Depends on globals: NOTES, NATURAL_NOTES, STRING_OFFSETS,
+// Depends on globals: NOTES, NATURAL_NOTES, GUITAR, UKULELE,
 // noteMatchesInput, createQuizEngine, createNoteKeyHandler, DEFAULT_CONFIG,
 // getAutomaticityColor, getSpeedHeatmapColor, buildStatsLegend,
 // computeRecommendations, createFretboardHelpers, toggleFretboardString
 
-function createFretboardMode() {
-  const container = document.getElementById('mode-fretboard');
-  const STRINGS_KEY = 'fretboard_enabledStrings';
-  let enabledStrings = new Set([5]); // Default: low E only
+function createFrettedInstrumentMode(instrument) {
+  const container = document.getElementById('mode-' + instrument.id);
+  const STRINGS_KEY = instrument.storageNamespace + '_enabledStrings';
+  let enabledStrings = new Set([instrument.defaultString]);
   let naturalsOnly = true;
   let recommendedStrings = new Set();
+  const allStrings = Array.from({length: instrument.stringCount}, (_, i) => i);
+
   // --- Pure helpers (from quiz-fretboard-state.js) ---
 
   const fb = createFretboardHelpers({
     notes: NOTES,
     naturalNotes: NATURAL_NOTES,
-    stringOffsets: STRING_OFFSETS,
+    stringOffsets: instrument.stringOffsets,
+    fretCount: instrument.fretCount,
     noteMatchesInput,
   });
 
@@ -77,21 +81,20 @@ function createFretboardMode() {
   }
 
   // --- Heatmap ---
-  // Color functions: getAutomaticityColor, getSpeedHeatmapColor from stats-display.js
 
   const statsControls = createStatsControls(container, (mode, el) => {
     el.innerHTML = buildStatsLegend(mode, engine.baseline);
     if (mode === 'retention') {
-      for (let s = 0; s <= 5; s++) {
-        for (let f = 0; f < 13; f++) {
+      for (const s of allStrings) {
+        for (let f = 0; f < instrument.fretCount; f++) {
           const auto = engine.selector.getAutomaticity(`${s}-${f}`);
           highlightCircle(s, f, getAutomaticityColor(auto));
           showNoteText(s, f);
         }
       }
     } else {
-      for (let s = 0; s <= 5; s++) {
-        for (let f = 0; f < 13; f++) {
+      for (const s of allStrings) {
+        for (let f = 0; f < instrument.fretCount; f++) {
           const stats = engine.selector.getStats(`${s}-${f}`);
           const ewma = stats ? stats.ewma : null;
           highlightCircle(s, f, getSpeedHeatmapColor(ewma, engine.baseline));
@@ -116,7 +119,6 @@ function createFretboardMode() {
   // --- Recommendations ---
 
   function updateRecommendations(selector) {
-    const allStrings = [0, 1, 2, 3, 4, 5];
     const result = computeRecommendations(
       selector, allStrings,
       (s) => fb.getItemIdsForString(s, naturalsOnly),
@@ -127,7 +129,6 @@ function createFretboardMode() {
   }
 
   function applyRecommendations(selector) {
-    const allStrings = [0, 1, 2, 3, 4, 5];
     const result = computeRecommendations(
       selector, allStrings,
       (s) => fb.getItemIdsForString(s, naturalsOnly),
@@ -156,15 +157,14 @@ function createFretboardMode() {
 
   // --- Quiz mode interface ---
 
-  // Track current question for answer checking
   let currentString = null;
   let currentFret = null;
   let currentNote = null;
 
   const mode = {
-    id: 'fretboard',
-    name: 'Fretboard',
-    storageNamespace: 'fretboard',
+    id: instrument.id,
+    name: instrument.name,
+    storageNamespace: instrument.storageNamespace,
 
     getEnabledItems() {
       return fb.getFretboardEnabledItems(enabledStrings, naturalsOnly);
@@ -211,7 +211,6 @@ function createFretboardMode() {
     },
 
     getCalibrationButtons() {
-      // Use only visible note buttons (respects naturals-only setting)
       return Array.from(container.querySelectorAll('.note-btn:not(.hidden)'));
     },
   };
@@ -219,7 +218,7 @@ function createFretboardMode() {
   // Create engine
   const engine = createQuizEngine(mode, container);
 
-  // Keyboard handler via shared helper (replaces inline state machine)
+  // Keyboard handler
   const noteKeyHandler = createNoteKeyHandler(
     (input) => engine.submitAnswer(input),
     () => !naturalsOnly
@@ -227,8 +226,8 @@ function createFretboardMode() {
 
   // Pre-cache all positions
   const allItemIds = [];
-  for (let s = 0; s < 6; s++) {
-    for (let f = 0; f < 13; f++) {
+  for (const s of allStrings) {
+    for (let f = 0; f < instrument.fretCount; f++) {
       allItemIds.push(`${s}-${f}`);
     }
   }
@@ -239,14 +238,12 @@ function createFretboardMode() {
   function init() {
     loadEnabledStrings();
 
-    // String toggle handlers
     container.querySelectorAll('.string-toggle').forEach(btn => {
       btn.addEventListener('click', () => {
         toggleString(parseInt(btn.dataset.string));
       });
     });
 
-    // Note button handlers
     container.querySelectorAll('.note-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         if (!engine.isActive || engine.isAnswered) return;
@@ -254,8 +251,7 @@ function createFretboardMode() {
       });
     });
 
-    // Naturals-only toggle
-    const naturalsCheckbox = container.querySelector('#naturals-only');
+    const naturalsCheckbox = container.querySelector('#' + instrument.id + '-naturals-only');
     if (naturalsCheckbox) {
       naturalsCheckbox.addEventListener('change', (e) => {
         naturalsOnly = e.target.checked;
@@ -264,7 +260,6 @@ function createFretboardMode() {
       });
     }
 
-    // Start/stop buttons
     container.querySelector('.start-btn').addEventListener('click', () => engine.start());
 
     applyRecommendations(engine.selector);
@@ -288,4 +283,12 @@ function createFretboardMode() {
       noteKeyHandler.reset();
     },
   };
+}
+
+function createGuitarFretboardMode() {
+  return createFrettedInstrumentMode(GUITAR);
+}
+
+function createUkuleleFretboardMode() {
+  return createFrettedInstrumentMode(UKULELE);
 }

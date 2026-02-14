@@ -4,12 +4,18 @@ import {
   NOTES,
   NATURAL_NOTES,
   STRING_OFFSETS,
+  GUITAR,
+  UKULELE,
   noteMatchesInput,
 } from "./music-data.js";
 import {
   toggleFretboardString,
   createFretboardHelpers,
 } from "./quiz-fretboard-state.js";
+
+// ---------------------------------------------------------------------------
+// Guitar helpers (backward compat — uses legacy STRING_OFFSETS)
+// ---------------------------------------------------------------------------
 
 const fb = createFretboardHelpers({
   notes: NOTES,
@@ -203,5 +209,146 @@ describe("toggleFretboardString", () => {
     const result = toggleFretboardString(original, 3);
     assert.notEqual(result, original);
     assert.equal(original.size, 1); // original unchanged
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Ukulele helpers
+// ---------------------------------------------------------------------------
+
+const uke = createFretboardHelpers({
+  notes: NOTES,
+  naturalNotes: NATURAL_NOTES,
+  stringOffsets: UKULELE.stringOffsets,
+  fretCount: UKULELE.fretCount,
+  noteMatchesInput,
+});
+
+// UKULELE.stringOffsets = [9, 4, 0, 7]
+// string 0 = A (offset 9)
+// string 1 = E (offset 4)
+// string 2 = C (offset 0)
+// string 3 = G (offset 7)
+
+describe("ukulele getNoteAtPosition", () => {
+  it("string 0 (A) fret 0 = A", () => {
+    assert.equal(uke.getNoteAtPosition(0, 0), "A");
+  });
+
+  it("string 1 (E) fret 0 = E", () => {
+    assert.equal(uke.getNoteAtPosition(1, 0), "E");
+  });
+
+  it("string 2 (C) fret 0 = C", () => {
+    assert.equal(uke.getNoteAtPosition(2, 0), "C");
+  });
+
+  it("string 3 (G) fret 0 = G", () => {
+    assert.equal(uke.getNoteAtPosition(3, 0), "G");
+  });
+
+  it("string 2 (C) fret 4 = E", () => {
+    // C + 4 semitones = E
+    assert.equal(uke.getNoteAtPosition(2, 4), "E");
+  });
+
+  it("string 3 (G) fret 5 = C", () => {
+    // G + 5 semitones = C
+    assert.equal(uke.getNoteAtPosition(3, 5), "C");
+  });
+
+  it("string 0 (A) fret 12 = A (wraps around)", () => {
+    assert.equal(uke.getNoteAtPosition(0, 12), "A");
+  });
+
+  it("all strings at fret 0 match UKULELE offsets", () => {
+    const expectedNames = ["A", "E", "C", "G"];
+    for (let s = 0; s < 4; s++) {
+      assert.equal(uke.getNoteAtPosition(s, 0), expectedNames[s],
+        `string ${s} fret 0 should be ${expectedNames[s]}`);
+    }
+  });
+});
+
+describe("ukulele getFretboardEnabledItems", () => {
+  it("single string, naturalsOnly=false: returns 13 frets", () => {
+    const items = uke.getFretboardEnabledItems(new Set([2]), false);
+    assert.equal(items.length, 13);
+    assert.equal(items[0], "2-0");
+    assert.equal(items[12], "2-12");
+  });
+
+  it("all 4 strings, naturalsOnly=false: returns 52 items", () => {
+    const items = uke.getFretboardEnabledItems(new Set([0, 1, 2, 3]), false);
+    assert.equal(items.length, 52); // 4 * 13
+  });
+
+  it("single string, naturalsOnly=true: correct count", () => {
+    // C string: C C# D D# E F F# G G# A A# B C
+    // Naturals: C(0) D(2) E(4) F(5) G(7) A(9) B(11) C(12) = 8
+    const items = uke.getFretboardEnabledItems(new Set([2]), true);
+    assert.equal(items.length, 8);
+  });
+});
+
+describe("ukulele parseFretboardItem", () => {
+  it("parses '2-0' to C string fret 0 = C", () => {
+    const q = uke.parseFretboardItem("2-0");
+    assert.equal(q.currentString, 2);
+    assert.equal(q.currentFret, 0);
+    assert.equal(q.currentNote, "C");
+  });
+
+  it("parses '3-2' to G string fret 2 = A", () => {
+    const q = uke.parseFretboardItem("3-2");
+    assert.equal(q.currentString, 3);
+    assert.equal(q.currentFret, 2);
+    assert.equal(q.currentNote, "A");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// fretCount parameter
+// ---------------------------------------------------------------------------
+
+describe("createFretboardHelpers fretCount", () => {
+  it("exposes fretCount from config", () => {
+    assert.equal(fb.fretCount, 13); // default
+    assert.equal(uke.fretCount, 13); // explicit
+  });
+
+  it("custom fretCount limits enabled items", () => {
+    const small = createFretboardHelpers({
+      notes: NOTES,
+      naturalNotes: NATURAL_NOTES,
+      stringOffsets: [0],
+      fretCount: 5,
+      noteMatchesInput,
+    });
+    const items = small.getFretboardEnabledItems(new Set([0]), false);
+    assert.equal(items.length, 5);
+    assert.equal(items[4], "0-4");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Instrument config structure
+// ---------------------------------------------------------------------------
+
+describe("instrument configs", () => {
+  it("GUITAR has expected shape", () => {
+    assert.equal(GUITAR.id, "fretboard");
+    assert.equal(GUITAR.stringCount, 6);
+    assert.equal(GUITAR.fretCount, 13);
+    assert.equal(GUITAR.stringOffsets.length, 6);
+    assert.equal(GUITAR.stringNames.length, 6);
+  });
+
+  it("UKULELE has expected shape", () => {
+    assert.equal(UKULELE.id, "ukulele");
+    assert.equal(UKULELE.stringCount, 4);
+    assert.equal(UKULELE.fretCount, 13);
+    assert.equal(UKULELE.stringOffsets.length, 4);
+    assert.equal(UKULELE.stringNames.length, 4);
   });
 });

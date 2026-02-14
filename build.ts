@@ -6,13 +6,6 @@ import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import {
-  fretPositions,
-  fretLines,
-  stringLines,
-  noteElements,
-  fretNumberElements,
-} from "./src/fretboard.ts";
-import {
   noteAnswerButtons,
   numberButtons,
   intervalAnswerButtons,
@@ -22,6 +15,8 @@ import {
   countdownAndPrompt,
   feedbackBlock,
   modeScreen,
+  fretboardSVG,
+  stringToggles,
 } from "./src/html-helpers.ts";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -54,27 +49,6 @@ const appJS = read("src/app.js");
 // Shared HTML fragments
 // ---------------------------------------------------------------------------
 
-function fretboardSVG(id?: string): string {
-  const idAttr = id ? ` id="${id}"` : "";
-  return `<div class="fretboard-wrapper">
-      <div class="fretboard-container">
-        <svg class="fretboard"${idAttr} viewBox="0 0 600 240">
-          <!-- Nut (thick line at fret 0) -->
-          <line x1="${fretPositions[1]}" y1="0" x2="${fretPositions[1]}" y2="240" stroke="#333" stroke-width="4"/>
-          <!-- Frets (vertical lines) -->
-          ${fretLines()}
-          <!-- Strings (horizontal lines) -->
-          ${stringLines()}
-          <!-- Note circles -->
-          ${noteElements()}
-        </svg>
-        <div class="fret-numbers">
-          ${fretNumberElements()}
-        </div>
-      </div>
-    </div>`;
-}
-
 const DISTANCE_TOGGLES = '<div class="toggle-group"><span class="toggle-group-label">Groups</span><div class="distance-toggles"></div></div>';
 
 // ---------------------------------------------------------------------------
@@ -99,7 +73,8 @@ const html = `<!DOCTYPE html>
   <div class="nav-overlay"></div>
   <div class="nav-drawer" id="nav-drawer">
     <div class="nav-group-label">Fretboard</div>
-    <button data-mode="fretboard">Fretboard</button>
+    <button data-mode="fretboard">Guitar Fretboard</button>
+    <button data-mode="ukulele">Ukulele Fretboard</button>
     <button data-mode="speedTap">Speed Tap</button>
     <div class="nav-group-label">Theory Lookup</div>
     <button data-mode="noteSemitones">Note \u2194 Semitones</button>
@@ -116,28 +91,46 @@ const html = `<!DOCTYPE html>
 
   <div class="top-bar">
     <button class="hamburger" type="button" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="nav-drawer">\u2630</button>
-    <h1 id="mode-title">Fretboard</h1>
-    <div class="version">v3.8</div>
+    <h1 id="mode-title">Guitar Fretboard</h1>
+    <div class="version">v3.9</div>
   </div>
 
-  <!-- Fretboard mode -->
+  <!-- Guitar Fretboard mode -->
 ${modeScreen("fretboard", {
-  settingsHTML: `<div class="toggle-group">
-          <span class="toggle-group-label">Strings</span>
-          <div class="string-toggles" id="string-toggles">
-            <button class="string-toggle" data-string="0">e</button>
-            <button class="string-toggle" data-string="1">B</button>
-            <button class="string-toggle" data-string="2">G</button>
-            <button class="string-toggle" data-string="3">D</button>
-            <button class="string-toggle" data-string="4">A</button>
-            <button class="string-toggle active" data-string="5">E</button>
-          </div>
-        </div>
+  settingsHTML: `${stringToggles(['e', 'B', 'G', 'D', 'A', 'E'], 5)}
         <label class="setting-group">
-          <input type="checkbox" id="naturals-only" checked>
+          <input type="checkbox" id="fretboard-naturals-only" checked>
           Natural only
         </label>`,
-  beforeQuizArea: fretboardSVG("fretboard"),
+  beforeQuizArea: fretboardSVG({ id: "fretboard", stringCount: 6, fretCount: 13, fretMarkers: [3, 5, 7, 9, 12] }),
+  quizAreaContent: `<div class="countdown-container">
+        <div class="countdown-track"><div class="countdown-bar"></div></div><span class="deadline-display"></span>
+      </div>
+      <div class="note-buttons">
+        <button class="note-btn" data-note="C">C</button>
+        <button class="note-btn accidental" data-note="C#">C#</button>
+        <button class="note-btn" data-note="D">D</button>
+        <button class="note-btn accidental" data-note="D#">D#</button>
+        <button class="note-btn" data-note="E">E</button>
+        <button class="note-btn" data-note="F">F</button>
+        <button class="note-btn accidental" data-note="F#">F#</button>
+        <button class="note-btn" data-note="G">G</button>
+        <button class="note-btn accidental" data-note="G#">G#</button>
+        <button class="note-btn" data-note="A">A</button>
+        <button class="note-btn accidental" data-note="A#">A#</button>
+        <button class="note-btn" data-note="B">B</button>
+      </div>
+      ${feedbackBlock()}`,
+})}
+
+  <!-- Ukulele Fretboard mode -->
+${modeScreen("ukulele", {
+  settingsHTML: `${stringToggles(['A', 'E', 'C', 'G'], 2)}
+        <label class="setting-group">
+          <input type="checkbox" id="ukulele-naturals-only" checked>
+          Natural only
+        </label>`,
+  beforeQuizArea: fretboardSVG({ id: "ukulele-fretboard", stringCount: 4, fretCount: 13, fretMarkers: [3, 5, 7, 10, 12] }),
   quizAreaContent: `<div class="countdown-container">
         <div class="countdown-track"><div class="countdown-bar"></div></div><span class="deadline-display"></span>
       </div>

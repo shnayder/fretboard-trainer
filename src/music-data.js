@@ -262,6 +262,34 @@ export function spelledNoteMatchesSemitone(expectedName, input) {
   return spelledNoteSemitone(expectedName) === spelledNoteSemitone(input);
 }
 
-// Guitar-specific data
-export const STRING_NAMES = ['e', 'B', 'G', 'D', 'A', 'E'];
-export const STRING_OFFSETS = [4, 11, 7, 2, 9, 4]; // semitones from C
+// ---------------------------------------------------------------------------
+// Instrument configurations
+// ---------------------------------------------------------------------------
+
+export const GUITAR = {
+  id: 'fretboard',            // mode ID (preserved for backward compat)
+  name: 'Guitar Fretboard',
+  storageNamespace: 'fretboard',
+  stringCount: 6,
+  fretCount: 13,              // frets 0–12
+  stringNames: ['e', 'B', 'G', 'D', 'A', 'E'],
+  stringOffsets: [4, 11, 7, 2, 9, 4],   // semitones from C per string
+  defaultString: 5,           // low E
+  fretMarkers: [3, 5, 7, 9, 12],
+};
+
+export const UKULELE = {
+  id: 'ukulele',
+  name: 'Ukulele Fretboard',
+  storageNamespace: 'ukulele',
+  stringCount: 4,
+  fretCount: 13,              // frets 0–12
+  stringNames: ['A', 'E', 'C', 'G'],    // 1st (top) to 4th (bottom)
+  stringOffsets: [9, 4, 0, 7],           // A=9, E=4, C=0, G=7
+  defaultString: 2,           // C string (lowest pitch)
+  fretMarkers: [3, 5, 7, 10, 12],
+};
+
+// Legacy exports (used by Speed Tap)
+export const STRING_NAMES = GUITAR.stringNames;
+export const STRING_OFFSETS = GUITAR.stringOffsets;

@@ -187,7 +187,7 @@ Solution: a factory function that accepts dependencies as parameters:
 
 ```javascript
 export function createFretboardHelpers(musicData) {
-  const { NOTES, NATURAL_NOTES, STRING_OFFSETS, noteMatchesInput } = musicData;
+  const { notes, naturalNotes, stringOffsets, fretCount, noteMatchesInput } = musicData;
   return {
     getNoteAtPosition(string, fret) { ... },
     checkFretboardAnswer(currentNote, input) { ... },
@@ -196,8 +196,25 @@ export function createFretboardHelpers(musicData) {
 }
 ```
 
-Browser: `createFretboardHelpers({ NOTES, NATURAL_NOTES, STRING_OFFSETS, noteMatchesInput })`
-Tests: `createFretboardHelpers(await import('./music-data.js'))`
+Browser: `createFretboardHelpers({ notes: NOTES, naturalNotes: NATURAL_NOTES, stringOffsets: instrument.stringOffsets, fretCount: instrument.fretCount, noteMatchesInput })`
+Tests: `createFretboardHelpers({ notes: NOTES, ..., stringOffsets: UKULELE.stringOffsets, fretCount: UKULELE.fretCount, noteMatchesInput })`
+
+#### Instrument Configs
+
+Fretted instrument modes are driven by config objects in `music-data.js`:
+
+```javascript
+const GUITAR = {
+  id: 'fretboard', name: 'Guitar Fretboard', storageNamespace: 'fretboard',
+  stringCount: 6, fretCount: 13, stringNames: ['e','B','G','D','A','E'],
+  stringOffsets: [4,11,7,2,9,4], defaultString: 5, fretMarkers: [3,5,7,9,12],
+};
+```
+
+`createFrettedInstrumentMode(instrument)` in `quiz-fretboard.js` is the shared
+factory — thin wrappers like `createGuitarFretboardMode()` and
+`createUkuleleFretboardMode()` just pass the config. To add a new fretted
+instrument, define a config object and a one-line wrapper.
 
 ### Stats Display Pattern
 

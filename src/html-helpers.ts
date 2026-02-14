@@ -1,6 +1,14 @@
 // Build-time HTML helpers for generating mode screen scaffolds and reusable
 // button blocks. Imported by both main.ts and build.ts to eliminate duplication.
 
+import {
+  fretPositions,
+  fretLines,
+  stringLines,
+  noteElements,
+  fretNumberElements,
+} from "./fretboard.ts";
+
 // ---------------------------------------------------------------------------
 // Reusable button blocks
 // ---------------------------------------------------------------------------
@@ -85,6 +93,55 @@ export function feedbackBlock(): string {
   return `<div class="feedback"></div>
       <div class="time-display"></div>
       <div class="hint"></div>`;
+}
+
+// ---------------------------------------------------------------------------
+// Fretboard SVG + string toggle helpers
+// ---------------------------------------------------------------------------
+
+interface FretboardSVGConfig {
+  id?: string;
+  stringCount?: number;
+  fretCount?: number;
+  fretMarkers?: number[];
+}
+
+/** Generate a complete fretboard SVG wrapper. Defaults to guitar dimensions. */
+export function fretboardSVG(config: FretboardSVGConfig = {}): string {
+  const sc = config.stringCount ?? 6;
+  const fc = config.fretCount ?? 13;
+  const h = sc * 40;
+  const markers = config.fretMarkers ?? [3, 5, 7, 9, 12];
+  const idAttr = config.id ? ` id="${config.id}"` : "";
+  return `<div class="fretboard-wrapper">
+      <div class="fretboard-container">
+        <svg class="fretboard"${idAttr} viewBox="0 0 600 ${h}">
+          <!-- Nut (thick line at fret 0) -->
+          <line x1="${fretPositions[1]}" y1="0" x2="${fretPositions[1]}" y2="${h}" stroke="#333" stroke-width="4"/>
+          <!-- Frets (vertical lines) -->
+          ${fretLines(h)}
+          <!-- Strings (horizontal lines) -->
+          ${stringLines(sc)}
+          <!-- Note circles -->
+          ${noteElements(sc, fc)}
+        </svg>
+        <div class="fret-numbers">
+          ${fretNumberElements(markers)}
+        </div>
+      </div>
+    </div>`;
+}
+
+/** Generate string toggle buttons for a fretted instrument mode. */
+export function stringToggles(stringNames: string[], defaultString: number): string {
+  return `<div class="toggle-group">
+          <span class="toggle-group-label">Strings</span>
+          <div class="string-toggles">
+${stringNames.map((name, i) =>
+  `            <button class="string-toggle${i === defaultString ? ' active' : ''}" data-string="${i}">${name}</button>`
+).join('\n')}
+          </div>
+        </div>`;
 }
 
 // ---------------------------------------------------------------------------

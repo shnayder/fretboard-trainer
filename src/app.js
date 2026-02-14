@@ -6,13 +6,22 @@
 (function () {
   const nav = createNavigation();
 
-  // Register fretboard mode
-  const fretboard = createFretboardMode();
+  // Register guitar fretboard mode
+  const guitar = createGuitarFretboardMode();
   nav.registerMode('fretboard', {
-    name: 'Fretboard',
-    init: fretboard.init,
-    activate: fretboard.activate,
-    deactivate: fretboard.deactivate,
+    name: 'Guitar Fretboard',
+    init: guitar.init,
+    activate: guitar.activate,
+    deactivate: guitar.deactivate,
+  });
+
+  // Register ukulele fretboard mode
+  const ukulele = createUkuleleFretboardMode();
+  nav.registerMode('ukulele', {
+    name: 'Ukulele Fretboard',
+    init: ukulele.init,
+    activate: ukulele.activate,
+    deactivate: ukulele.deactivate,
   });
 
   // Speed Tap mode

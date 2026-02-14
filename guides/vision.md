@@ -46,6 +46,15 @@ These are inferred from the existing codebase and design decisions:
   to each user's device and physical response speed. A phone user and a
   desktop keyboard user get equivalently challenging targets.
 
+- **Clear screen states.** Each mode has distinct states (idle/stats, quizzing,
+  calibrating). Each state should have its own clear layout — elements
+  irrelevant to the current state hidden, content ordered by interaction
+  priority. See [layout-and-ia.md](design/layout-and-ia.md) for details.
+
+- **Label over inference.** Toggles, progress indicators, and data displays
+  need text labels. Users shouldn't have to guess what `e B G D A E` means
+  or what "3 / 13" represents.
+
 ## Current State
 
 v3.5 with 10 quiz modes:
@@ -109,6 +118,14 @@ Guidelines inferred from how existing modes were designed:
 - **Reuse shared infrastructure.** Adaptive selector, `computeRecommendations()`,
   `createStatsControls()`, `createNoteKeyHandler()`. A new mode should feel
   like a natural extension, not a separate app.
+
+- **Consistency over accommodation.** When a mode behaves differently from
+  the rest, the first question is "should it?" — not "how do we support
+  that?" Often the different behavior is just legacy or an early prototype
+  that predates the shared system. Change the outlier to match the standard
+  rather than adding complexity to support the variation. Per-mode flags and
+  overrides (`mode.useX = false`, `mode.customConfig`) are a code smell;
+  they usually mean the outlier should be fixed, not preserved.
 
 - **Stats visualization for every mode.** Users should always be able to see
   what they've mastered and what needs work. Heatmaps with Recall/Speed toggle.

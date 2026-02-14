@@ -117,7 +117,7 @@ export function modeScreen(id: string, opts: ModeScreenOptions): string {
     : "";
   const beforeQuizArea = opts.beforeQuizArea ? "\n    " + opts.beforeQuizArea : "";
 
-  return `  <div class="mode-screen" id="mode-${id}">
+  return `  <div class="mode-screen phase-idle" id="mode-${id}">
     <div class="stats-section">
       <div class="stats-container"></div>
       <div class="stats-controls">
@@ -132,7 +132,7 @@ export function modeScreen(id: string, opts: ModeScreenOptions): string {
         <button class="recalibrate-btn" style="display: none;">Redo speed check</button>
       </div>
     </div>
-    <div class="quiz-session" style="display: none;">
+    <div class="quiz-session">
       <div class="quiz-header">
         <span class="quiz-header-title"></span>
         <button class="quiz-header-close" aria-label="Stop quiz">\u00D7</button>

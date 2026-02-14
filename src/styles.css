@@ -192,6 +192,12 @@ body {
   flex: 1;
 }
 
+/* --- Phase-driven visibility --- */
+.phase-idle .quiz-session { display: none; }
+.phase-active .stats-section,
+.phase-active .quiz-config { display: none; }
+.phase-calibration > *:not(.quiz-area) { display: none; }
+
 /* --- Fretboard --- */
 .fretboard-wrapper {
   display: flex;
@@ -588,28 +594,25 @@ button {
   grid-template-columns: repeat(3, 1fr);
 }
 
-/* --- Calibration overlay: hide all mode chrome, show only quiz-area --- */
-.mode-screen.calibrating > *:not(.quiz-area) {
-  display: none !important;
+/* --- Calibration overlay: inside quiz-area, hide non-calibration content --- */
+.phase-calibration .answer-buttons:not(.calibration-active),
+.phase-calibration .note-buttons:not(.calibration-active) {
+  display: none;
 }
-.mode-screen.calibrating .answer-buttons:not(.calibration-active),
-.mode-screen.calibrating .note-buttons:not(.calibration-active) {
-  display: none !important;
+.phase-calibration .answer-buttons.calibration-active {
+  display: grid;
 }
-.mode-screen.calibrating .answer-buttons.calibration-active {
-  display: grid !important;
+.phase-calibration .note-buttons.calibration-active {
+  display: flex;
 }
-.mode-screen.calibrating .note-buttons.calibration-active {
-  display: flex !important;
+.phase-calibration .speed-tap-status,
+.phase-calibration .fretboard-wrapper {
+  display: none;
 }
-.mode-screen.calibrating .speed-tap-status,
-.mode-screen.calibrating .fretboard-wrapper {
-  display: none !important;
-}
-.mode-screen.calibrating .countdown-container,
-.mode-screen.calibrating .quiz-prompt,
-.mode-screen.calibrating .chord-slots {
-  display: none !important;
+.phase-calibration .countdown-container,
+.phase-calibration .quiz-prompt,
+.phase-calibration .chord-slots {
+  display: none;
 }
 .calibration-close-btn {
   position: absolute;

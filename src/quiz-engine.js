@@ -232,8 +232,7 @@ function runCalibration(opts) {
  * @param {HTMLElement} container - Root element containing quiz DOM elements.
  *   Expected children (found by class):
  *     .countdown-bar, .feedback, .time-display, .hint,
- *     .start-btn, .stats-toggle, .stats,
- *     .stats-section, .quiz-config, .quiz-session, .mastery-message
+ *     .start-btn, .stats-toggle, .stats, .mastery-message
  *
  * @returns {{ start, stop, submitAnswer, nextQuestion, attach, detach,
  *             updateIdleMessage, isActive, isAnswered, selector, storage, els, baseline }}
@@ -286,12 +285,9 @@ export function createQuizEngine(mode, container) {
     startBtn: container.querySelector('.start-btn'),
     statsToggle: container.querySelector('.stats-toggle'),
     stats: container.querySelector('.stats'),
-    statsSection: container.querySelector('.stats-section'),
     quizArea: container.querySelector('.quiz-area'),
     masteryMessage: container.querySelector('.mastery-message'),
     recalibrateBtn: container.querySelector('.recalibrate-btn'),
-    quizConfig: container.querySelector('.quiz-config'),
-    quizSession: container.querySelector('.quiz-session'),
     quizHeaderClose: container.querySelector('.quiz-header-close'),
     questionCountEl: container.querySelector('.question-count'),
     elapsedTimeEl: container.querySelector('.elapsed-time'),
@@ -392,8 +388,12 @@ export function createQuizEngine(mode, container) {
       clearCalibrationContent();
     }
 
-    // Toggle calibrating class on container for CSS-driven visibility
-    container.classList.toggle('calibrating', inCalibration);
+    // Set phase class on container for CSS-driven visibility
+    const phaseClass = inCalibration ? 'phase-calibration'
+      : state.phase === 'active' ? 'phase-active'
+      : 'phase-idle';
+    container.classList.remove('phase-idle', 'phase-active', 'phase-calibration');
+    container.classList.add(phaseClass);
 
     // Mark the calibration button container so CSS can hide others
     if (inCalibration && !container.querySelector('.calibration-active')) {
@@ -425,16 +425,7 @@ export function createQuizEngine(mode, container) {
       if (closeBtn) closeBtn.remove();
     }
 
-    // Group visibility: stats-section + quiz-config shown in idle,
-    // quiz-session shown during active quiz
     const isActive = state.phase === 'active';
-    if (els.statsSection) els.statsSection.style.display = state.showStatsControls ? '' : 'none';
-    if (els.quizConfig) {
-      els.quizConfig.style.display = state.showStartBtn || state.phase === 'idle' ? '' : 'none';
-    }
-    if (els.quizSession) els.quizSession.style.display = isActive ? '' : 'none';
-
-    if (els.startBtn) els.startBtn.style.display = state.showStartBtn ? 'inline' : 'none';
     if (els.quizArea) els.quizArea.classList.toggle('active', state.quizActive);
     if (els.feedback) {
       els.feedback.textContent = state.feedbackText;

@@ -790,6 +790,17 @@ button {
   color: var(--color-text-muted);
   cursor: pointer;
 }
+.toggle-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+}
+.toggle-group-label {
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+  font-weight: 500;
+}
 
 /* --- Stats tables (lookup modes) --- */
 .stats-container {
@@ -1062,13 +1073,16 @@ button {
     </div>
     <div class="quiz-controls">
       <div class="settings-row">
-        <div class="string-toggles" id="string-toggles">
-          <button class="string-toggle" data-string="0">e</button>
-          <button class="string-toggle" data-string="1">B</button>
-          <button class="string-toggle" data-string="2">G</button>
-          <button class="string-toggle" data-string="3">D</button>
-          <button class="string-toggle" data-string="4">A</button>
-          <button class="string-toggle active" data-string="5">E</button>
+        <div class="toggle-group">
+          <span class="toggle-group-label">Strings</span>
+          <div class="string-toggles" id="string-toggles">
+            <button class="string-toggle" data-string="0">e</button>
+            <button class="string-toggle" data-string="1">B</button>
+            <button class="string-toggle" data-string="2">G</button>
+            <button class="string-toggle" data-string="3">D</button>
+            <button class="string-toggle" data-string="4">A</button>
+            <button class="string-toggle active" data-string="5">E</button>
+          </div>
         </div>
         <label class="setting-group">
           <input type="checkbox" id="naturals-only" checked>
@@ -1083,7 +1097,7 @@ button {
       </div>
     </div>
     <div class="quiz-header" style="display: none;">
-      <span class="quiz-header-title">Practicing</span>
+      <span class="quiz-header-title"></span>
       <button class="quiz-header-close" aria-label="Stop quiz">×</button>
     </div>
     <div class="session-stats" style="display: none;">
@@ -1092,7 +1106,7 @@ button {
     </div>
     <div class="progress-bar" style="display: none;">
       <div class="progress-fill" style="width: 0%"></div>
-      <div class="progress-text">0 / 0</div>
+      <div class="progress-text">0 / 0 mastered</div>
     </div>
     <div class="fretboard-wrapper">
       <div class="fretboard-container">
@@ -2815,7 +2829,7 @@ button {
       </div>
     </div>
     <div class="quiz-header" style="display: none;">
-      <span class="quiz-header-title">Practicing</span>
+      <span class="quiz-header-title"></span>
       <button class="quiz-header-close" aria-label="Stop quiz">×</button>
     </div>
     <div class="session-stats" style="display: none;">
@@ -2824,7 +2838,7 @@ button {
     </div>
     <div class="progress-bar" style="display: none;">
       <div class="progress-fill" style="width: 0%"></div>
-      <div class="progress-text">0 / 0</div>
+      <div class="progress-text">0 / 0 mastered</div>
     </div>
     <div class="quiz-area">
       <div class="speed-tap-prompt"></div>
@@ -4543,7 +4557,7 @@ button {
       </div>
     </div>
     <div class="quiz-header" style="display: none;">
-      <span class="quiz-header-title">Practicing</span>
+      <span class="quiz-header-title"></span>
       <button class="quiz-header-close" aria-label="Stop quiz">×</button>
     </div>
     <div class="session-stats" style="display: none;">
@@ -4552,7 +4566,7 @@ button {
     </div>
     <div class="progress-bar" style="display: none;">
       <div class="progress-fill" style="width: 0%"></div>
-      <div class="progress-text">0 / 0</div>
+      <div class="progress-text">0 / 0 mastered</div>
     </div>
     <div class="quiz-area">
       <div class="countdown-container"><div class="countdown-track"><div class="countdown-bar"></div></div><span class="deadline-display"></span></div>
@@ -4607,7 +4621,7 @@ button {
       </div>
     </div>
     <div class="quiz-header" style="display: none;">
-      <span class="quiz-header-title">Practicing</span>
+      <span class="quiz-header-title"></span>
       <button class="quiz-header-close" aria-label="Stop quiz">×</button>
     </div>
     <div class="session-stats" style="display: none;">
@@ -4616,7 +4630,7 @@ button {
     </div>
     <div class="progress-bar" style="display: none;">
       <div class="progress-fill" style="width: 0%"></div>
-      <div class="progress-text">0 / 0</div>
+      <div class="progress-text">0 / 0 mastered</div>
     </div>
     <div class="quiz-area">
       <div class="countdown-container"><div class="countdown-track"><div class="countdown-bar"></div></div><span class="deadline-display"></span></div>
@@ -4664,7 +4678,7 @@ button {
     </div>
     <div class="quiz-controls">
       <div class="settings-row">
-        <div class="distance-toggles"></div>
+        <div class="toggle-group"><span class="toggle-group-label">Groups</span><div class="distance-toggles"></div></div>
       </div>
       <div class="mastery-message" style="display: none;">Looks like you've got this!</div>
       <div>
@@ -4674,7 +4688,7 @@ button {
       </div>
     </div>
     <div class="quiz-header" style="display: none;">
-      <span class="quiz-header-title">Practicing</span>
+      <span class="quiz-header-title"></span>
       <button class="quiz-header-close" aria-label="Stop quiz">×</button>
     </div>
     <div class="session-stats" style="display: none;">
@@ -4683,7 +4697,7 @@ button {
     </div>
     <div class="progress-bar" style="display: none;">
       <div class="progress-fill" style="width: 0%"></div>
-      <div class="progress-text">0 / 0</div>
+      <div class="progress-text">0 / 0 mastered</div>
     </div>
     <div class="quiz-area">
       <div class="countdown-container"><div class="countdown-track"><div class="countdown-bar"></div></div><span class="deadline-display"></span></div>
@@ -4717,7 +4731,7 @@ button {
     </div>
     <div class="quiz-controls">
       <div class="settings-row">
-        <div class="distance-toggles"></div>
+        <div class="toggle-group"><span class="toggle-group-label">Groups</span><div class="distance-toggles"></div></div>
       </div>
       <div class="mastery-message" style="display: none;">Looks like you've got this!</div>
       <div>
@@ -4727,7 +4741,7 @@ button {
       </div>
     </div>
     <div class="quiz-header" style="display: none;">
-      <span class="quiz-header-title">Practicing</span>
+      <span class="quiz-header-title"></span>
       <button class="quiz-header-close" aria-label="Stop quiz">×</button>
     </div>
     <div class="session-stats" style="display: none;">
@@ -4736,7 +4750,7 @@ button {
     </div>
     <div class="progress-bar" style="display: none;">
       <div class="progress-fill" style="width: 0%"></div>
-      <div class="progress-text">0 / 0</div>
+      <div class="progress-text">0 / 0 mastered</div>
     </div>
     <div class="quiz-area">
       <div class="countdown-container"><div class="countdown-track"><div class="countdown-bar"></div></div><span class="deadline-display"></span></div>
@@ -4770,7 +4784,7 @@ button {
     </div>
     <div class="quiz-controls">
       <div class="settings-row">
-        <div class="distance-toggles"></div>
+        <div class="toggle-group"><span class="toggle-group-label">Groups</span><div class="distance-toggles"></div></div>
       </div>
       <div class="mastery-message" style="display: none;">Looks like you've got this!</div>
       <div>
@@ -4780,7 +4794,7 @@ button {
       </div>
     </div>
     <div class="quiz-header" style="display: none;">
-      <span class="quiz-header-title">Practicing</span>
+      <span class="quiz-header-title"></span>
       <button class="quiz-header-close" aria-label="Stop quiz">×</button>
     </div>
     <div class="session-stats" style="display: none;">
@@ -4789,7 +4803,7 @@ button {
     </div>
     <div class="progress-bar" style="display: none;">
       <div class="progress-fill" style="width: 0%"></div>
-      <div class="progress-text">0 / 0</div>
+      <div class="progress-text">0 / 0 mastered</div>
     </div>
     <div class="quiz-area">
       <div class="countdown-container"><div class="countdown-track"><div class="countdown-bar"></div></div><span class="deadline-display"></span></div>
@@ -4840,7 +4854,7 @@ button {
     </div>
     <div class="quiz-controls">
       <div class="settings-row">
-        <div class="distance-toggles"></div>
+        <div class="toggle-group"><span class="toggle-group-label">Groups</span><div class="distance-toggles"></div></div>
       </div>
       <div class="mastery-message" style="display: none;">Looks like you've got this!</div>
       <div>
@@ -4850,7 +4864,7 @@ button {
       </div>
     </div>
     <div class="quiz-header" style="display: none;">
-      <span class="quiz-header-title">Practicing</span>
+      <span class="quiz-header-title"></span>
       <button class="quiz-header-close" aria-label="Stop quiz">×</button>
     </div>
     <div class="session-stats" style="display: none;">
@@ -4859,7 +4873,7 @@ button {
     </div>
     <div class="progress-bar" style="display: none;">
       <div class="progress-fill" style="width: 0%"></div>
-      <div class="progress-text">0 / 0</div>
+      <div class="progress-text">0 / 0 mastered</div>
     </div>
     <div class="quiz-area">
       <div class="countdown-container"><div class="countdown-track"><div class="countdown-bar"></div></div><span class="deadline-display"></span></div>
@@ -4902,7 +4916,7 @@ button {
     </div>
     <div class="quiz-controls">
       <div class="settings-row">
-        <div class="distance-toggles"></div>
+        <div class="toggle-group"><span class="toggle-group-label">Groups</span><div class="distance-toggles"></div></div>
       </div>
       <div class="mastery-message" style="display: none;">Looks like you've got this!</div>
       <div>
@@ -4912,7 +4926,7 @@ button {
       </div>
     </div>
     <div class="quiz-header" style="display: none;">
-      <span class="quiz-header-title">Practicing</span>
+      <span class="quiz-header-title"></span>
       <button class="quiz-header-close" aria-label="Stop quiz">×</button>
     </div>
     <div class="session-stats" style="display: none;">
@@ -4921,7 +4935,7 @@ button {
     </div>
     <div class="progress-bar" style="display: none;">
       <div class="progress-fill" style="width: 0%"></div>
-      <div class="progress-text">0 / 0</div>
+      <div class="progress-text">0 / 0 mastered</div>
     </div>
     <div class="quiz-area">
       <div class="countdown-container"><div class="countdown-track"><div class="countdown-bar"></div></div><span class="deadline-display"></span></div>
@@ -4964,7 +4978,7 @@ button {
     </div>
     <div class="quiz-controls">
       <div class="settings-row">
-        <div class="distance-toggles"></div>
+        <div class="toggle-group"><span class="toggle-group-label">Groups</span><div class="distance-toggles"></div></div>
       </div>
       <div class="mastery-message" style="display: none;">Looks like you've got this!</div>
       <div>
@@ -4974,7 +4988,7 @@ button {
       </div>
     </div>
     <div class="quiz-header" style="display: none;">
-      <span class="quiz-header-title">Practicing</span>
+      <span class="quiz-header-title"></span>
       <button class="quiz-header-close" aria-label="Stop quiz">×</button>
     </div>
     <div class="session-stats" style="display: none;">
@@ -4983,7 +4997,7 @@ button {
     </div>
     <div class="progress-bar" style="display: none;">
       <div class="progress-fill" style="width: 0%"></div>
-      <div class="progress-text">0 / 0</div>
+      <div class="progress-text">0 / 0 mastered</div>
     </div>
     <div class="quiz-area">
       <div class="countdown-container"><div class="countdown-track"><div class="countdown-bar"></div></div><span class="deadline-display"></span></div>
@@ -6547,7 +6561,7 @@ function createQuizEngine(mode, container) {
       els.progressFill.style.width = pct + '%';
     }
     if (els.progressText) {
-      els.progressText.textContent = state.masteredCount + ' / ' + state.totalEnabledCount;
+      els.progressText.textContent = state.masteredCount + ' / ' + state.totalEnabledCount + ' mastered';
     }
 
     setAnswerButtonsEnabled(state.answersEnabled);
@@ -7900,7 +7914,7 @@ function createSpeedTapMode() {
       els.progressFill.style.width = pct + '%';
     }
     if (els.progressText) {
-      els.progressText.textContent = progress.masteredCount + ' / ' + progress.totalEnabledCount;
+      els.progressText.textContent = progress.masteredCount + ' / ' + progress.totalEnabledCount + ' mastered';
     }
   }
 

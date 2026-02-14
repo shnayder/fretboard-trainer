@@ -86,7 +86,7 @@ graph, algorithm details, and step-by-step "adding a new quiz mode" checklist.
 | Mode | Items | Answer type | Item ID format |
 |------|-------|-------------|----------------|
 | Guitar Fretboard | 78 (6 strings x 13 frets) | Note name | `0-5` (string-fret) |
-| Ukulele Fretboard | 52 (4 strings x 13 frets) | Note name | `0-5` (string-fret) |
+| Ukulele Fretboard | 52 (4 strings x 13 frets) | Note name | `0-3` (string-fret) |
 | Note ↔ Semitones | 24 (12 notes x 2 dirs) | Note or number 0-11 | `C:fwd`, `C:rev` |
 | Interval ↔ Semitones | 24 (12 intervals x 2 dirs) | Interval or number 1-12 | `m2:fwd`, `m2:rev` |
 | Semitone Math | 264 (12 notes x 11 x 2 dirs) | Note name | `C+3`, `C-3` |

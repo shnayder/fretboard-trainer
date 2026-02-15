@@ -43,6 +43,7 @@ const quizKeySignaturesJS = read("src/quiz-key-signatures.js");
 const quizScaleDegreesJS = read("src/quiz-scale-degrees.js");
 const quizDiatonicChordsJS = read("src/quiz-diatonic-chords.js");
 const quizChordSpellingJS = read("src/quiz-chord-spelling.js");
+const colorSchemesJS = read("src/color-schemes.js");
 const settingsJS = read("src/settings.js");
 const navigationJS = read("src/navigation.js");
 const appJS = read("src/app.js");
@@ -94,7 +95,7 @@ const html = `<!DOCTYPE html>
   <div class="top-bar">
     <button class="hamburger" type="button" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="nav-drawer">\u2630</button>
     <h1 id="mode-title">Guitar Fretboard</h1>
-    <div class="version">v3.13</div>
+    <div class="version">v3.14</div>
     <button class="gear-btn" type="button" aria-label="Settings">\u2699</button>
   </div>
 
@@ -230,6 +231,7 @@ ${quizKeySignaturesJS}
 ${quizScaleDegreesJS}
 ${quizDiatonicChordsJS}
 ${quizChordSpellingJS}
+${colorSchemesJS}
 ${settingsJS}
 ${navigationJS}
 ${appJS}

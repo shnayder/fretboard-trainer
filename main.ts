@@ -62,6 +62,7 @@ async function buildHTML(): Promise<string> {
     quizScaleDegreesJS,
     quizDiatonicChordsJS,
     quizChordSpellingJS,
+    colorSchemesJS,
     settingsJS,
     navigationJS,
     appJS,
@@ -85,6 +86,7 @@ async function buildHTML(): Promise<string> {
     readFile("./src/quiz-scale-degrees.js"),
     readFile("./src/quiz-diatonic-chords.js"),
     readFile("./src/quiz-chord-spelling.js"),
+    readFile("./src/color-schemes.js"),
     readFile("./src/settings.js"),
     readFile("./src/navigation.js"),
     readFile("./src/app.js"),
@@ -127,7 +129,7 @@ async function buildHTML(): Promise<string> {
   <div class="top-bar">
     <button class="hamburger" type="button" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="nav-drawer">\u2630</button>
     <h1 id="mode-title">Guitar Fretboard</h1>
-    <div class="version">v3.13</div>
+    <div class="version">v3.14</div>
     <button class="gear-btn" type="button" aria-label="Settings">\u2699</button>
   </div>
 
@@ -263,6 +265,7 @@ ${quizKeySignaturesJS}
 ${quizScaleDegreesJS}
 ${quizDiatonicChordsJS}
 ${quizChordSpellingJS}
+${colorSchemesJS}
 ${settingsJS}
 ${navigationJS}
 ${appJS}

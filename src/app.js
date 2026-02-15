@@ -107,17 +107,28 @@
 
   nav.init();
 
+  // Re-render stats on visible mode screens (shared by notation + scheme change)
+  function refreshVisibleStats() {
+    document.querySelectorAll('.mode-screen').forEach(function(el) {
+      if (el.style.display !== 'none') {
+        var activeToggle = el.querySelector('.stats-toggle-btn.active');
+        if (activeToggle) activeToggle.click();
+      }
+    });
+  }
+
   // Settings modal
   var settings = createSettingsModal({
     onNotationChange: function() {
       document.querySelectorAll('.mode-screen').forEach(function(el) {
         if (el.style.display !== 'none') {
           refreshNoteButtonLabels(el);
-          // Re-render stats if currently showing
-          var activeToggle = el.querySelector('.stats-toggle-btn.active');
-          if (activeToggle) activeToggle.click();
+          refreshVisibleStats();
         }
       });
+    },
+    onSchemeChange: function() {
+      refreshVisibleStats();
     }
   });
 

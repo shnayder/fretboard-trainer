@@ -8,6 +8,10 @@
 
 var _heatmapColors = null;
 
+export function resetHeatmapCache() {
+  _heatmapColors = null;
+}
+
 function cssVar(name) {
   try {
     var val = getComputedStyle(document.documentElement).getPropertyValue(name).trim();

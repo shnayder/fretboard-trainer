@@ -72,9 +72,12 @@
 }
 
 * { -webkit-tap-highlight-color: transparent; }
+html {
+  background: var(--color-surface);
+}
 body {
   font-family: system-ui, -apple-system, sans-serif;
-  max-width: 1400px;
+  max-width: 650px;
   margin: 0 auto;
   padding: 0 var(--space-5);
   display: flex;
@@ -83,6 +86,8 @@ body {
   min-height: 100dvh;
   color: var(--color-text);
   background: var(--color-bg);
+  border-left: 1px solid var(--color-border-lighter);
+  border-right: 1px solid var(--color-border-lighter);
 }
 
 /* --- Top bar & navigation --- */
@@ -90,9 +95,7 @@ body {
   display: flex;
   align-items: center;
   padding: var(--space-3) var(--space-5);
-  margin: 0 auto;
-  max-width: 800px;
-  border-radius: 0 0 8px 8px;
+  margin: 0 calc(-1 * var(--space-5));
   background: var(--color-topbar-bg);
   color: var(--color-topbar-text);
   position: relative;
@@ -603,18 +606,21 @@ button {
   grid-template-columns: repeat(3, 1fr);
 }
 
+/* --- Answer group visibility (toggled by mode JS for bidirectional questions) --- */
+.answer-group-hidden {
+  display: none;
+}
+
 /* --- Calibration overlay: inside quiz-area, hide non-calibration content --- */
 .phase-calibration .answer-buttons:not(.calibration-active),
 .phase-calibration .note-buttons:not(.calibration-active) {
   display: none;
 }
-/* !important overrides inline style="display:none" set by html-helpers.ts
-   on button groups that are hidden at rest (e.g. noteAnswerButtons in Speed Tap). */
 .phase-calibration .answer-buttons.calibration-active {
-  display: grid !important;
+  display: grid;
 }
 .phase-calibration .note-buttons.calibration-active {
-  display: flex !important;
+  display: flex;
 }
 .phase-calibration .speed-tap-status,
 .phase-calibration .fretboard-wrapper {
@@ -983,13 +989,13 @@ button {
   body {
     margin: 0;
     padding: 0 var(--space-1);
+    border-left: none;
+    border-right: none;
   }
 
   .top-bar {
     margin: 0 calc(-1 * var(--space-1));
     padding: var(--space-2) var(--space-3);
-    max-width: none;
-    border-radius: 0;
   }
 
   .fretboard-container {

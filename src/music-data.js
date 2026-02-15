@@ -293,3 +293,52 @@ export const UKULELE = {
 // Legacy exports (used by Speed Tap)
 export const STRING_NAMES = GUITAR.stringNames;
 export const STRING_OFFSETS = GUITAR.stringOffsets;
+
+// ---------------------------------------------------------------------------
+// Solfège notation
+// ---------------------------------------------------------------------------
+
+export const SOLFEGE_MAP = {
+  C: 'Do', D: 'Re', E: 'Mi', F: 'Fa', G: 'Sol', A: 'La', B: 'Si'
+};
+
+let _useSolfege = false;
+
+/** Get current notation mode. */
+export function getUseSolfege() { return _useSolfege; }
+
+/** Set notation mode and persist to localStorage. */
+export function setUseSolfege(v) {
+  _useSolfege = v;
+  try { localStorage.setItem('fretboard_notation', v ? 'solfege' : 'letter'); } catch (_) {}
+}
+
+// Load notation preference on module evaluation
+try {
+  _useSolfege = localStorage.getItem('fretboard_notation') === 'solfege';
+} catch (_) {}
+
+/**
+ * Translate a letter-name note to solfège if solfège mode is active.
+ * "C#" → "Do#", "Db" → "Re♭", "C" → "Do". Returns input unchanged if
+ * solfège is off or the name doesn't start with a letter.
+ */
+export function displayNote(name) {
+  if (!_useSolfege || !name) return name;
+  const letter = name[0].toUpperCase();
+  const syl = SOLFEGE_MAP[letter];
+  if (!syl) return name;
+  const acc = name.slice(1).replace(/b/g, '\u266D');
+  return syl + acc;
+}
+
+/**
+ * Translate a display-name pair like "C#/Db" → "Do#/Re♭".
+ * Handles both single names and slash-separated pairs.
+ */
+export function displayNotePair(displayName) {
+  if (!_useSolfege) return displayName;
+  if (!displayName.includes('/')) return displayNote(displayName);
+  const [s, f] = displayName.split('/');
+  return displayNote(s) + '/' + displayNote(f);
+}

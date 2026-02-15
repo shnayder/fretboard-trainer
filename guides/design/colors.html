@@ -132,6 +132,53 @@
     .scale-sample {
       color: var(--color-text);
     }
+
+    /* --- Theme switcher --- */
+    .theme-bar {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.75rem 1rem;
+      margin-bottom: 1.5rem;
+      border: 1px solid var(--color-border-light);
+      border-radius: 8px;
+      background: var(--color-surface);
+      flex-wrap: wrap;
+    }
+    .theme-bar-label {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--color-text-muted);
+      margin-right: 0.25rem;
+    }
+    .theme-swatch {
+      width: 32px;
+      height: 32px;
+      padding: 2px;
+      border: 2px solid var(--color-border-light);
+      border-radius: 50%;
+      background: var(--color-bg);
+      cursor: pointer;
+      transition: border-color 0.15s ease, transform 0.1s ease;
+    }
+    .theme-swatch:hover {
+      border-color: var(--color-text-muted);
+      transform: scale(1.1);
+    }
+    .theme-swatch.active {
+      border-color: var(--color-text);
+      box-shadow: 0 0 0 2px var(--color-bg), 0 0 0 4px var(--color-text);
+    }
+    .theme-swatch .fill {
+      display: block;
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+    }
+    .theme-active-name {
+      font-size: 0.75rem;
+      color: var(--color-text-muted);
+    }
   </style>
 </head>
 <body>
@@ -139,6 +186,13 @@
   <div class="subtitle">
     Fretboard Trainer design reference &mdash; all values read live from
     <code>src/styles.css</code> <code>:root</code> variables.
+    Switch themes below to see how colors change.
+  </div>
+
+  <!-- Theme switcher bar -->
+  <div class="theme-bar" id="theme-bar">
+    <span class="theme-bar-label">Theme:</span>
+    <!-- swatches injected by script -->
   </div>
 
   <!-- ================================================================== -->
@@ -202,8 +256,64 @@
   <div id="examples"></div>
 
   <script>
-    var root = getComputedStyle(document.documentElement);
-    function v(name) { return root.getPropertyValue(name).trim(); }
+    // Stub for standalone page (color-schemes.js calls this)
+    function resetHeatmapCache() {}
+  </script>
+  <script src="../../src/color-schemes.js"></script>
+  <script>
+    // --- Theme switcher ---
+    (function() {
+      var bar = document.getElementById('theme-bar');
+      var ids = Object.keys(COLOR_SCHEMES);
+      var nameSpan = document.createElement('span');
+      nameSpan.className = 'theme-active-name';
+      var buttons = [];
+
+      for (var i = 0; i < ids.length; i++) {
+        var id = ids[i];
+        var scheme = COLOR_SCHEMES[id];
+        var btn = document.createElement('button');
+        btn.className = 'theme-swatch';
+        btn.dataset.scheme = id;
+        btn.title = scheme.name;
+        btn.setAttribute('aria-label', scheme.name + ' color scheme');
+        var fill = document.createElement('span');
+        fill.className = 'fill';
+        fill.style.background = scheme.vars['--color-brand'];
+        fill.style.boxShadow = 'inset 0 -7px 0 ' + scheme.vars['--color-topbar-bg'];
+        btn.appendChild(fill);
+        bar.appendChild(btn);
+        buttons.push(btn);
+      }
+      bar.appendChild(nameSpan);
+
+      function setActive(id) {
+        applyColorScheme(id);
+        for (var j = 0; j < buttons.length; j++) {
+          buttons[j].classList.toggle('active', buttons[j].dataset.scheme === id);
+        }
+        nameSpan.textContent = COLOR_SCHEMES[id] ? COLOR_SCHEMES[id].name : '';
+        // Re-render all sections with new colors
+        renderAll();
+      }
+
+      bar.addEventListener('click', function(e) {
+        var btn = e.target.closest('.theme-swatch');
+        if (btn && btn.dataset.scheme) setActive(btn.dataset.scheme);
+      });
+
+      // Set initial active state
+      var current = getColorSchemeId();
+      for (var k = 0; k < buttons.length; k++) {
+        buttons[k].classList.toggle('active', buttons[k].dataset.scheme === current);
+      }
+      nameSpan.textContent = COLOR_SCHEMES[current] ? COLOR_SCHEMES[current].name : '';
+    })();
+
+    // --- Color reference rendering ---
+    function v(name) {
+      return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+    }
 
     // --- Render a group of swatch cards into a container ---
     function renderSwatches(containerId, vars) {
@@ -233,6 +343,8 @@
       return (r * 0.299 + g * 0.587 + b * 0.114) < 140;
     }
 
+    function renderAll() {
+
     // --- Brand ---
     renderSwatches('brand-colors', [
       { v: '--color-brand',      note: 'Start Quiz CTA, active stats toggle, focus outline' },
@@ -248,7 +360,7 @@
 
     // --- Semantic colors ---
     renderSwatches('semantic-colors', [
-      { v: '--color-success',      note: 'Active toggles, progress, countdown' },
+      { v: '--color-success',      note: 'Correct answer feedback, progress' },
       { v: '--color-success-dark', note: 'Calibration target border, pressed CTA' },
       { v: '--color-success-bg',   note: 'Mastery message bg' },
       { v: '--color-success-text', note: 'Text on success-bg' },
@@ -257,7 +369,8 @@
       { v: '--color-error-text',   note: 'Text on error-bg' },
       { v: '--color-focus',        note: 'Active chord-slot border' },
       { v: '--color-focus-bg',     note: 'Active chord-slot bg' },
-      { v: '--color-recommended',  note: 'Orange glow on suggested toggles' },
+      { v: '--color-toggle-active',      note: 'Active string/distance toggle (themed)' },
+      { v: '--color-toggle-recommended', note: 'Recommended toggle glow (themed)' },
       { v: '--color-highlight',    note: 'Gold — current fretboard question (SVG)' },
     ]);
 
@@ -377,17 +490,17 @@
         + ';border-color:' + v('--color-border') + ';color:' + v('--color-text') + ';">Stop Quiz</span>';
       html += '</div></div>';
 
-      // Toggle buttons
+      // Toggle buttons (now themed)
       html += '<div class="example-box">';
-      html += '<div style="font-size:0.75rem;color:' + v('--color-text-muted') + ';margin-bottom:0.5rem;">Toggle states</div>';
+      html += '<div style="font-size:0.75rem;color:' + v('--color-text-muted') + ';margin-bottom:0.5rem;">Toggle states (themed)</div>';
       html += '<div class="example-row">';
       html += '<span class="example-btn" style="background:' + v('--color-surface')
         + ';border-color:' + v('--color-border') + ';color:' + v('--color-border') + ';">Inactive</span>';
-      html += '<span class="example-btn" style="background:' + v('--color-success')
-        + ';border-color:' + v('--color-success') + ';color:white;">Active</span>';
-      html += '<span class="example-btn" style="background:' + v('--color-success')
-        + ';border-color:' + v('--color-recommended') + ';color:white;box-shadow:0 0 0 2px '
-        + v('--color-recommended') + ';">Recommended</span>';
+      html += '<span class="example-btn" style="background:' + v('--color-toggle-active')
+        + ';border-color:' + v('--color-toggle-active') + ';color:white;">Active</span>';
+      html += '<span class="example-btn" style="background:' + v('--color-toggle-active')
+        + ';border-color:' + v('--color-toggle-recommended') + ';color:white;box-shadow:0 0 0 2px '
+        + v('--color-toggle-recommended') + ';">Recommended</span>';
       html += '</div></div>';
 
       // Chord slots
@@ -416,6 +529,11 @@
 
       el.innerHTML = html;
     })();
+
+    } // end renderAll
+
+    // Initial render
+    renderAll();
   </script>
 </body>
 </html>

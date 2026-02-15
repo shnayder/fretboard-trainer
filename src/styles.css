@@ -21,6 +21,10 @@
   --color-recommended: #FF9800;
   --color-highlight: #FFD700;
 
+  /* Themed UI accents (overridden per color scheme) */
+  --color-toggle-active: #4CAF50;
+  --color-toggle-recommended: #FF9800;
+
   /* Text (warm neutrals) */
   --color-text: hsl(30, 5%, 20%);
   --color-text-muted: hsl(30, 3%, 40%);
@@ -404,15 +408,15 @@ body {
   background: var(--color-surface-hover);
 }
 .string-toggle.active {
-  background: var(--color-success);
+  background: var(--color-toggle-active);
   color: white;
-  border-color: var(--color-success);
+  border-color: var(--color-toggle-active);
 }
 .string-toggle.recommended {
-  box-shadow: 0 0 0 2px var(--color-recommended);
+  box-shadow: 0 0 0 2px var(--color-toggle-recommended);
 }
 .string-toggle.active.recommended {
-  border-color: var(--color-recommended);
+  border-color: var(--color-toggle-recommended);
 }
 .distance-toggles {
   display: flex;
@@ -437,15 +441,15 @@ body {
   background: var(--color-surface-hover);
 }
 .distance-toggle.active {
-  background: var(--color-success);
+  background: var(--color-toggle-active);
   color: white;
-  border-color: var(--color-success);
+  border-color: var(--color-toggle-active);
 }
 .distance-toggle.recommended {
-  box-shadow: 0 0 0 2px var(--color-recommended);
+  box-shadow: 0 0 0 2px var(--color-toggle-recommended);
 }
 .distance-toggle.active.recommended {
-  border-color: var(--color-recommended);
+  border-color: var(--color-toggle-recommended);
 }
 .fretboard-container {
   position: relative;

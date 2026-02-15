@@ -796,13 +796,15 @@ describe("getUseSolfege / setUseSolfege", () => {
 });
 
 describe("displayNote", () => {
-  it("returns input unchanged when solfège is off", () => {
+  it("uses Unicode accidentals in letter mode", () => {
     const original = getUseSolfege();
     try {
       setUseSolfege(false);
       assert.equal(displayNote("C"), "C");
-      assert.equal(displayNote("F#"), "F#");
-      assert.equal(displayNote("Bb"), "Bb");
+      assert.equal(displayNote("F#"), "F\u266F");
+      assert.equal(displayNote("Bb"), "B\u266D");
+      assert.equal(displayNote("C#"), "C\u266F");
+      assert.equal(displayNote("Eb"), "E\u266D");
     } finally {
       setUseSolfege(original);
     }
@@ -875,12 +877,13 @@ describe("displayNote", () => {
 });
 
 describe("displayNotePair", () => {
-  it("returns input unchanged when solfège is off", () => {
+  it("uses Unicode accidentals in letter mode", () => {
     const original = getUseSolfege();
     try {
       setUseSolfege(false);
-      assert.equal(displayNotePair("C#/Db"), "C#/Db");
+      assert.equal(displayNotePair("C#/Db"), "C\u266F/D\u266D");
       assert.equal(displayNotePair("C"), "C");
+      assert.equal(displayNotePair("F#"), "F\u266F");
     } finally {
       setUseSolfege(original);
     }

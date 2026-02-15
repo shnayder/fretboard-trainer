@@ -118,6 +118,11 @@ body {
   padding: var(--space-2) var(--space-3);
   margin: 0;
   line-height: 1;
+  min-width: 44px;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   color: var(--color-topbar-text);
   border-radius: 6px;
   transition: background 0.15s ease;
@@ -145,6 +150,11 @@ body {
   padding: var(--space-2) var(--space-3);
   margin: 0;
   line-height: 1;
+  min-width: 44px;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   color: var(--color-topbar-text);
   opacity: 0.7;
   border-radius: 6px;
@@ -1174,7 +1184,7 @@ button {
   <div class="top-bar">
     <button class="hamburger" type="button" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="nav-drawer">☰</button>
     <h1 id="mode-title">Guitar Fretboard</h1>
-    <div class="version">v3.11</div>
+    <div class="version">v3.12</div>
     <button class="gear-btn" type="button" aria-label="Settings">⚙</button>
   </div>
 
@@ -8162,6 +8172,9 @@ function createQuizEngine(mode, container) {
       els.countdownBar.classList.remove('expired');
       if (!isActive) els.countdownBar.style.width = '0%';
     }
+    if (els.countdownContainer && !isActive) {
+      els.countdownContainer.style.width = '';
+    }
     if (els.deadlineDisplay && !isActive) {
       els.deadlineDisplay.textContent = '';
     }
@@ -9604,6 +9617,7 @@ function createNoteSemitonesMode() {
   }
 
   let currentItem = null;
+  let currentAccidentalChoice = null;
 
   // Build row definitions for the stats table
   function getTableRows() {
@@ -9640,9 +9654,10 @@ function createNoteSemitonesMode() {
       const noteButtons = container.querySelector('.answer-buttons-notes');
       const numButtons = container.querySelector('.answer-buttons-numbers');
 
+      currentAccidentalChoice = pickRandomAccidental(currentItem.note.displayName);
       if (currentItem.dir === 'fwd') {
         // Show note, answer is number 0-11
-        prompt.textContent = displayNote(pickRandomAccidental(currentItem.note.displayName)) + ' = ?';
+        prompt.textContent = displayNote(currentAccidentalChoice) + ' = ?';
         noteButtons.classList.add('answer-group-hidden');
         numButtons.classList.remove('answer-group-hidden');
       } else {
@@ -9659,7 +9674,7 @@ function createNoteSemitonesMode() {
         return { correct, correctAnswer: String(currentItem.note.num) };
       } else {
         const correct = noteMatchesInput(currentItem.note, input);
-        return { correct, correctAnswer: displayNote(pickRandomAccidental(currentItem.note.displayName)) };
+        return { correct, correctAnswer: displayNote(currentAccidentalChoice) };
       }
     },
 

@@ -6,6 +6,7 @@ import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import {
+  pianoNoteButtons,
   noteAnswerButtons,
   numberButtons,
   intervalAnswerButtons,
@@ -108,20 +109,7 @@ ${modeScreen("fretboard", {
   quizAreaContent: `<div class="countdown-container">
         <div class="countdown-track"><div class="countdown-bar"></div></div><span class="deadline-display"></span>
       </div>
-      <div class="note-buttons">
-        <button class="note-btn" data-note="C">C</button>
-        <button class="note-btn accidental" data-note="C#">C#</button>
-        <button class="note-btn" data-note="D">D</button>
-        <button class="note-btn accidental" data-note="D#">D#</button>
-        <button class="note-btn" data-note="E">E</button>
-        <button class="note-btn" data-note="F">F</button>
-        <button class="note-btn accidental" data-note="F#">F#</button>
-        <button class="note-btn" data-note="G">G</button>
-        <button class="note-btn accidental" data-note="G#">G#</button>
-        <button class="note-btn" data-note="A">A</button>
-        <button class="note-btn accidental" data-note="A#">A#</button>
-        <button class="note-btn" data-note="B">B</button>
-      </div>
+      ${pianoNoteButtons()}
       ${feedbackBlock()}`,
 })}
 
@@ -136,20 +124,7 @@ ${modeScreen("ukulele", {
   quizAreaContent: `<div class="countdown-container">
         <div class="countdown-track"><div class="countdown-bar"></div></div><span class="deadline-display"></span>
       </div>
-      <div class="note-buttons">
-        <button class="note-btn" data-note="C">C</button>
-        <button class="note-btn accidental" data-note="C#">C#</button>
-        <button class="note-btn" data-note="D">D</button>
-        <button class="note-btn accidental" data-note="D#">D#</button>
-        <button class="note-btn" data-note="E">E</button>
-        <button class="note-btn" data-note="F">F</button>
-        <button class="note-btn accidental" data-note="F#">F#</button>
-        <button class="note-btn" data-note="G">G</button>
-        <button class="note-btn accidental" data-note="G#">G#</button>
-        <button class="note-btn" data-note="A">A</button>
-        <button class="note-btn accidental" data-note="A#">A#</button>
-        <button class="note-btn" data-note="B">B</button>
-      </div>
+      ${pianoNoteButtons()}
       ${feedbackBlock()}`,
 })}
 

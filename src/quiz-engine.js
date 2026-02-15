@@ -533,7 +533,7 @@ export function createQuizEngine(mode, container) {
     selector.recordResponse(itemId, deadline, false);
     deadlineTracker.recordOutcome(itemId, false, rc);
 
-    state = engineTimedOut(state, result.correctAnswer, deadline);
+    state = engineTimedOut(state, result.correctAnswer);
 
     // Check mastery and progress
     const allMastered = selector.checkAllAutomatic(mode.getEnabledItems());
@@ -678,7 +678,7 @@ export function createQuizEngine(mode, container) {
     selector.recordResponse(state.currentItemId, responseTime, result.correct);
     deadlineTracker.recordOutcome(state.currentItemId, result.correct, rc);
 
-    state = engineSubmitAnswer(state, result.correct, result.correctAnswer, responseTime);
+    state = engineSubmitAnswer(state, result.correct, result.correctAnswer);
 
     // Check if all enabled items are mastered
     const allMastered = selector.checkAllAutomatic(mode.getEnabledItems());

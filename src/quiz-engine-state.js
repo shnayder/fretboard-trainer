@@ -83,9 +83,8 @@ export function engineNextQuestion(state, nextItemId, nowMs) {
  * @param {EngineState} state
  * @param {boolean} isCorrect
  * @param {string} correctAnswer - display string for incorrect feedback
- * @param {number} responseTimeMs
  */
-export function engineSubmitAnswer(state, isCorrect, correctAnswer, responseTimeMs) {
+export function engineSubmitAnswer(state, isCorrect, correctAnswer) {
   return {
     ...state,
     answered: true,
@@ -102,9 +101,8 @@ export function engineSubmitAnswer(state, isCorrect, correctAnswer, responseTime
  * Transition: timer expired before user answered.
  * @param {EngineState} state
  * @param {string} correctAnswer - display string for the correct answer
- * @param {number} deadlineMs - the deadline that was active
  */
-export function engineTimedOut(state, correctAnswer, deadlineMs) {
+export function engineTimedOut(state, correctAnswer) {
   return {
     ...state,
     answered: true,

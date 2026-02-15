@@ -88,7 +88,7 @@ export function countdownAndPrompt(): string {
       <div class="quiz-prompt"></div>`;
 }
 
-/** Feedback + time display + hint (shared by all modes). */
+/** Feedback + hint (shared by all modes). time-display used during calibration. */
 export function feedbackBlock(): string {
   return `<div class="feedback"></div>
       <div class="time-display"></div>

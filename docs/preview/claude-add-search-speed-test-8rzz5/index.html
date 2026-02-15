@@ -729,6 +729,9 @@ button {
   margin: var(--space-5) 0;
   min-height: 2.5rem;
 }
+.quiz-prompt:empty {
+  display: none;
+}
 
 /* --- Answer buttons grid (shared by new modes) --- */
 .answer-buttons {
@@ -1202,7 +1205,7 @@ button {
   <div class="top-bar">
     <button class="hamburger" type="button" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="nav-drawer">☰</button>
     <h1 id="mode-title">Guitar Fretboard</h1>
-    <div class="version">v3.15</div>
+    <div class="version">v3.16</div>
     <button class="gear-btn" type="button" aria-label="Settings">⚙</button>
   </div>
 
@@ -2932,6 +2935,7 @@ button {
       <div class="countdown-container">
         <div class="countdown-track"><div class="countdown-bar"></div></div><span class="deadline-display"></span>
       </div>
+      <div class="quiz-prompt"></div>
       <div class="note-buttons">
         <div class="note-row-accidentals">
           <button class="note-btn accidental" data-note="C#">C#</button>
@@ -4132,6 +4136,7 @@ button {
       <div class="countdown-container">
         <div class="countdown-track"><div class="countdown-bar"></div></div><span class="deadline-display"></span>
       </div>
+      <div class="quiz-prompt"></div>
       <div class="note-buttons">
         <div class="note-row-accidentals">
           <button class="note-btn accidental" data-note="C#">C#</button>

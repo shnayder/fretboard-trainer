@@ -1,12 +1,12 @@
 :root {
-  /* Brand */
-  --color-brand: hsl(38, 90%, 55%);
-  --color-brand-dark: hsl(38, 90%, 42%);
-  --color-brand-bg: hsl(38, 60%, 95%);
+  /* Brand (sage) */
+  --color-brand: hsl(90, 35%, 45%);
+  --color-brand-dark: hsl(90, 35%, 35%);
+  --color-brand-bg: hsl(90, 25%, 94%);
 
   /* Top bar */
-  --color-topbar-bg: hsl(220, 15%, 18%);
-  --color-topbar-text: hsl(0, 0%, 95%);
+  --color-topbar-bg: hsl(100, 15%, 22%);
+  --color-topbar-text: hsl(90, 10%, 95%);
 
   /* Semantic colors */
   --color-success: #4CAF50;
@@ -20,6 +20,10 @@
   --color-focus-bg: #e3f2fd;
   --color-recommended: #FF9800;
   --color-highlight: #FFD700;
+
+  /* UI accents */
+  --color-toggle-active: hsl(90, 35%, 42%);
+  --color-toggle-recommended: hsl(35, 80%, 55%);
 
   /* Text (warm neutrals) */
   --color-text: hsl(30, 5%, 20%);
@@ -42,13 +46,13 @@
   /* Overlay */
   --color-overlay: rgba(0, 0, 0, 0.35);
 
-  /* Heatmap scale (blue → amber, accessible) */
-  --heatmap-none: hsl(30, 5%, 85%);
-  --heatmap-5: hsl(38, 85%, 55%);
-  --heatmap-4: hsl(42, 70%, 58%);
-  --heatmap-3: hsl(50, 50%, 65%);
-  --heatmap-2: hsl(200, 40%, 65%);
-  --heatmap-1: hsl(215, 45%, 60%);
+  /* Heatmap scale (warm terracotta → sage, high saturation) */
+  --heatmap-none: hsl(60, 5%, 93%);
+  --heatmap-1: hsl(15, 55%, 68%);
+  --heatmap-2: hsl(35, 55%, 58%);
+  --heatmap-3: hsl(55, 45%, 50%);
+  --heatmap-4: hsl(72, 42%, 42%);
+  --heatmap-5: hsl(88, 52%, 33%);
 
   /* Fretboard SVG */
   --color-fretboard-line: hsl(30, 5%, 30%);
@@ -364,15 +368,15 @@ body {
   background: var(--color-surface-hover);
 }
 .string-toggle.active {
-  background: var(--color-success);
+  background: var(--color-toggle-active);
   color: white;
-  border-color: var(--color-success);
+  border-color: var(--color-toggle-active);
 }
 .string-toggle.recommended {
-  box-shadow: 0 0 0 2px var(--color-recommended);
+  box-shadow: 0 0 0 2px var(--color-toggle-recommended);
 }
 .string-toggle.active.recommended {
-  border-color: var(--color-recommended);
+  border-color: var(--color-toggle-recommended);
 }
 .distance-toggles {
   display: flex;
@@ -397,15 +401,15 @@ body {
   background: var(--color-surface-hover);
 }
 .distance-toggle.active {
-  background: var(--color-success);
+  background: var(--color-toggle-active);
   color: white;
-  border-color: var(--color-success);
+  border-color: var(--color-toggle-active);
 }
 .distance-toggle.recommended {
-  box-shadow: 0 0 0 2px var(--color-recommended);
+  box-shadow: 0 0 0 2px var(--color-toggle-recommended);
 }
 .distance-toggle.active.recommended {
-  border-color: var(--color-recommended);
+  border-color: var(--color-toggle-recommended);
 }
 .fretboard-container {
   position: relative;
@@ -589,11 +593,22 @@ button {
   pointer-events: none;
 }
 
+/* --- Quiz-active visual focus (colored accent when quiz is running) --- */
+.phase-active .top-bar,
+.phase-calibration .top-bar {
+  box-shadow: 0 2px 0 var(--color-brand);
+}
+.phase-active .quiz-area.active {
+  border: 2px solid var(--color-brand);
+  border-top: 3px solid var(--color-brand);
+}
+
 /* --- Quiz area (subtle card containment) --- */
 .quiz-area {
   display: none;
   text-align: center;
   margin: var(--space-5) 0;
+  border: 2px solid transparent;
 }
 .quiz-area.active {
   display: block;

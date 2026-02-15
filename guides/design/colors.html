@@ -132,6 +132,7 @@
     .scale-sample {
       color: var(--color-text);
     }
+
   </style>
 </head>
 <body>
@@ -143,8 +144,7 @@
 
   <!-- ================================================================== -->
   <h2>Brand</h2>
-  <p>Warm amber/gold — musically evocative (brass, stage lighting). Used for
-     CTAs, identity, and the top of the heatmap mastery scale.</p>
+  <p>Sage green — natural, earthy feel. Used for CTAs and identity.</p>
 
   <div id="brand-colors" class="grid"></div>
 
@@ -180,8 +180,8 @@
 
   <!-- ================================================================== -->
   <h2>Heatmap Scale</h2>
-  <p>Accessible blue-to-amber scale. Cool (needs work) to warm (mastered),
-     with brand amber as the goal color. No red/green dependency.</p>
+  <p>Warm terracotta → sage sequential scale. Bright at both ends, muted in
+     the middle. No red/green dependency.</p>
 
   <div id="heatmap-strip" class="heatmap-strip"></div>
 
@@ -202,8 +202,10 @@
   <div id="examples"></div>
 
   <script>
-    var root = getComputedStyle(document.documentElement);
-    function v(name) { return root.getPropertyValue(name).trim(); }
+    // --- Color reference rendering ---
+    function v(name) {
+      return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+    }
 
     // --- Render a group of swatch cards into a container ---
     function renderSwatches(containerId, vars) {
@@ -233,6 +235,8 @@
       return (r * 0.299 + g * 0.587 + b * 0.114) < 140;
     }
 
+    function renderAll() {
+
     // --- Brand ---
     renderSwatches('brand-colors', [
       { v: '--color-brand',      note: 'Start Quiz CTA, active stats toggle, focus outline' },
@@ -248,7 +252,7 @@
 
     // --- Semantic colors ---
     renderSwatches('semantic-colors', [
-      { v: '--color-success',      note: 'Active toggles, progress, countdown' },
+      { v: '--color-success',      note: 'Correct answer feedback, progress' },
       { v: '--color-success-dark', note: 'Calibration target border, pressed CTA' },
       { v: '--color-success-bg',   note: 'Mastery message bg' },
       { v: '--color-success-text', note: 'Text on success-bg' },
@@ -257,7 +261,8 @@
       { v: '--color-error-text',   note: 'Text on error-bg' },
       { v: '--color-focus',        note: 'Active chord-slot border' },
       { v: '--color-focus-bg',     note: 'Active chord-slot bg' },
-      { v: '--color-recommended',  note: 'Orange glow on suggested toggles' },
+      { v: '--color-toggle-active',      note: 'Active string/distance toggle (themed)' },
+      { v: '--color-toggle-recommended', note: 'Recommended toggle glow (themed)' },
       { v: '--color-highlight',    note: 'Gold — current fretboard question (SVG)' },
     ]);
 
@@ -377,17 +382,17 @@
         + ';border-color:' + v('--color-border') + ';color:' + v('--color-text') + ';">Stop Quiz</span>';
       html += '</div></div>';
 
-      // Toggle buttons
+      // Toggle buttons (now themed)
       html += '<div class="example-box">';
-      html += '<div style="font-size:0.75rem;color:' + v('--color-text-muted') + ';margin-bottom:0.5rem;">Toggle states</div>';
+      html += '<div style="font-size:0.75rem;color:' + v('--color-text-muted') + ';margin-bottom:0.5rem;">Toggle states (themed)</div>';
       html += '<div class="example-row">';
       html += '<span class="example-btn" style="background:' + v('--color-surface')
         + ';border-color:' + v('--color-border') + ';color:' + v('--color-border') + ';">Inactive</span>';
-      html += '<span class="example-btn" style="background:' + v('--color-success')
-        + ';border-color:' + v('--color-success') + ';color:white;">Active</span>';
-      html += '<span class="example-btn" style="background:' + v('--color-success')
-        + ';border-color:' + v('--color-recommended') + ';color:white;box-shadow:0 0 0 2px '
-        + v('--color-recommended') + ';">Recommended</span>';
+      html += '<span class="example-btn" style="background:' + v('--color-toggle-active')
+        + ';border-color:' + v('--color-toggle-active') + ';color:white;">Active</span>';
+      html += '<span class="example-btn" style="background:' + v('--color-toggle-active')
+        + ';border-color:' + v('--color-toggle-recommended') + ';color:white;box-shadow:0 0 0 2px '
+        + v('--color-toggle-recommended') + ';">Recommended</span>';
       html += '</div></div>';
 
       // Chord slots
@@ -416,6 +421,11 @@
 
       el.innerHTML = html;
     })();
+
+    } // end renderAll
+
+    // Initial render
+    renderAll();
   </script>
 </body>
 </html>

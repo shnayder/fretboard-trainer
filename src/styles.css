@@ -130,16 +130,11 @@ body {
 .gear-btn {
   background: none;
   border: none;
-  font-size: var(--text-lg);
+  font-size: var(--text-xl);
   cursor: pointer;
-  padding: var(--space-3);
+  padding: var(--space-2) var(--space-3);
   margin: 0;
   line-height: 1;
-  min-width: 44px;
-  min-height: 44px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
   color: var(--color-topbar-text);
   opacity: 0.7;
   border-radius: 6px;
@@ -153,7 +148,7 @@ body {
   opacity: 0.5;
 }
 .gear-btn.hidden {
-  display: none;
+  visibility: hidden;
 }
 
 /* --- Settings modal --- */
@@ -609,7 +604,9 @@ button {
   align-items: center;
   gap: var(--space-3);
   width: 240px;
+  max-width: 90vw;
   margin: var(--space-5) auto;
+  transition: width 0.3s ease;
 }
 .countdown-track {
   flex: 1;

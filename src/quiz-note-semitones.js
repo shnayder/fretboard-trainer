@@ -26,7 +26,7 @@ function createNoteSemitonesMode() {
   // Build row definitions for the stats table
   function getTableRows() {
     return NOTES.map(note => ({
-      label: displayNotePair(note.displayName),
+      label: displayNote(note.name),
       sublabel: String(note.num),
       _colHeader: 'Note',
       fwdItemId: note.name + ':fwd',
@@ -60,7 +60,7 @@ function createNoteSemitonesMode() {
 
       if (currentItem.dir === 'fwd') {
         // Show note, answer is number 0-11
-        prompt.textContent = displayNotePair(currentItem.note.displayName) + ' = ?';
+        prompt.textContent = displayNote(pickRandomAccidental(currentItem.note.displayName)) + ' = ?';
         noteButtons.classList.add('answer-group-hidden');
         numButtons.classList.remove('answer-group-hidden');
       } else {
@@ -77,7 +77,7 @@ function createNoteSemitonesMode() {
         return { correct, correctAnswer: String(currentItem.note.num) };
       } else {
         const correct = noteMatchesInput(currentItem.note, input);
-        return { correct, correctAnswer: displayNotePair(currentItem.note.displayName) };
+        return { correct, correctAnswer: displayNote(pickRandomAccidental(currentItem.note.displayName)) };
       }
     },
 

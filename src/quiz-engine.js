@@ -599,6 +599,9 @@ export function createQuizEngine(mode, container) {
       els.countdownBar.classList.remove('expired');
       if (!isActive) els.countdownBar.style.width = '0%';
     }
+    if (els.countdownContainer && !isActive) {
+      els.countdownContainer.style.width = '';
+    }
     if (els.deadlineDisplay && !isActive) {
       els.deadlineDisplay.textContent = '';
     }

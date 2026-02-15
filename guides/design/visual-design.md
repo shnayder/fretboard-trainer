@@ -211,9 +211,10 @@ Groups:
 
 ### Top Bar Icons
 
-Hamburger (☰) and settings gear (⚙) must share the same `font-size` and
-`padding` so the top bar height stays constant regardless of which icons are
-visible. Both use `--text-xl` and `padding: var(--space-2) var(--space-3)`.
+Hamburger (☰) and settings gear (⚙) must share the same `font-size`,
+`padding`, and `min-width`/`min-height` so the top bar height stays constant
+regardless of which icons are visible. Both use `--text-xl`,
+`padding: var(--space-2) var(--space-3)`, and 44×44px minimum touch targets.
 When the gear hides during an active quiz, use `visibility: hidden` (not
 `display: none`) so it reserves space and prevents layout shift.
 

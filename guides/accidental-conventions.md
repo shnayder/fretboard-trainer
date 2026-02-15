@@ -35,8 +35,8 @@ When no harmonic, key, or directional context applies, randomly show either
 enharmonic spelling per question to train recognition of both. The user
 should be able to deal with either form.
 
-*Applies to:* Fretboard (answer feedback), Note ↔ Semitones (questions,
-correct answer feedback), Speed Tap (prompts).
+*Applies to:* Note ↔ Semitones (questions, correct answer feedback),
+Speed Tap (prompts).
 
 *Mechanism:* `pickRandomAccidental(displayName)` — 50/50 sharp or flat per
 question presentation.
@@ -64,7 +64,7 @@ accidentals for the standard 12-note chromatic set).
 
 | Mode | Rule(s) | Mechanism |
 |------|---------|-----------|
-| **Fretboard** | Random (rule 5) | `displayNote()` on canonical name; accepts both sharp and flat input |
+| **Fretboard** | Sharp default (rule 6) | `displayNote()` on canonical name; accepts both sharp and flat input |
 | **Note ↔ Semitones** | Random (rule 5) | `pickRandomAccidental()` in questions and correct answers; accepts both |
 | **Interval ↔ Semitones** | — (no notes involved) | N/A |
 | **Semitone Math** | Directional (rule 4) | `useFlats = (op === '-')` — sharps ascending, flats descending |

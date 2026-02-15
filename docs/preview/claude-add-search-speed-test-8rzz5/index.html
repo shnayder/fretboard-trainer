@@ -1206,7 +1206,7 @@ button {
   <div class="top-bar">
     <button class="hamburger" type="button" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="nav-drawer">☰</button>
     <h1 id="mode-title">Guitar Fretboard</h1>
-    <div class="version">v3.13</div>
+    <div class="version">v3.14</div>
     <button class="gear-btn" type="button" aria-label="Settings">⚙</button>
   </div>
 
@@ -7377,8 +7377,10 @@ function engineTimedOut(state, correctAnswer) {
 /**
  * Transition: enter calibration intro screen.
  * Shows explanation and a Start button; quiz controls are hidden.
+ * @param {EngineState} state
+ * @param {string} [hintOverride] - optional hint text (for search-mode calibration)
  */
-function engineCalibrationIntro(state) {
+function engineCalibrationIntro(state, hintOverride) {
   return {
     ...state,
     phase: 'calibration-intro',
@@ -7387,7 +7389,7 @@ function engineCalibrationIntro(state) {
     answersEnabled: false,
     feedbackText: 'Quick Speed Check',
     feedbackClass: 'feedback',
-    hintText: "We\u2019ll measure your tap speed to set personalized targets. Tap each highlighted button as fast as you can \u2014 10 taps total.",
+    hintText: hintOverride || "We\u2019ll measure your tap speed to set personalized targets. Tap each highlighted button as fast as you can \u2014 10 taps total.",
     timeDisplayText: '',
     calibrationBaseline: null,
   };
@@ -7396,14 +7398,16 @@ function engineCalibrationIntro(state) {
 /**
  * Transition: calibration trials are running.
  * Buttons enabled for tapping; trial counter shown in timeDisplay.
+ * @param {EngineState} state
+ * @param {string} [hintOverride] - optional hint text (for search-mode calibration)
  */
-function engineCalibrating(state) {
+function engineCalibrating(state, hintOverride) {
   return {
     ...state,
     phase: 'calibrating',
     answersEnabled: true,
     feedbackText: 'Speed check!',
-    hintText: 'Tap the highlighted button as fast as you can',
+    hintText: hintOverride || 'Tap the highlighted button as fast as you can',
   };
 }
 
@@ -7872,17 +7876,48 @@ function getKeyForButton(btn) {
 }
 
 /**
+ * Pick a random calibration button, weighted toward accidentals ~35% of the time.
+ * Shared helper for mode getCalibrationTrialConfig implementations.
+ *
+ * @param {Element[]} buttons - available answer buttons
+ * @param {Element|null} prevBtn - previous trial's button (to avoid repeats)
+ * @returns {Element}
+ */
+function pickCalibrationButton(buttons, prevBtn) {
+  const sharpBtns = buttons.filter(b => {
+    const note = b.dataset.note;
+    return note && note.includes('#');
+  });
+  const naturalBtns = buttons.filter(b => {
+    const note = b.dataset.note;
+    return note && !note.includes('#');
+  });
+
+  // ~35% chance of sharp if available
+  const useSharp = sharpBtns.length > 0 && Math.random() < 0.35;
+  const pool = useSharp ? sharpBtns : (naturalBtns.length > 0 ? naturalBtns : buttons);
+
+  let btn;
+  do {
+    btn = pool[Math.floor(Math.random() * pool.length)];
+  } while (btn === prevBtn && pool.length > 1);
+  return btn;
+}
+
+/**
  * Run a motor-baseline calibration sequence.
- * Highlights random buttons one at a time; user taps or types to respond.
+ * In highlight mode (no getTrialConfig): highlights a random button green.
+ * In search mode (getTrialConfig provided): shows a text prompt, user finds the button.
  *
  * @param {object}   opts
- * @param {Element[]} opts.buttons    - answer buttons to use for calibration
- * @param {object}   opts.els        - engine DOM elements (feedback, hint, timeDisplay)
- * @param {Element}  opts.container  - mode container element
- * @param {function} opts.onComplete - called with median time in ms
+ * @param {Element[]} opts.buttons       - answer buttons to use for calibration
+ * @param {object}   opts.els           - engine DOM elements (feedback, hint, timeDisplay)
+ * @param {Element}  opts.container     - mode container element
+ * @param {function} opts.onComplete    - called with median time in ms
+ * @param {function} [opts.getTrialConfig] - mode's getCalibrationTrialConfig(buttons, prevBtn)
  */
 function runCalibration(opts) {
-  const { buttons, els, container, onComplete } = opts;
+  const { buttons, els, container, onComplete, getTrialConfig } = opts;
   const TRIAL_COUNT = 10;
   const PAUSE_MS = 400;
 
@@ -7893,40 +7928,90 @@ function runCalibration(opts) {
 
   const times = [];
   let trialIndex = 0;
-  let targetBtn = null;
+  let targetBtn = null;        // current target (single-target or current in sequence)
   let trialStartTime = null;
-  let prevBtnIndex = -1;
+  let prevBtn = null;
   let canceled = false;
   let pendingTimeout = null;
 
+  // Search mode state
+  let trialConfig = null;      // current trial's config from getTrialConfig
+  let targetIndex = 0;         // index within trialConfig.targetButtons
+  let pressStartTime = null;   // time of last press (for per-press timing)
+
+  // Accidental key support for search mode
+  let pendingNote = null;
+  let pendingNoteTimeout = null;
+
+  function isSearchMode() {
+    return !!getTrialConfig;
+  }
+
   function startTrial() {
     if (canceled) return;
+
+    // For multi-target trials, count warmup by trial (not by press)
+    const warmupPresses = isSearchMode() ? 0 : WARMUP_TRIALS;
+
     if (trialIndex >= TRIAL_COUNT) {
       cleanup();
-      const median = computeMedian(times.slice(WARMUP_TRIALS));
+      // For search mode, warmup is counted differently: skip all presses
+      // from the first WARMUP_TRIALS trials
+      const median = isSearchMode()
+        ? computeMedian(times.slice(warmupPresses))
+        : computeMedian(times.slice(WARMUP_TRIALS));
       onComplete(median);
       return;
     }
 
-    // Pick random button (not same as previous)
-    let idx;
-    do {
-      idx = Math.floor(Math.random() * buttons.length);
-    } while (idx === prevBtnIndex && buttons.length > 1);
-    prevBtnIndex = idx;
+    if (isSearchMode()) {
+      trialConfig = getTrialConfig(buttons, prevBtn);
+      targetIndex = 0;
+      targetBtn = trialConfig.targetButtons[0];
+      pressStartTime = Date.now();
+      trialStartTime = Date.now();
 
-    targetBtn = buttons[idx];
-    targetBtn.classList.add('calibration-target');
-    trialStartTime = Date.now();
+      if (els.feedback) els.feedback.textContent = trialConfig.prompt;
+    } else {
+      // Highlight mode (speed tap fallback)
+      let idx;
+      let prevBtnIndex = prevBtn ? buttons.indexOf(prevBtn) : -1;
+      do {
+        idx = Math.floor(Math.random() * buttons.length);
+      } while (idx === prevBtnIndex && buttons.length > 1);
 
+      targetBtn = buttons[idx];
+      targetBtn.classList.add('calibration-target');
+      trialStartTime = Date.now();
+    }
+
+    prevBtn = targetBtn;
     if (els.timeDisplay) els.timeDisplay.textContent = (trialIndex + 1) + ' / ' + TRIAL_COUNT;
   }
 
-  function recordTrial() {
-    const elapsed = Date.now() - trialStartTime;
-    times.push(elapsed);
-    targetBtn.classList.remove('calibration-target');
+  function recordPress() {
+    const now = Date.now();
+    const elapsed = now - (isSearchMode() ? pressStartTime : trialStartTime);
+
+    // Skip warmup trials
+    if (trialIndex >= WARMUP_TRIALS) {
+      times.push(elapsed);
+    }
+
+    if (isSearchMode() && trialConfig && targetIndex < trialConfig.targetButtons.length - 1) {
+      // Multi-target: advance to next target in sequence
+      targetIndex++;
+      targetBtn = trialConfig.targetButtons[targetIndex];
+      pressStartTime = now;
+      return; // don't advance trial
+    }
+
+    // Trial complete
+    if (!isSearchMode() && targetBtn) {
+      targetBtn.classList.remove('calibration-target');
+    }
     targetBtn = null;
+    trialConfig = null;
     trialIndex++;
     pendingTimeout = setTimeout(startTrial, PAUSE_MS);
   }
@@ -7935,31 +8020,110 @@ function runCalibration(opts) {
     if (!targetBtn) return;
     const clicked = e.target.closest('.note-btn, .answer-btn');
     if (clicked === targetBtn) {
-      recordTrial();
+      clearPendingNote();
+      recordPress();
     }
+  }
+
+  function clearPendingNote() {
+    if (pendingNoteTimeout) clearTimeout(pendingNoteTimeout);
+    pendingNote = null;
+    pendingNoteTimeout = null;
+  }
+
+  function checkNoteMatch(noteName) {
+    if (!targetBtn) return false;
+    const targetNote = targetBtn.dataset.note;
+    return targetNote && targetNote.toUpperCase() === noteName.toUpperCase();
   }
 
   function handleCalibrationKey(e) {
     if (!targetBtn) return;
-    const expectedKey = getKeyForButton(targetBtn);
-    if (expectedKey && e.key.toUpperCase() === expectedKey) {
-      e.preventDefault();
-      recordTrial();
+
+    if (isSearchMode()) {
+      const key = e.key.toUpperCase();
+
+      // Handle # or b after a pending note letter
+      if (pendingNote) {
+        if (e.key === '#' || (e.shiftKey && e.key === '3')) {
+          e.preventDefault();
+          clearTimeout(pendingNoteTimeout);
+          const combined = pendingNote + '#';
+          pendingNote = null;
+          pendingNoteTimeout = null;
+          if (checkNoteMatch(combined)) recordPress();
+          return;
+        }
+        if (e.key === 'b' || e.key === 'B') {
+          // 'B' by itself could be the note B, but after a pending note it's a flat
+          if (pendingNote !== 'B') {
+            e.preventDefault();
+            clearTimeout(pendingNoteTimeout);
+            const combined = pendingNote + 'b';
+            pendingNote = null;
+            pendingNoteTimeout = null;
+            if (checkNoteMatch(combined)) recordPress();
+            return;
+          }
+        }
+      }
+
+      // Note letter
+      if ('CDEFGAB'.includes(key)) {
+        e.preventDefault();
+        clearPendingNote();
+
+        // Check if target is a natural — if so, submit immediately
+        const targetNote = targetBtn.dataset.note;
+        if (targetNote && !targetNote.includes('#')) {
+          if (checkNoteMatch(key)) recordPress();
+        } else {
+          // Target is an accidental — wait for # or b
+          pendingNote = key;
+          pendingNoteTimeout = setTimeout(() => {
+            // Window expired, check natural
+            if (checkNoteMatch(pendingNote)) recordPress();
+            pendingNote = null;
+            pendingNoteTimeout = null;
+          }, 400);
+        }
+        return;
+      }
+
+      // For interval buttons, check data-interval match
+      const interval = targetBtn.dataset.interval;
+      if (interval) {
+        // Single-digit shortcuts only (no multi-char interval names)
+        const num = parseInt(e.key, 10);
+        if (!isNaN(num) && String(num) === interval) {
+          e.preventDefault();
+          recordPress();
+        }
+      }
+    } else {
+      // Highlight mode: single-key match
+      const expectedKey = getKeyForButton(targetBtn);
+      if (expectedKey && e.key.toUpperCase() === expectedKey) {
+        e.preventDefault();
+        recordPress();
+      }
     }
   }
 
   function cleanup() {
     canceled = true;
+    clearPendingNote();
     if (pendingTimeout !== null) {
       clearTimeout(pendingTimeout);
       pendingTimeout = null;
     }
     container.removeEventListener('click', handleCalibrationClick);
     document.removeEventListener('keydown', handleCalibrationKey);
-    if (targetBtn) {
+    if (targetBtn && !isSearchMode()) {
       targetBtn.classList.remove('calibration-target');
-      targetBtn = null;
     }
+    targetBtn = null;
+    trialConfig = null;
   }
 
   container.addEventListener('click', handleCalibrationClick);
@@ -7984,6 +8148,8 @@ function runCalibration(opts) {
  *   mode.onStop()     - Called when quiz stops (optional)
  *   mode.handleKey(e, state) - Mode-specific key handling, return true if handled (optional)
  *   mode.getCalibrationButtons() - Returns array of DOM elements for calibration (optional)
+ *   mode.getCalibrationTrialConfig(buttons, prevBtn) - Returns { prompt, targetButtons } for search calibration (optional)
+ *   mode.calibrationIntroHint - Custom intro hint text (optional, e.g. for chord spelling)
  *
  * @param {HTMLElement} container - Root element containing quiz DOM elements.
  *   Expected children (found by class):
@@ -8355,11 +8521,32 @@ function createQuizEngine(mode, container) {
   }
 
   /**
+   * Determine if the mode uses search-based calibration (text prompt)
+   * vs highlight-based (speed tap fallback).
+   */
+  function hasSearchCalibration() {
+    return typeof mode.getCalibrationTrialConfig === 'function';
+  }
+
+  function getCalibrationIntroHint() {
+    if (mode.calibrationIntroHint) return mode.calibrationIntroHint;
+    if (hasSearchCalibration()) {
+      return "We\u2019ll measure your response speed to set personalized targets. Press the button shown in the prompt \u2014 10 rounds total.";
+    }
+    return undefined; // use default (highlight mode)
+  }
+
+  function getCalibrationTrialHint() {
+    if (hasSearchCalibration()) return 'Find and press the button';
+    return undefined; // use default (highlight mode)
+  }
+
+  /**
    * Enter the calibration intro screen.
    */
   function startCalibration() {
     if (mode.onStart) mode.onStart();
-    state = engineCalibrationIntro(state);
+    state = engineCalibrationIntro(state, getCalibrationIntroHint());
     render();
   }
 
@@ -8373,13 +8560,18 @@ function createQuizEngine(mode, container) {
       return;
     }
 
-    state = engineCalibrating(state);
+    state = engineCalibrating(state, getCalibrationTrialHint());
     render();
+
+    const getTrialConfig = hasSearchCalibration()
+      ? (btns, prevBtn) => mode.getCalibrationTrialConfig(btns, prevBtn)
+      : undefined;
 
     calibrationCleanup = runCalibration({
       buttons,
       els,
       container,
+      getTrialConfig,
       onComplete: (median) => {
         calibrationCleanup = null;
         if (!Number.isFinite(median) || median <= 0) {
@@ -9269,6 +9461,11 @@ function createFrettedInstrumentMode(instrument) {
     getCalibrationButtons() {
       return Array.from(container.querySelectorAll('.note-btn:not(.hidden)'));
     },
+
+    getCalibrationTrialConfig(buttons, prevBtn) {
+      const btn = pickCalibrationButton(buttons, prevBtn);
+      return { prompt: 'Press ' + btn.textContent, targetButtons: [btn] };
+    },
   };
 
   // Create engine
@@ -9767,6 +9964,11 @@ function createNoteSemitonesMode() {
     getCalibrationButtons() {
       return Array.from(container.querySelectorAll('.answer-btn-note'));
     },
+
+    getCalibrationTrialConfig(buttons, prevBtn) {
+      const btn = pickCalibrationButton(buttons, prevBtn);
+      return { prompt: 'Press ' + btn.textContent, targetButtons: [btn] };
+    },
   };
 
   let pendingDigit = null;
@@ -9952,6 +10154,15 @@ function createIntervalSemitonesMode() {
 
     getCalibrationButtons() {
       return Array.from(container.querySelectorAll('.answer-btn-interval'));
+    },
+
+    getCalibrationTrialConfig(buttons, prevBtn) {
+      // Uniform random — no accidental/natural distinction for intervals
+      let btn;
+      do {
+        btn = buttons[Math.floor(Math.random() * buttons.length)];
+      } while (btn === prevBtn && buttons.length > 1);
+      return { prompt: 'Press ' + btn.textContent, targetButtons: [btn] };
     },
   };
 
@@ -10193,6 +10404,11 @@ function createSemitoneMathMode() {
 
     getCalibrationButtons() {
       return Array.from(container.querySelectorAll('.answer-btn-note'));
+    },
+
+    getCalibrationTrialConfig(buttons, prevBtn) {
+      const btn = pickCalibrationButton(buttons, prevBtn);
+      return { prompt: 'Press ' + btn.textContent, targetButtons: [btn] };
     },
   };
 
@@ -10445,6 +10661,11 @@ function createIntervalMathMode() {
 
     getCalibrationButtons() {
       return Array.from(container.querySelectorAll('.answer-btn-note'));
+    },
+
+    getCalibrationTrialConfig(buttons, prevBtn) {
+      const btn = pickCalibrationButton(buttons, prevBtn);
+      return { prompt: 'Press ' + btn.textContent, targetButtons: [btn] };
     },
   };
 
@@ -10727,6 +10948,11 @@ function createKeySignaturesMode() {
     getCalibrationButtons() {
       return Array.from(container.querySelectorAll('.answer-btn-note'));
     },
+
+    getCalibrationTrialConfig(buttons, prevBtn) {
+      const btn = pickCalibrationButton(buttons, prevBtn);
+      return { prompt: 'Press ' + btn.textContent, targetButtons: [btn] };
+    },
   };
 
   const engine = createQuizEngine(mode, container);
@@ -10998,6 +11224,11 @@ function createScaleDegreesMode() {
     getCalibrationButtons() {
       return Array.from(container.querySelectorAll('.answer-btn-note'));
     },
+
+    getCalibrationTrialConfig(buttons, prevBtn) {
+      const btn = pickCalibrationButton(buttons, prevBtn);
+      return { prompt: 'Press ' + btn.textContent, targetButtons: [btn] };
+    },
   };
 
   const engine = createQuizEngine(mode, container);
@@ -11267,6 +11498,11 @@ function createDiatonicChordsMode() {
 
     getCalibrationButtons() {
       return Array.from(container.querySelectorAll('.answer-btn-note'));
+    },
+
+    getCalibrationTrialConfig(buttons, prevBtn) {
+      const btn = pickCalibrationButton(buttons, prevBtn);
+      return { prompt: 'Press ' + btn.textContent, targetButtons: [btn] };
     },
   };
 
@@ -11564,6 +11800,22 @@ function createChordSpellingMode() {
     getCalibrationButtons() {
       return Array.from(container.querySelectorAll('.answer-btn-note'));
     },
+
+    getCalibrationTrialConfig(buttons, prevBtn) {
+      // Multi-press: pick 2–4 random note buttons
+      const count = 2 + Math.floor(Math.random() * 3); // 2, 3, or 4
+      const targets = [];
+      let prev = prevBtn;
+      for (let i = 0; i < count; i++) {
+        const btn = pickCalibrationButton(buttons, prev);
+        targets.push(btn);
+        prev = btn;
+      }
+      const labels = targets.map(b => b.textContent);
+      return { prompt: 'Press ' + labels.join(' '), targetButtons: targets };
+    },
+
+    calibrationIntroHint: "We\u2019ll measure your response speed to set personalized targets. Press the notes shown in the prompt, in order \u2014 10 rounds total.",
   };
 
   const engine = createQuizEngine(mode, container);

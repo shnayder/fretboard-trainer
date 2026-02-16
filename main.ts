@@ -6,6 +6,7 @@ import {
   keysigAnswerButtons,
   degreeAnswerButtons,
   numeralAnswerButtons,
+  quizPrompt,
   countdownAndPrompt,
   feedbackBlock,
   modeScreen,
@@ -125,7 +126,7 @@ async function buildHTML(): Promise<string> {
   <div class="top-bar">
     <button class="hamburger" type="button" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="nav-drawer">\u2630</button>
     <h1 id="mode-title">Guitar Fretboard</h1>
-    <div class="version">v4.2</div>
+    <div class="version">v4.3</div>
     <button class="gear-btn" type="button" aria-label="Settings">\u2699</button>
   </div>
 
@@ -137,7 +138,8 @@ ${modeScreen("fretboard", {
           Natural only
         </label>`,
   beforeQuizArea: fretboardSVG({ id: "fretboard", stringCount: 6, fretCount: 13, fretMarkers: [3, 5, 7, 9, 12] }),
-  quizAreaContent: `${pianoNoteButtons()}
+  quizAreaContent: `${quizPrompt()}
+      ${pianoNoteButtons()}
       ${feedbackBlock()}`,
 })}
 
@@ -149,7 +151,8 @@ ${modeScreen("ukulele", {
           Natural only
         </label>`,
   beforeQuizArea: fretboardSVG({ id: "ukulele-fretboard", stringCount: 4, fretCount: 13, fretMarkers: [3, 5, 7, 10, 12] }),
-  quizAreaContent: `${pianoNoteButtons()}
+  quizAreaContent: `${quizPrompt()}
+      ${pianoNoteButtons()}
       ${feedbackBlock()}`,
 })}
 

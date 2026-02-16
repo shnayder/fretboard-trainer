@@ -90,7 +90,7 @@ scaffold:
 
 In both `main.ts` and `build.ts`, remove `quizPrompt()` /
 `countdownAndPrompt()` and `feedbackBlock()` from every mode's
-`quizAreaContent`. All 10 modes affected:
+`quizAreaContent`. All 11 modes affected:
 
 | Mode | Remove from quizAreaContent |
 |------|---------------------------|

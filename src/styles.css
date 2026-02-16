@@ -345,12 +345,16 @@ body {
 .phase-round-complete .quiz-config { display: none; }
 
 /* Hide tabs and tab content during non-idle phases */
+/* .tab-content.active needs explicit override (higher specificity than .tab-content.active display:block) */
 .phase-active .mode-tabs,
 .phase-active .tab-content,
+.phase-active .tab-content.active,
 .phase-calibration .mode-tabs,
 .phase-calibration .tab-content,
+.phase-calibration .tab-content.active,
 .phase-round-complete .mode-tabs,
-.phase-round-complete .tab-content { display: none; }
+.phase-round-complete .tab-content,
+.phase-round-complete .tab-content.active { display: none; }
 
 /* Element-level visibility (replaces inline style="display: none;") */
 .mastery-message { display: none; }
@@ -361,6 +365,25 @@ body {
 .phase-round-complete .round-complete { display: block; }
 .stats-container.stats-hidden { display: none; }
 .fretboard-wrapper.fretboard-hidden { display: none; }
+
+/* --- Fretboard mode layout: flex ordering so tabs appear before fretboard --- */
+#mode-fretboard.mode-active,
+#mode-ukulele.mode-active {
+  display: flex;
+  flex-direction: column;
+}
+/* Default high order for non-tab children (quiz-session, quiz-area) */
+#mode-fretboard > *,
+#mode-ukulele > * { order: 10; }
+/* Tabs first, then practice content, then fretboard, then progress content */
+#mode-fretboard > .mode-tabs,
+#mode-ukulele > .mode-tabs { order: 1; }
+#mode-fretboard > .tab-practice,
+#mode-ukulele > .tab-practice { order: 2; }
+#mode-fretboard > .fretboard-wrapper,
+#mode-ukulele > .fretboard-wrapper { order: 3; }
+#mode-fretboard > .tab-progress,
+#mode-ukulele > .tab-progress { order: 4; }
 
 /* --- Mode tabs (Practice / Progress) --- */
 .mode-tabs {

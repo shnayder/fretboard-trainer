@@ -122,6 +122,8 @@
         refreshNoteButtonLabels(el);
         refreshVisibleStats();
       });
+      guitar.onNotationChange();
+      ukulele.onNotationChange();
     }
   });
 

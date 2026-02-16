@@ -474,6 +474,10 @@ function createFrettedInstrumentMode(instrument) {
       engine.detach();
       noteKeyHandler.reset();
     },
+    onNotationChange() {
+      if (!container.classList.contains('mode-active')) return;
+      renderPracticeSummary();
+    },
   };
 }
 

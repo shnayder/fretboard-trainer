@@ -480,16 +480,8 @@ function runCalibration(opts) {
         return;
       }
 
-      // For interval buttons, check data-interval match
-      const interval = targetBtn.dataset.interval;
-      if (interval) {
-        // Single-digit shortcuts only (no multi-char interval names)
-        const num = parseInt(e.key, 10);
-        if (!isNaN(num) && String(num) === interval) {
-          e.preventDefault();
-          recordPress();
-        }
-      }
+      // Interval buttons (data-interval="P5" etc.) have no keyboard
+      // shortcut during calibration — users tap/click them instead.
     } else {
       // Highlight mode: single-key match
       const expectedKey = getKeyForButton(targetBtn);

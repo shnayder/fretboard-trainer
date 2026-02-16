@@ -15,7 +15,8 @@ import {
   numeralAnswerButtons,
   modeScreen,
   fretboardSVG,
-  stringToggles,
+  tabbedIdleHTML,
+  fretboardIdleHTML,
 } from "./src/html-helpers.ts";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -91,38 +92,30 @@ const html = `<!DOCTYPE html>
   <div class="top-bar">
     <button class="hamburger" type="button" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="nav-drawer">\u2630</button>
     <h1 id="mode-title">Guitar Fretboard</h1>
-    <div class="version">v4.4</div>
+    <div class="version">v4.8</div>
     <button class="gear-btn" type="button" aria-label="Settings">\u2699</button>
   </div>
 
   <!-- Guitar Fretboard mode -->
 ${modeScreen("fretboard", {
-  settingsHTML: `${stringToggles(['e', 'B', 'G', 'D', 'A', 'E'], 5)}
-        <label class="setting-group">
-          <input type="checkbox" id="fretboard-naturals-only" checked>
-          Natural only
-        </label>`,
-  beforeQuizArea: fretboardSVG({ id: "fretboard", stringCount: 6, fretCount: 13, fretMarkers: [3, 5, 7, 9, 12] }),
-  quizAreaContent: `${pianoNoteButtons()}`,
+  idleHTML: fretboardIdleHTML({ stringNames: ['e', 'B', 'G', 'D', 'A', 'E'], defaultString: 5, id: 'fretboard', fretboardSVG: fretboardSVG({ stringCount: 6, fretCount: 13, fretMarkers: [3, 5, 7, 9, 12] }) }),
+  quizAreaContent: `${fretboardSVG({ stringCount: 6, fretCount: 13, fretMarkers: [3, 5, 7, 9, 12] })}
+      ${pianoNoteButtons()}`,
 })}
 
   <!-- Ukulele Fretboard mode -->
 ${modeScreen("ukulele", {
-  settingsHTML: `${stringToggles(['A', 'E', 'C', 'G'], 2)}
-        <label class="setting-group">
-          <input type="checkbox" id="ukulele-naturals-only" checked>
-          Natural only
-        </label>`,
-  beforeQuizArea: fretboardSVG({ id: "ukulele-fretboard", stringCount: 4, fretCount: 13, fretMarkers: [3, 5, 7, 10, 12] }),
-  quizAreaContent: `${pianoNoteButtons()}`,
+  idleHTML: fretboardIdleHTML({ stringNames: ['A', 'E', 'C', 'G'], defaultString: 2, id: 'ukulele', fretboardSVG: fretboardSVG({ stringCount: 4, fretCount: 13, fretMarkers: [3, 5, 7, 10, 12] }) }),
+  quizAreaContent: `${fretboardSVG({ stringCount: 4, fretCount: 13, fretMarkers: [3, 5, 7, 10, 12] })}
+      ${pianoNoteButtons()}`,
 })}
 
   <!-- Speed Tap mode -->
 ${modeScreen("speedTap", {
-  settingsHTML: `<label class="setting-group">
-          <input type="checkbox" id="speed-tap-naturals-only" checked>
-          Natural only
-        </label>`,
+  idleHTML: tabbedIdleHTML({ practiceScope: `<label class="setting-group">
+            <input type="checkbox" id="speed-tap-naturals-only" checked>
+            Natural only
+          </label>` }),
   quizAreaContent: `<div class="speed-tap-status">
         <span class="speed-tap-progress"></span>
       </div>
@@ -132,52 +125,54 @@ ${modeScreen("speedTap", {
 
   <!-- Note Semitones mode -->
 ${modeScreen("noteSemitones", {
+  idleHTML: tabbedIdleHTML({}),
   quizAreaContent: `${noteAnswerButtons()}
       ${numberButtons(0, 11)}`,
 })}
 
   <!-- Interval Semitones mode -->
 ${modeScreen("intervalSemitones", {
+  idleHTML: tabbedIdleHTML({}),
   quizAreaContent: `${intervalAnswerButtons()}
       ${numberButtons(1, 12)}`,
 })}
 
   <!-- Semitone Math mode -->
 ${modeScreen("semitoneMath", {
-  settingsHTML: DISTANCE_TOGGLES,
+  idleHTML: tabbedIdleHTML({ practiceScope: DISTANCE_TOGGLES }),
   quizAreaContent: `${noteAnswerButtons()}`,
 })}
 
   <!-- Interval Math mode -->
 ${modeScreen("intervalMath", {
-  settingsHTML: DISTANCE_TOGGLES,
+  idleHTML: tabbedIdleHTML({ practiceScope: DISTANCE_TOGGLES }),
   quizAreaContent: `${noteAnswerButtons()}`,
 })}
 
   <!-- Key Signatures mode -->
 ${modeScreen("keySignatures", {
-  settingsHTML: DISTANCE_TOGGLES,
+  idleHTML: tabbedIdleHTML({ practiceScope: DISTANCE_TOGGLES }),
   quizAreaContent: `${keysigAnswerButtons()}
       ${noteAnswerButtons({ hidden: true })}`,
 })}
 
   <!-- Scale Degrees mode -->
 ${modeScreen("scaleDegrees", {
-  settingsHTML: DISTANCE_TOGGLES,
+  idleHTML: tabbedIdleHTML({ practiceScope: DISTANCE_TOGGLES }),
   quizAreaContent: `${noteAnswerButtons()}
       ${degreeAnswerButtons({ hidden: true })}`,
 })}
 
   <!-- Diatonic Chords mode -->
 ${modeScreen("diatonicChords", {
-  settingsHTML: DISTANCE_TOGGLES,
+  idleHTML: tabbedIdleHTML({ practiceScope: DISTANCE_TOGGLES }),
   quizAreaContent: `${noteAnswerButtons()}
       ${numeralAnswerButtons({ hidden: true })}`,
 })}
 
   <!-- Chord Spelling mode -->
 ${modeScreen("chordSpelling", {
-  settingsHTML: DISTANCE_TOGGLES,
+  idleHTML: tabbedIdleHTML({ practiceScope: DISTANCE_TOGGLES }),
   quizAreaContent: `<div class="chord-slots"></div>
       ${noteAnswerButtons()}`,
 })}

@@ -31,17 +31,24 @@ function createFrettedInstrumentMode(instrument) {
   const COLOR_SUCCESS = _cs.getPropertyValue('--color-success').trim();
   const COLOR_ERROR = _cs.getPropertyValue('--color-error').trim();
 
-  // --- SVG helpers ---
+  // --- Tab state ---
+  let activeTab = 'practice';
 
-  function highlightCircle(string, fret, color) {
-    const circle = container.querySelector(
+  // --- Two fretboard instances: progress (heatmap) and quiz (highlighting) ---
+  const progressFretboard = container.querySelector('.tab-progress .fretboard-wrapper');
+  const quizFretboard = container.querySelector('.quiz-area .fretboard-wrapper');
+
+  // --- SVG helpers (scoped to a specific fretboard instance) ---
+
+  function highlightCircle(root, string, fret, color) {
+    const circle = root.querySelector(
       `circle[data-string="${string}"][data-fret="${fret}"]`
     );
     if (circle) circle.style.fill = color;
   }
 
-  function showNoteText(string, fret, bgColor) {
-    const text = container.querySelector(
+  function showNoteText(root, string, fret, bgColor) {
+    const text = root.querySelector(
       `text[data-string="${string}"][data-fret="${fret}"]`
     );
     if (text) {
@@ -50,9 +57,9 @@ function createFrettedInstrumentMode(instrument) {
     }
   }
 
-  function clearAll() {
-    container.querySelectorAll('.note-circle').forEach(c => c.style.fill = '');
-    container.querySelectorAll('.note-text').forEach(t => { t.textContent = ''; t.style.fill = ''; });
+  function clearAll(root) {
+    root.querySelectorAll('.note-circle').forEach(c => c.style.fill = '');
+    root.querySelectorAll('.note-text').forEach(t => { t.textContent = ''; t.style.fill = ''; });
   }
 
   // --- String toggles ---
@@ -83,7 +90,31 @@ function createFrettedInstrumentMode(instrument) {
     refreshUI();
   }
 
-  // --- Heatmap ---
+  // --- Tab switching ---
+
+  function switchTab(tabName) {
+    activeTab = tabName;
+    container.querySelectorAll('.mode-tab').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.tab === tabName);
+    });
+    container.querySelectorAll('.tab-content').forEach(el => {
+      var isPractice = el.classList.contains('tab-practice');
+      var isProgress = el.classList.contains('tab-progress');
+      if (tabName === 'practice') {
+        el.classList.toggle('active', isPractice);
+      } else {
+        el.classList.toggle('active', isProgress);
+      }
+    });
+    if (tabName === 'progress') {
+      statsControls.show(statsControls.mode || 'retention');
+    } else {
+      clearAll(progressFretboard);
+      renderPracticeSummary();
+    }
+  }
+
+  // --- Heatmap (renders on the progress fretboard) ---
 
   const statsControls = createStatsControls(container, (mode, el) => {
     el.innerHTML = buildStatsLegend(mode, engine.baseline);
@@ -92,8 +123,8 @@ function createFrettedInstrumentMode(instrument) {
         for (let f = 0; f < instrument.fretCount; f++) {
           const auto = engine.selector.getAutomaticity(`${s}-${f}`);
           const color = getAutomaticityColor(auto);
-          highlightCircle(s, f, color);
-          showNoteText(s, f, color);
+          highlightCircle(progressFretboard, s, f, color);
+          showNoteText(progressFretboard, s, f, color);
         }
       }
     } else {
@@ -102,8 +133,8 @@ function createFrettedInstrumentMode(instrument) {
           const stats = engine.selector.getStats(`${s}-${f}`);
           const ewma = stats ? stats.ewma : null;
           const color = getSpeedHeatmapColor(ewma, engine.baseline);
-          highlightCircle(s, f, color);
-          showNoteText(s, f, color);
+          highlightCircle(progressFretboard, s, f, color);
+          showNoteText(progressFretboard, s, f, color);
         }
       }
     }
@@ -111,7 +142,7 @@ function createFrettedInstrumentMode(instrument) {
 
   function hideHeatmap() {
     statsControls.hide();
-    clearAll();
+    clearAll(progressFretboard);
   }
 
   // --- Stats ---
@@ -123,22 +154,22 @@ function createFrettedInstrumentMode(instrument) {
 
   // --- Recommendations ---
 
-  function updateRecommendations(selector) {
-    const result = computeRecommendations(
-      selector, allStrings,
+  function getRecommendationResult() {
+    return computeRecommendations(
+      engine.selector, allStrings,
       (s) => fb.getItemIdsForString(s, naturalsOnly),
       DEFAULT_CONFIG, {}
     );
+  }
+
+  function updateRecommendations(selector) {
+    const result = getRecommendationResult();
     recommendedStrings = result.recommended;
     updateStringToggles();
   }
 
   function applyRecommendations(selector) {
-    const result = computeRecommendations(
-      selector, allStrings,
-      (s) => fb.getItemIdsForString(s, naturalsOnly),
-      DEFAULT_CONFIG, {}
-    );
+    const result = getRecommendationResult();
     recommendedStrings = result.recommended;
     if (result.enabled) {
       enabledStrings = result.enabled;
@@ -150,6 +181,101 @@ function createFrettedInstrumentMode(instrument) {
   function refreshUI() {
     updateRecommendations(engine.selector);
     engine.updateIdleMessage();
+    renderPracticeSummary();
+    renderSessionSummary();
+  }
+
+  // --- Practice summary rendering ---
+
+  function computeStringAvgAutomaticity(stringIndex) {
+    const items = fb.getItemIdsForString(stringIndex, naturalsOnly);
+    var sum = 0, count = 0;
+    for (var i = 0; i < items.length; i++) {
+      var auto = engine.selector.getAutomaticity(items[i]);
+      if (auto !== null) { sum += auto; count++; }
+    }
+    return count > 0 ? sum / count : null;
+  }
+
+  function renderPracticeSummary() {
+    var statusLabel = container.querySelector('.practice-status-label');
+    var statusDetail = container.querySelector('.practice-status-detail');
+    var recText = container.querySelector('.practice-rec-text');
+    var recBtn = container.querySelector('.practice-rec-btn');
+    var chipsEl = container.querySelector('.practice-group-chips');
+    if (!statusLabel) return;
+
+    // Overall stats
+    var items = mode.getEnabledItems();
+    var threshold = engine.selector.getConfig().automaticityThreshold;
+    var fluent = 0, seen = 0;
+    for (var i = 0; i < items.length; i++) {
+      var auto = engine.selector.getAutomaticity(items[i]);
+      if (auto !== null) {
+        seen++;
+        if (auto > threshold) fluent++;
+      }
+    }
+
+    // All items (not just enabled)
+    var allItems = fb.getFretboardEnabledItems(new Set(allStrings), naturalsOnly);
+    var allFluent = 0;
+    for (var j = 0; j < allItems.length; j++) {
+      var a2 = engine.selector.getAutomaticity(allItems[j]);
+      if (a2 !== null && a2 > threshold) allFluent++;
+    }
+
+    if (seen === 0) {
+      statusLabel.textContent = 'Ready to start';
+      statusDetail.textContent = allItems.length + ' positions to learn';
+    } else {
+      var pct = allItems.length > 0 ? Math.round((allFluent / allItems.length) * 100) : 0;
+      var label;
+      if (pct >= 80) label = 'Strong';
+      else if (pct >= 50) label = 'Solid';
+      else if (pct >= 20) label = 'Building';
+      else label = 'Getting started';
+      statusLabel.textContent = 'Overall: ' + label;
+      statusDetail.textContent = allFluent + ' of ' + allItems.length + ' positions fluent';
+    }
+
+    // Recommendation
+    var result = getRecommendationResult();
+    if (result.recommended.size > 0) {
+      var names = [];
+      var sorted = Array.from(result.recommended).sort(function(a, b) { return b - a; });
+      for (var k = 0; k < sorted.length; k++) {
+        names.push(displayNote(instrument.stringNames[sorted[k]]));
+      }
+      recText.textContent = 'Recommended: ' + names.join(', ') + ' string' + (names.length > 1 ? 's' : '');
+      recBtn.classList.remove('hidden');
+    } else {
+      recText.textContent = '';
+      recBtn.classList.add('hidden');
+    }
+
+    // String chips
+    var chipHTML = '';
+    for (var s = 0; s < allStrings.length; s++) {
+      var avg = computeStringAvgAutomaticity(s);
+      var color = getAutomaticityColor(avg);
+      var textColor = heatmapNeedsLightText(color) ? 'white' : '';
+      var name = displayNote(instrument.stringNames[s]);
+      chipHTML += '<div class="string-chip" style="background:' + color;
+      if (textColor) chipHTML += ';color:' + textColor;
+      chipHTML += '">' + name + '</div>';
+    }
+    chipsEl.innerHTML = chipHTML;
+  }
+
+  // --- Session summary ---
+
+  function renderSessionSummary() {
+    var el = container.querySelector('.session-summary-text');
+    if (!el) return;
+    var count = enabledStrings.size;
+    var noteType = naturalsOnly ? 'natural notes' : 'all notes';
+    el.textContent = count + ' string' + (count !== 1 ? 's' : '') + ' \u00B7 ' + noteType + ' \u00B7 60s';
   }
 
   // --- Accidental buttons ---
@@ -185,12 +311,12 @@ function createFrettedInstrumentMode(instrument) {
     },
 
     presentQuestion(itemId) {
-      clearAll();
+      clearAll(quizFretboard);
       const q = fb.parseFretboardItem(itemId);
       currentString = q.currentString;
       currentFret = q.currentFret;
       currentNote = q.currentNote;
-      highlightCircle(q.currentString, q.currentFret, COLOR_HIGHLIGHT);
+      highlightCircle(quizFretboard, q.currentString, q.currentFret, COLOR_HIGHLIGHT);
     },
 
     checkAnswer(itemId, input) {
@@ -199,11 +325,11 @@ function createFrettedInstrumentMode(instrument) {
 
     onAnswer(itemId, result, responseTime) {
       if (result.correct) {
-        highlightCircle(currentString, currentFret, COLOR_SUCCESS);
+        highlightCircle(quizFretboard, currentString, currentFret, COLOR_SUCCESS);
       } else {
-        highlightCircle(currentString, currentFret, COLOR_ERROR);
+        highlightCircle(quizFretboard, currentString, currentFret, COLOR_ERROR);
       }
-      showNoteText(currentString, currentFret);
+      showNoteText(quizFretboard, currentString, currentFret);
     },
 
     onStart() {
@@ -214,9 +340,11 @@ function createFrettedInstrumentMode(instrument) {
 
     onStop() {
       noteKeyHandler.reset();
-      clearAll();
+      clearAll(quizFretboard);
       updateStats(engine.selector);
-      statsControls.show('retention');
+      if (activeTab === 'progress') {
+        statsControls.show('retention');
+      }
       refreshUI();
     },
 
@@ -257,12 +385,21 @@ function createFrettedInstrumentMode(instrument) {
   function init() {
     loadEnabledStrings();
 
+    // Tab switching
+    container.querySelectorAll('.mode-tab').forEach(btn => {
+      btn.addEventListener('click', () => {
+        switchTab(btn.dataset.tab);
+      });
+    });
+
+    // String toggles
     container.querySelectorAll('.string-toggle').forEach(btn => {
       btn.addEventListener('click', () => {
         toggleString(parseInt(btn.dataset.string));
       });
     });
 
+    // Note buttons (for quiz)
     container.querySelectorAll('.note-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         if (!engine.isActive || engine.isAnswered) return;
@@ -270,6 +407,7 @@ function createFrettedInstrumentMode(instrument) {
       });
     });
 
+    // Naturals-only checkbox
     const naturalsCheckbox = container.querySelector('#' + instrument.id + '-naturals-only');
     if (naturalsCheckbox) {
       naturalsCheckbox.addEventListener('change', (e) => {
@@ -279,12 +417,23 @@ function createFrettedInstrumentMode(instrument) {
       });
     }
 
+    // Start button
     container.querySelector('.start-btn').addEventListener('click', () => engine.start());
+
+    // Use recommendation button
+    var recBtn = container.querySelector('.practice-rec-btn');
+    if (recBtn) {
+      recBtn.addEventListener('click', () => {
+        applyRecommendations(engine.selector);
+        refreshUI();
+      });
+    }
 
     applyRecommendations(engine.selector);
     updateAccidentalButtons();
     updateStats(engine.selector);
-    statsControls.show('retention');
+    renderPracticeSummary();
+    renderSessionSummary();
   }
 
   return {
@@ -301,6 +450,13 @@ function createFrettedInstrumentMode(instrument) {
       if (engine.isRunning) engine.stop();
       engine.detach();
       noteKeyHandler.reset();
+    },
+    onNotationChange() {
+      if (!container.classList.contains('mode-active')) return;
+      renderPracticeSummary();
+      if (activeTab === 'progress' && statsControls.mode) {
+        statsControls.show(statsControls.mode);
+      }
     },
   };
 }

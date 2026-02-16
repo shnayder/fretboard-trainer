@@ -158,6 +158,7 @@ export function fretboardIdleHTML(config: {
   stringNames: string[];
   defaultString: number;
   id: string;
+  fretboardSVG: string;
 }): string {
   const togglesHTML = stringToggles(config.stringNames, config.defaultString);
   return `<div class="mode-tabs">
@@ -197,6 +198,7 @@ export function fretboardIdleHTML(config: {
       </details>
     </div>
     <div class="tab-content tab-progress">
+      ${config.fretboardSVG}
       <div class="stats-container"></div>
       <div class="stats-controls">
         <div class="stats-toggle"><button class="stats-toggle-btn active" data-mode="retention">Recall</button><button class="stats-toggle-btn" data-mode="speed">Speed</button></div>
@@ -214,8 +216,6 @@ interface ModeScreenOptions {
   settingsHTML?: string;
   /** HTML for inside the quiz-area div. */
   quizAreaContent: string;
-  /** HTML inserted before stats-section (e.g. fretboard-wrapper). */
-  beforeQuizArea?: string;
   /**
    * Custom idle-phase HTML replacing the standard stats-section + quiz-config.
    * When provided, the mode owns its own idle layout (e.g. Practice/Progress
@@ -230,15 +230,12 @@ interface ModeScreenOptions {
  * Each mode only specifies what's unique: settings, quiz-area content, etc.
  *
  * DOM grouping:
- *   [beforeQuizArea] — mode-specific content above stats (e.g. fretboard SVG)
  *   stats-section    — heatmap + recall/speed toggle (idle)
  *   quiz-config      — settings + mastery + start/recalibrate (idle)
  *   quiz-session     — close button + counters + progress (active)
  *   quiz-area        — question + answer buttons + feedback (active)
  */
 export function modeScreen(id: string, opts: ModeScreenOptions): string {
-  const beforeQuizArea = opts.beforeQuizArea ? "\n    " + opts.beforeQuizArea : "";
-
   // Idle content: custom (tab-based) or standard scaffold
   let idleContent: string;
   if (opts.idleHTML) {
@@ -265,7 +262,7 @@ export function modeScreen(id: string, opts: ModeScreenOptions): string {
     </div>`;
   }
 
-  return `  <div class="mode-screen phase-idle" id="mode-${id}">${beforeQuizArea}${idleContent}
+  return `  <div class="mode-screen phase-idle" id="mode-${id}">${idleContent}
     <div class="quiz-session">
       <div class="quiz-header">
         <span class="quiz-header-title"></span>

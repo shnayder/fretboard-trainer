@@ -34,17 +34,21 @@ function createFrettedInstrumentMode(instrument) {
   // --- Tab state ---
   let activeTab = 'practice';
 
-  // --- SVG helpers ---
+  // --- Two fretboard instances: progress (heatmap) and quiz (highlighting) ---
+  const progressFretboard = container.querySelector('.tab-progress .fretboard-wrapper');
+  const quizFretboard = container.querySelector('.quiz-area .fretboard-wrapper');
 
-  function highlightCircle(string, fret, color) {
-    const circle = container.querySelector(
+  // --- SVG helpers (scoped to a specific fretboard instance) ---
+
+  function highlightCircle(root, string, fret, color) {
+    const circle = root.querySelector(
       `circle[data-string="${string}"][data-fret="${fret}"]`
     );
     if (circle) circle.style.fill = color;
   }
 
-  function showNoteText(string, fret, bgColor) {
-    const text = container.querySelector(
+  function showNoteText(root, string, fret, bgColor) {
+    const text = root.querySelector(
       `text[data-string="${string}"][data-fret="${fret}"]`
     );
     if (text) {
@@ -53,9 +57,9 @@ function createFrettedInstrumentMode(instrument) {
     }
   }
 
-  function clearAll() {
-    container.querySelectorAll('.note-circle').forEach(c => c.style.fill = '');
-    container.querySelectorAll('.note-text').forEach(t => { t.textContent = ''; t.style.fill = ''; });
+  function clearAll(root) {
+    root.querySelectorAll('.note-circle').forEach(c => c.style.fill = '');
+    root.querySelectorAll('.note-text').forEach(t => { t.textContent = ''; t.style.fill = ''; });
   }
 
   // --- String toggles ---
@@ -86,18 +90,6 @@ function createFrettedInstrumentMode(instrument) {
     refreshUI();
   }
 
-  // --- Fretboard visibility ---
-
-  function showFretboard() {
-    const wrapper = container.querySelector('.fretboard-wrapper');
-    if (wrapper) wrapper.classList.remove('fretboard-hidden');
-  }
-
-  function hideFretboard() {
-    const wrapper = container.querySelector('.fretboard-wrapper');
-    if (wrapper) wrapper.classList.add('fretboard-hidden');
-  }
-
   // --- Tab switching ---
 
   function switchTab(tabName) {
@@ -114,21 +106,15 @@ function createFrettedInstrumentMode(instrument) {
         el.classList.toggle('active', isProgress);
       }
     });
-    // Show fretboard only on progress tab (during idle)
     if (tabName === 'progress') {
-      showFretboard();
       statsControls.show(statsControls.mode || 'retention');
     } else {
-      hideFretboard();
-      clearAll();
-    }
-    // Update practice summary when switching to practice tab
-    if (tabName === 'practice') {
+      clearAll(progressFretboard);
       renderPracticeSummary();
     }
   }
 
-  // --- Heatmap ---
+  // --- Heatmap (renders on the progress fretboard) ---
 
   const statsControls = createStatsControls(container, (mode, el) => {
     el.innerHTML = buildStatsLegend(mode, engine.baseline);
@@ -137,8 +123,8 @@ function createFrettedInstrumentMode(instrument) {
         for (let f = 0; f < instrument.fretCount; f++) {
           const auto = engine.selector.getAutomaticity(`${s}-${f}`);
           const color = getAutomaticityColor(auto);
-          highlightCircle(s, f, color);
-          showNoteText(s, f, color);
+          highlightCircle(progressFretboard, s, f, color);
+          showNoteText(progressFretboard, s, f, color);
         }
       }
     } else {
@@ -147,8 +133,8 @@ function createFrettedInstrumentMode(instrument) {
           const stats = engine.selector.getStats(`${s}-${f}`);
           const ewma = stats ? stats.ewma : null;
           const color = getSpeedHeatmapColor(ewma, engine.baseline);
-          highlightCircle(s, f, color);
-          showNoteText(s, f, color);
+          highlightCircle(progressFretboard, s, f, color);
+          showNoteText(progressFretboard, s, f, color);
         }
       }
     }
@@ -156,7 +142,7 @@ function createFrettedInstrumentMode(instrument) {
 
   function hideHeatmap() {
     statsControls.hide();
-    clearAll();
+    clearAll(progressFretboard);
   }
 
   // --- Stats ---
@@ -325,12 +311,12 @@ function createFrettedInstrumentMode(instrument) {
     },
 
     presentQuestion(itemId) {
-      clearAll();
+      clearAll(quizFretboard);
       const q = fb.parseFretboardItem(itemId);
       currentString = q.currentString;
       currentFret = q.currentFret;
       currentNote = q.currentNote;
-      highlightCircle(q.currentString, q.currentFret, COLOR_HIGHLIGHT);
+      highlightCircle(quizFretboard, q.currentString, q.currentFret, COLOR_HIGHLIGHT);
     },
 
     checkAnswer(itemId, input) {
@@ -339,31 +325,25 @@ function createFrettedInstrumentMode(instrument) {
 
     onAnswer(itemId, result, responseTime) {
       if (result.correct) {
-        highlightCircle(currentString, currentFret, COLOR_SUCCESS);
+        highlightCircle(quizFretboard, currentString, currentFret, COLOR_SUCCESS);
       } else {
-        highlightCircle(currentString, currentFret, COLOR_ERROR);
+        highlightCircle(quizFretboard, currentString, currentFret, COLOR_ERROR);
       }
-      showNoteText(currentString, currentFret);
+      showNoteText(quizFretboard, currentString, currentFret);
     },
 
     onStart() {
       noteKeyHandler.reset();
       if (statsControls.mode) hideHeatmap();
       updateStats(engine.selector);
-      // Show fretboard for quiz (it may be hidden by practice tab)
-      showFretboard();
     },
 
     onStop() {
       noteKeyHandler.reset();
-      clearAll();
+      clearAll(quizFretboard);
       updateStats(engine.selector);
-      // Restore tab state
       if (activeTab === 'progress') {
-        showFretboard();
         statsControls.show('retention');
-      } else {
-        hideFretboard();
       }
       refreshUI();
     },
@@ -452,9 +432,6 @@ function createFrettedInstrumentMode(instrument) {
     applyRecommendations(engine.selector);
     updateAccidentalButtons();
     updateStats(engine.selector);
-
-    // Start on practice tab — hide fretboard, show practice content
-    hideFretboard();
     renderPracticeSummary();
     renderSessionSummary();
   }
@@ -477,6 +454,9 @@ function createFrettedInstrumentMode(instrument) {
     onNotationChange() {
       if (!container.classList.contains('mode-active')) return;
       renderPracticeSummary();
+      if (activeTab === 'progress' && statsControls.mode) {
+        statsControls.show(statsControls.mode);
+      }
     },
   };
 }

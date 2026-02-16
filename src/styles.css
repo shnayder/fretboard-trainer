@@ -366,25 +366,6 @@ body {
 .stats-container.stats-hidden { display: none; }
 .fretboard-wrapper.fretboard-hidden { display: none; }
 
-/* --- Fretboard mode layout: flex ordering so tabs appear before fretboard --- */
-#mode-fretboard.mode-active,
-#mode-ukulele.mode-active {
-  display: flex;
-  flex-direction: column;
-}
-/* Default high order for non-tab children (quiz-session, quiz-area) */
-#mode-fretboard > *,
-#mode-ukulele > * { order: 10; }
-/* Tabs first, then practice content, then fretboard, then progress content */
-#mode-fretboard > .mode-tabs,
-#mode-ukulele > .mode-tabs { order: 1; }
-#mode-fretboard > .tab-practice,
-#mode-ukulele > .tab-practice { order: 2; }
-#mode-fretboard > .fretboard-wrapper,
-#mode-ukulele > .fretboard-wrapper { order: 3; }
-#mode-fretboard > .tab-progress,
-#mode-ukulele > .tab-progress { order: 4; }
-
 /* --- Mode tabs (Practice / Progress) --- */
 .mode-tabs {
   display: flex;

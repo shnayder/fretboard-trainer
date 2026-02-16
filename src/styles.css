@@ -715,6 +715,7 @@ button {
 .phase-round-complete .chord-slots,
 .phase-round-complete .feedback,
 .phase-round-complete .hint,
+.phase-round-complete .time-display,
 .phase-round-complete .practicing-label,
 .phase-round-complete .speed-tap-status,
 .phase-round-complete .fretboard-wrapper { display: none; }

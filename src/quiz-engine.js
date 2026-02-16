@@ -1031,7 +1031,6 @@ export function createQuizEngine(mode, container) {
     const responseTime = Date.now() - state.questionStartTime;
 
     const result = mode.checkAnswer(state.currentItemId, input);
-    const rc = getResponseCount(state.currentItemId);
     selector.recordResponse(state.currentItemId, responseTime, result.correct);
 
     state = engineSubmitAnswer(state, result.correct, result.correctAnswer);
@@ -1053,7 +1052,9 @@ export function createQuizEngine(mode, container) {
 
     // If round timer already expired, show feedback briefly then transition
     if (state.roundTimerExpired) {
-      setTimeout(() => transitionToRoundComplete(), 600);
+      setTimeout(() => {
+        if (state.phase === 'active') transitionToRoundComplete();
+      }, 600);
     }
   }
 

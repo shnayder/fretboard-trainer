@@ -51,26 +51,7 @@ const appJS = read("src/app.js");
 
 const DISTANCE_TOGGLES = '<div class="toggle-group"><span class="toggle-group-label">Groups</span><div class="distance-toggles"></div></div>';
 
-// ---------------------------------------------------------------------------
-// HTML assembly
-// ---------------------------------------------------------------------------
-
-const html = `<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Music Reps</title>
-  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
-  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
-
-  <style>
-    ${css}
-  </style>
-</head>
-<body>
-  <!-- Home screen -->
-  <div class="home-screen" id="home-screen">
+const HOME_SCREEN_HTML = `  <div class="home-screen" id="home-screen">
     <div class="home-header">
       <h1 class="home-title">Music Reps</h1>
     </div>
@@ -128,7 +109,28 @@ const html = `<!DOCTYPE html>
       <button class="home-settings-btn" type="button">Settings</button>
       <span class="version">v5.1</span>
     </div>
-  </div>
+  </div>`;
+
+// ---------------------------------------------------------------------------
+// HTML assembly
+// ---------------------------------------------------------------------------
+
+const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Music Reps</title>
+  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+
+  <style>
+    ${css}
+  </style>
+</head>
+<body>
+  <!-- Home screen -->
+${HOME_SCREEN_HTML}
 
   <!-- Guitar Fretboard mode -->
 ${modeScreen("fretboard", {
@@ -262,6 +264,667 @@ self.addEventListener('fetch', (event) => {
   );
 });
 `;
+
+// ---------------------------------------------------------------------------
+// Moments page generation
+// ---------------------------------------------------------------------------
+
+interface MomentOverrides {
+  phase?: 'active' | 'round-complete';
+  quizAreaActive?: boolean;
+  quizPrompt?: string;
+  feedbackHtml?: string;
+  timeDisplay?: string;
+  hint?: string;
+  countdown?: number;
+  countdownWarning?: boolean;
+  infoContext?: string;
+  infoTime?: string;
+  infoCount?: string;
+  progressPercent?: number;
+  progressText?: string;
+  roundHeading?: string;
+  roundCorrect?: string;
+  roundMedian?: string;
+  roundFluent?: string;
+  practiceStatusLabel?: string;
+  practiceStatusDetail?: string;
+  practiceRecText?: string;
+  sessionSummary?: string;
+  showMastery?: boolean;
+  highlightNotes?: Array<{s: number; f: number; fill: string; text?: string}>;
+  chordSlotsHtml?: string;
+  hideAccidentals?: boolean;
+  toggleState?: { active: number[]; recommended?: number };
+  progressTabActive?: boolean;
+  statsHtml?: string;
+  statsText?: string;
+}
+
+function prepareMoment(source: string, o: MomentOverrides): string {
+  let h = source;
+
+  // Phase + visibility
+  if (o.phase) h = h.replace('phase-idle', `phase-${o.phase}`);
+  if (o.quizAreaActive) h = h.replace('class="quiz-area"', 'class="quiz-area active"');
+
+  // Quiz content
+  if (o.quizPrompt) h = h.replace(
+    '<div class="quiz-prompt"></div>',
+    `<div class="quiz-prompt">${o.quizPrompt}</div>`,
+  );
+  if (o.feedbackHtml) h = h.replace(
+    '<div class="feedback"></div>',
+    `<div class="feedback">${o.feedbackHtml}</div>`,
+  );
+  if (o.timeDisplay) h = h.replace(
+    '<div class="time-display"></div>',
+    `<div class="time-display">${o.timeDisplay}</div>`,
+  );
+  if (o.hint) h = h.replace(
+    '<div class="hint"></div>',
+    `<div class="hint">${o.hint}</div>`,
+  );
+
+  // Countdown
+  if (o.countdown !== undefined) h = h.replace(
+    '<div class="quiz-countdown-fill"></div>',
+    `<div class="quiz-countdown-fill" style="width: ${o.countdown}%;"></div>`,
+  );
+  if (o.countdownWarning) h = h.replace(
+    'class="quiz-countdown-bar"',
+    'class="quiz-countdown-bar round-timer-warning"',
+  );
+
+  // Session info
+  if (o.infoContext) h = h.replace(
+    '<span class="quiz-info-context"></span>',
+    `<span class="quiz-info-context">${o.infoContext}</span>`,
+  );
+  if (o.infoTime) h = h.replace(
+    '<span class="quiz-info-time"></span>',
+    `<span class="quiz-info-time">${o.infoTime}</span>`,
+  );
+  if (o.infoCount) h = h.replace(
+    '<span class="quiz-info-count"></span>',
+    `<span class="quiz-info-count">${o.infoCount}</span>`,
+  );
+
+  // Progress bar
+  if (o.progressPercent !== undefined) h = h.replace(
+    'style="width: 0%"',
+    `style="width: ${o.progressPercent}%"`,
+  );
+  if (o.progressText) h = h.replace(
+    '<div class="progress-text">0 / 0 fluent</div>',
+    `<div class="progress-text">${o.progressText}</div>`,
+  );
+
+  // Round complete
+  if (o.roundHeading) h = h.replace(
+    '<div class="round-complete-heading"></div>',
+    `<div class="round-complete-heading">${o.roundHeading}</div>`,
+  );
+  if (o.roundCorrect) h = h.replace(
+    '<span class="round-stat-value round-stat-correct"></span>',
+    `<span class="round-stat-value round-stat-correct">${o.roundCorrect}</span>`,
+  );
+  if (o.roundMedian) h = h.replace(
+    '<span class="round-stat-value round-stat-median"></span>',
+    `<span class="round-stat-value round-stat-median">${o.roundMedian}</span>`,
+  );
+  if (o.roundFluent) h = h.replace(
+    '<span class="round-stat-value round-stat-fluent"></span>',
+    `<span class="round-stat-value round-stat-fluent">${o.roundFluent}</span>`,
+  );
+
+  // Practice card
+  if (o.practiceStatusLabel) h = h.replace(
+    '<span class="practice-status-label"></span>',
+    `<span class="practice-status-label">${o.practiceStatusLabel}</span>`,
+  );
+  if (o.practiceStatusDetail) h = h.replace(
+    '<span class="practice-status-detail"></span>',
+    `<span class="practice-status-detail">${o.practiceStatusDetail}</span>`,
+  );
+  if (o.practiceRecText) h = h.replace(
+    '<span class="practice-rec-text"></span>',
+    `<span class="practice-rec-text">${o.practiceRecText}</span>`,
+  );
+  if (o.sessionSummary) h = h.replace(
+    '<div class="session-summary-text"></div>',
+    `<div class="session-summary-text">${o.sessionSummary}</div>`,
+  );
+  if (o.showMastery) h = h.replace(
+    'class="mastery-message"',
+    'class="mastery-message mastery-visible"',
+  );
+
+  // Fretboard note highlighting
+  if (o.highlightNotes) {
+    for (const n of o.highlightNotes) {
+      const circleRe = new RegExp(
+        `(<circle\\s+class="note-circle"\\s+data-string="${n.s}"\\s+data-fret="${n.f}"\\s+cx="[^"]*"\\s+cy="[^"]*"\\s+r="15"\\s+)fill="white"`,
+      );
+      h = h.replace(circleRe, `$1fill="${n.fill}"`);
+      if (n.text) {
+        const textRe = new RegExp(
+          `(class="note-text"\\s+data-string="${n.s}"\\s+data-fret="${n.f}"[^>]*>)(</text>)`,
+        );
+        h = h.replace(textRe, `$1${n.text}$2`);
+      }
+    }
+  }
+
+  // Chord slots
+  if (o.chordSlotsHtml) h = h.replace(
+    '<div class="chord-slots"></div>',
+    `<div class="chord-slots">${o.chordSlotsHtml}</div>`,
+  );
+
+  // Hide accidentals (naturals-only mode)
+  if (o.hideAccidentals) h = h.replace(
+    'class="note-row-accidentals"',
+    'class="note-row-accidentals" style="display: none;"',
+  );
+
+  // String toggle state
+  if (o.toggleState) {
+    // Reset all toggles (remove default active)
+    h = h.replace(/class="string-toggle active"/g, 'class="string-toggle"');
+    for (const idx of o.toggleState.active) {
+      h = h.replace(
+        `class="string-toggle" data-string="${idx}"`,
+        `class="string-toggle active" data-string="${idx}"`,
+      );
+    }
+    if (o.toggleState.recommended !== undefined) {
+      const ri = o.toggleState.recommended;
+      h = h.replace(
+        new RegExp(`class="string-toggle( active)?" data-string="${ri}"`),
+        (_, act) => `class="string-toggle${act || ''} recommended" data-string="${ri}"`,
+      );
+    }
+  }
+
+  // Progress tab active
+  if (o.progressTabActive) {
+    h = h.replace('class="mode-tab active" data-tab="practice"', 'class="mode-tab" data-tab="practice"');
+    h = h.replace('class="mode-tab" data-tab="progress"', 'class="mode-tab active" data-tab="progress"');
+    h = h.replace('class="tab-content tab-practice active"', 'class="tab-content tab-practice"');
+    h = h.replace('class="tab-content tab-progress"', 'class="tab-content tab-progress" style="display:block;"');
+  }
+
+  // Stats injection
+  if (o.statsHtml) h = h.replace(
+    '<div class="stats-container"></div>',
+    `<div class="stats-container">${o.statsHtml}</div>`,
+  );
+  if (o.statsText) h = h.replace(
+    '<span class="stats"></span>',
+    `<span class="stats">${o.statsText}</span>`,
+  );
+
+  return h;
+}
+
+function momentFrame(label: string, bodyHtml: string, annotation: string): string {
+  return `  <div class="moment-frame">
+    <div class="moment-label">${label}</div>
+    <div class="moment-body">
+${bodyHtml}
+    </div>
+    <div class="moment-anno">${annotation}</div>
+  </div>`;
+}
+
+function buildMoments(): void {
+  // --- Mode screen generators (fresh copy per moment) ---
+  const fbScreen = () => modeScreen("fretboard", {
+    modeName: 'Guitar Fretboard',
+    idleHTML: fretboardIdleHTML({ stringNames: ['e', 'B', 'G', 'D', 'A', 'E'], defaultString: 5, id: 'fretboard', fretboardSVG: fretboardSVG({ stringCount: 6, fretCount: 13, fretMarkers: [3, 5, 7, 9, 12] }) }),
+    quizAreaContent: `${fretboardSVG({ stringCount: 6, fretCount: 13, fretMarkers: [3, 5, 7, 9, 12] })}
+      ${pianoNoteButtons()}`,
+  });
+  const smScreen = () => modeScreen("semitoneMath", {
+    modeName: 'Semitone Math',
+    idleHTML: tabbedIdleHTML({ practiceScope: DISTANCE_TOGGLES }),
+    quizAreaContent: `${noteAnswerButtons()}`,
+  });
+  const imScreen = () => modeScreen("intervalMath", {
+    modeName: 'Interval Math',
+    idleHTML: tabbedIdleHTML({ practiceScope: DISTANCE_TOGGLES }),
+    quizAreaContent: `${noteAnswerButtons()}`,
+  });
+  const csScreen = () => modeScreen("chordSpelling", {
+    modeName: 'Chord Spelling',
+    idleHTML: tabbedIdleHTML({ practiceScope: DISTANCE_TOGGLES }),
+    quizAreaContent: `<div class="chord-slots"></div>
+      ${noteAnswerButtons()}`,
+  });
+  const nsScreen = () => modeScreen("noteSemitones", {
+    modeName: 'Note \u2194 Semitones',
+    idleHTML: tabbedIdleHTML({}),
+    quizAreaContent: `${noteAnswerButtons()}
+      ${numberButtons(0, 11)}`,
+  });
+
+  // --- Moment 1: Awaiting answer (fretboard, active) ---
+  const m1 = momentFrame(
+    'Fretboard mode &mdash; awaiting answer',
+    prepareMoment(fbScreen(), {
+      phase: 'active',
+      quizAreaActive: true,
+      quizPrompt: 'What note is this?',
+      highlightNotes: [{ s: 5, f: 3, fill: '#FFD700' }],
+      hideAccidentals: true,
+      countdown: 72,
+      infoContext: 'e, B strings',
+      infoTime: '0:42',
+      infoCount: '7 answers',
+      progressPercent: 30,
+      progressText: '5 / 18 fluent',
+    }),
+    'phase-active &middot; quiz-area.active &middot; highlighted note circle &middot; naturals only',
+  );
+
+  // --- Moment 2: Correct feedback (semitoneMath, active) ---
+  const m2 = momentFrame(
+    'Semitone Math &mdash; correct answer',
+    prepareMoment(smScreen(), {
+      phase: 'active',
+      quizAreaActive: true,
+      quizPrompt: 'C + 3 = ?',
+      feedbackHtml: '<span class="correct" style="font-weight:600;">Correct!</span>',
+      timeDisplay: '0.82s',
+      hint: 'Press Space for next question',
+      countdown: 55,
+      infoContext: '+1 to +5',
+      infoTime: '0:28',
+      infoCount: '14 answers',
+      progressPercent: 45,
+      progressText: '8 / 18 fluent',
+    }),
+    'phase-active &middot; feedback: .correct &middot; time-display &middot; hint text',
+  );
+
+  // --- Moment 3: Wrong feedback (intervalMath, active) ---
+  const m3 = momentFrame(
+    'Interval Math &mdash; wrong answer',
+    prepareMoment(imScreen(), {
+      phase: 'active',
+      quizAreaActive: true,
+      quizPrompt: 'G + M3 = ?',
+      feedbackHtml: '<span class="incorrect" style="font-weight:600;">Wrong &mdash; it was B</span>',
+      timeDisplay: '1.34s',
+      hint: 'Press Space for next question',
+      countdown: 38,
+      infoContext: '+m2 to +P5',
+      infoTime: '0:18',
+      infoCount: '22 answers',
+      progressPercent: 52,
+      progressText: '10 / 20 fluent',
+    }),
+    'phase-active &middot; feedback: .incorrect &middot; wrong answer shown',
+  );
+
+  // --- Moment 4: Chord spelling (chordSpelling, active) ---
+  const m4 = momentFrame(
+    'Chord Spelling &mdash; mid-answer (2 of 4 filled)',
+    prepareMoment(csScreen(), {
+      phase: 'active',
+      quizAreaActive: true,
+      quizPrompt: 'Spell: D major',
+      chordSlotsHtml: `
+            <span class="chord-slot correct">D</span>
+            <span class="chord-slot correct">F#</span>
+            <span class="chord-slot active">_</span>
+            <span class="chord-slot">_</span>`,
+      countdown: 60,
+      infoContext: 'major, minor',
+      infoTime: '0:35',
+      infoCount: '5 answers',
+      progressPercent: 20,
+      progressText: '3 / 14 fluent',
+    }),
+    'phase-active &middot; chord-slots: correct/active/empty &middot; note answer buttons',
+  );
+
+  // --- Moment 5a: Round complete — good round ---
+  const m5a = momentFrame(
+    'Round complete &mdash; good round',
+    prepareMoment(fbScreen(), {
+      phase: 'round-complete',
+      quizAreaActive: true,
+      countdown: 0,
+      infoContext: 'e, B strings',
+      infoTime: '1:00',
+      infoCount: '18 answers',
+      progressPercent: 65,
+      progressText: '12 / 18 fluent',
+      roundHeading: 'Round 3 complete',
+      roundCorrect: '16 / 18',
+      roundMedian: '0.9s',
+      roundFluent: '12 / 18',
+    }),
+    'phase-round-complete &middot; good stats: 89% correct, fast median',
+  );
+
+  // --- Moment 5b: Round complete — rough round ---
+  const m5b = momentFrame(
+    'Round complete &mdash; rough round',
+    prepareMoment(fbScreen(), {
+      phase: 'round-complete',
+      quizAreaActive: true,
+      countdown: 0,
+      infoContext: 'all strings',
+      infoTime: '1:00',
+      infoCount: '9 answers',
+      progressPercent: 15,
+      progressText: '3 / 24 fluent',
+      roundHeading: 'Round 1 complete',
+      roundCorrect: '5 / 9',
+      roundMedian: '2.8s',
+      roundFluent: '3 / 24',
+    }),
+    'phase-round-complete &middot; rough stats: 56% correct, slow median',
+  );
+
+  // --- Moment 7: Practice — consolidating ---
+  const m7 = momentFrame(
+    'Practice tab &mdash; consolidating (recommendation available)',
+    prepareMoment(fbScreen(), {
+      practiceStatusLabel: 'Consolidating',
+      practiceStatusDetail: 'Master current strings before adding more',
+      practiceRecText: 'Recommended: add string D',
+      sessionSummary: '26 items across 2 strings',
+      toggleState: { active: [0, 1], recommended: 3 },
+    }),
+    'phase-idle &middot; practice-status: consolidating &middot; .recommended glow on toggle',
+  );
+
+  // --- Moment 8: Practice — ready to expand ---
+  const m8 = momentFrame(
+    'Practice tab &mdash; ready to expand',
+    prepareMoment(fbScreen(), {
+      practiceStatusLabel: 'Ready to expand',
+      practiceStatusDetail: 'Current strings mastered',
+      practiceRecText: 'Recommended: add string G',
+      sessionSummary: '39 items across 3 strings',
+      showMastery: true,
+      toggleState: { active: [0, 1, 3], recommended: 2 },
+    }),
+    'phase-idle &middot; mastery-message visible &middot; ready to expand',
+  );
+
+  // --- Moment 9: Home screen ---
+  const m9 = momentFrame(
+    'Home screen',
+    HOME_SCREEN_HTML,
+    'home-screen layout &middot; group labels + mode buttons + footer',
+  );
+
+  // --- Moment 10: Progress + heatmap ---
+  const heatmapHtml = `
+            <table class="stats-table">
+              <thead><tr><th></th><th>Forward</th><th>Reverse</th></tr></thead>
+              <tbody>
+                <tr><th>C</th>
+                  <td><div class="stats-cell" style="background: var(--heatmap-5); color: white;">5</div></td>
+                  <td><div class="stats-cell" style="background: var(--heatmap-4); color: white;">4</div></td></tr>
+                <tr><th>C#</th>
+                  <td><div class="stats-cell" style="background: var(--heatmap-3); color: white;">3</div></td>
+                  <td><div class="stats-cell" style="background: var(--heatmap-2);">2</div></td></tr>
+                <tr><th>D</th>
+                  <td><div class="stats-cell" style="background: var(--heatmap-5); color: white;">5</div></td>
+                  <td><div class="stats-cell" style="background: var(--heatmap-3); color: white;">3</div></td></tr>
+                <tr><th>D#</th>
+                  <td><div class="stats-cell" style="background: var(--heatmap-1);">1</div></td>
+                  <td><div class="stats-cell" style="background: var(--heatmap-none);">&mdash;</div></td></tr>
+                <tr><th>E</th>
+                  <td><div class="stats-cell" style="background: var(--heatmap-4); color: white;">4</div></td>
+                  <td><div class="stats-cell" style="background: var(--heatmap-5); color: white;">5</div></td></tr>
+                <tr><th>F</th>
+                  <td><div class="stats-cell" style="background: var(--heatmap-2);">2</div></td>
+                  <td><div class="stats-cell" style="background: var(--heatmap-1);">1</div></td></tr>
+              </tbody>
+            </table>
+            <div class="heatmap-legend" style="display:flex;">
+              <div class="legend-item"><span class="legend-swatch" style="background: var(--heatmap-none);"></span>No data</div>
+              <div class="legend-item"><span class="legend-swatch" style="background: var(--heatmap-1);"></span>Needs work</div>
+              <div class="legend-item"><span class="legend-swatch" style="background: var(--heatmap-2);"></span>Fading</div>
+              <div class="legend-item"><span class="legend-swatch" style="background: var(--heatmap-3);"></span>Getting there</div>
+              <div class="legend-item"><span class="legend-swatch" style="background: var(--heatmap-4);"></span>Solid</div>
+              <div class="legend-item"><span class="legend-swatch" style="background: var(--heatmap-5);"></span>Automatic</div>
+            </div>`;
+  const m10 = momentFrame(
+    'Progress tab &mdash; recall heatmap',
+    prepareMoment(nsScreen(), {
+      progressTabActive: true,
+      statsHtml: heatmapHtml,
+      statsText: '4 / 12 items fluent',
+    }),
+    'phase-idle &middot; progress tab active &middot; heatmap + legend + stats toggle',
+  );
+
+  // --- Moment 11: Countdown bar states (isolated) ---
+  const m11 = momentFrame(
+    'Countdown bar &mdash; fill levels + warning',
+    `      <div class="countdown-demo">
+        <div class="countdown-demo-label">100% &mdash; round start</div>
+        <div class="quiz-countdown-bar"><div class="quiz-countdown-fill" style="width: 100%;"></div></div>
+
+        <div class="countdown-demo-label">65% &mdash; mid-round</div>
+        <div class="quiz-countdown-bar"><div class="quiz-countdown-fill" style="width: 65%;"></div></div>
+
+        <div class="countdown-demo-label">30% &mdash; getting low</div>
+        <div class="quiz-countdown-bar"><div class="quiz-countdown-fill" style="width: 30%;"></div></div>
+
+        <div class="countdown-demo-label">12% &mdash; warning (last 10s, red fill)</div>
+        <div class="quiz-countdown-bar round-timer-warning"><div class="quiz-countdown-fill" style="width: 12%;"></div></div>
+
+        <div class="countdown-demo-label">0% &mdash; time&rsquo;s up</div>
+        <div class="quiz-countdown-bar round-timer-warning"><div class="quiz-countdown-fill" style="width: 0%;"></div></div>
+      </div>`,
+    'quiz-countdown-bar &middot; 4px height &middot; brand fill &rarr; red (.round-timer-warning)',
+  );
+
+  // --- Assemble page ---
+  const momentsPage = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Screen Moments &mdash; Music Reps</title>
+  <link rel="stylesheet" href="../../src/styles.css">
+  <style>
+    /* Override app layout for this reference page */
+    body {
+      display: block;
+      max-width: 960px;
+      padding: 2rem 1rem;
+      min-height: auto;
+      color: var(--color-text);
+      line-height: 1.5;
+      background: var(--color-surface);
+      border: none;
+    }
+    body > h1 { font-size: 1.5rem; margin: 0 0 0.25rem; }
+    .subtitle { color: var(--color-text-muted); font-size: 0.9rem; margin-bottom: 2rem; }
+    body > h2 {
+      font-size: 1.1rem;
+      margin: 2.5rem 0 0.75rem;
+      padding-bottom: 0.25rem;
+      border-bottom: 1px solid var(--color-border-lighter);
+    }
+    body > p { font-size: 0.85rem; color: var(--color-text-muted); margin: 0 0 1rem; }
+    code {
+      font-family: ui-monospace, 'SF Mono', Monaco, monospace;
+      font-size: 0.8em;
+      background: var(--color-surface);
+      padding: 0.1em 0.35em;
+      border-radius: 3px;
+    }
+
+    /* Nav link */
+    .page-nav {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 1rem;
+      font-size: 0.8rem;
+    }
+    .page-nav a { color: var(--color-brand-dark); text-decoration: none; }
+    .page-nav a:hover { text-decoration: underline; }
+
+    /* Moment frames */
+    .moment-frame {
+      width: 402px;
+      border: 1px solid var(--color-border-light);
+      border-radius: 8px;
+      overflow: hidden;
+      margin: 0.75rem 0;
+      background: var(--color-bg);
+    }
+    .moment-label {
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--color-text-light);
+      padding: 0.4rem 0.75rem;
+      background: var(--color-surface);
+      border-bottom: 1px solid var(--color-border-lighter);
+    }
+    .moment-body {
+      max-width: 402px;
+      padding: 0 var(--space-5);
+      font-family: system-ui, -apple-system, sans-serif;
+    }
+    .moment-anno {
+      font-size: 0.7rem;
+      color: var(--color-text-light);
+      font-family: ui-monospace, 'SF Mono', Monaco, monospace;
+      padding: 0.4rem 0.75rem;
+      background: var(--color-surface);
+      border-top: 1px solid var(--color-border-lighter);
+    }
+
+    /* Side-by-side moment pairs */
+    .moment-row { display: flex; gap: 1rem; flex-wrap: wrap; }
+
+    /* --- Neutralize production CSS inside moment frames --- */
+    .moment-body .mode-screen {
+      display: block;
+      padding-top: var(--space-3);
+      flex: none;
+    }
+    .moment-body .phase-active,
+    .moment-body .phase-round-complete {
+      margin: 0;
+      background: var(--color-surface);
+      padding: 0;
+    }
+    .moment-body .quiz-countdown-bar {
+      margin: 0;
+      margin-bottom: var(--space-2);
+    }
+    .moment-body .quiz-area.active {
+      display: block;
+      background: var(--color-surface);
+      border-radius: 12px;
+      padding: var(--space-5);
+    }
+    .moment-body .phase-active .quiz-area.active {
+      border: 1px solid var(--color-border-lighter);
+      padding: var(--space-3) var(--space-3);
+    }
+    .moment-body .phase-round-complete .round-complete { display: block; }
+    .moment-body .quiz-session { display: block; }
+
+    /* Home screen moment */
+    .moment-body .home-screen {
+      display: flex;
+      flex-direction: column;
+      padding: var(--space-5);
+      min-height: auto;
+    }
+    .moment-body .home-screen.hidden { display: flex; }
+
+    /* Countdown bar demo (section 11) */
+    .countdown-demo { padding: var(--space-4); }
+    .countdown-demo-label {
+      font-size: 0.7rem;
+      color: var(--color-text-muted);
+      margin-bottom: var(--space-2);
+    }
+    .countdown-demo .quiz-countdown-bar { margin: 0 0 var(--space-4) 0; }
+  </style>
+</head>
+<body>
+  <h1>Screen Moments</h1>
+  <div class="subtitle">
+    Build-generated layouts at 402px &mdash; edit <code>src/styles.css</code>,
+    run <code>npx tsx build.ts</code>, refresh.
+  </div>
+  <div class="page-nav">
+    <a href="components.html">Components &rarr;</a>
+    <a href="colors.html">Colors &rarr;</a>
+  </div>
+
+  <h2>1. Quiz: Awaiting Answer</h2>
+  <p>Active quiz with question displayed, waiting for user input.</p>
+${m1}
+
+  <h2>2. Quiz: Correct Feedback</h2>
+  <p>After answering correctly &mdash; feedback text, time display, hint.</p>
+${m2}
+
+  <h2>3. Quiz: Wrong Feedback</h2>
+  <p>After answering incorrectly &mdash; error feedback with correct answer.</p>
+${m3}
+
+  <h2>4. Quiz: Chord Spelling</h2>
+  <p>Sequential slot-fill with chord slots and note answer buttons.</p>
+${m4}
+
+  <h2>5. Round Complete</h2>
+  <p>End-of-round summary &mdash; good and rough variants side by side.</p>
+  <div class="moment-row">
+${m5a}
+${m5b}
+  </div>
+
+  <h2>7. Practice Tab: Consolidating</h2>
+  <p>Idle state with practice card showing consolidation recommendation.</p>
+${m7}
+
+  <h2>8. Practice Tab: Ready to Expand</h2>
+  <p>All current items mastered &mdash; recommendation to add more scope.</p>
+${m8}
+
+  <h2>9. Home Screen</h2>
+  <p>Mode selector with grouped mode buttons and footer.</p>
+${m9}
+
+  <h2>10. Progress Tab + Heatmap</h2>
+  <p>Progress tab with stats toggle and heatmap table.</p>
+${m10}
+
+  <h2>11. Countdown Bar States</h2>
+  <p>Isolated countdown bar at different fill levels, including warning state.</p>
+${m11}
+
+</body>
+</html>`;
+
+  writeFileSync(join(__dirname, "guides/design/moments.html"), momentsPage);
+}
+
+buildMoments();
+
+// ---------------------------------------------------------------------------
+// Write output files
+// ---------------------------------------------------------------------------
 
 mkdirSync(join(__dirname, "docs"), { recursive: true });
 writeFileSync(join(__dirname, "docs/index.html"), html);

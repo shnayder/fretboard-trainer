@@ -53,6 +53,7 @@ plans/                   # Design docs, product specs, execution plans
   references/            #   Reference material
 backlogs/                # Per-workstream backlogs (product, design, engineering, process)
 docs/                    # Built output for GitHub Pages
+  design/                #   Design reference pages (copied from guides/design/)
 .github/workflows/       # CI: preview deploys for claude/* branches
 ```
 

@@ -29,8 +29,8 @@ mode, quiz, round, item, fluent vs mastered, recall vs speed, etc.
 4. Roadmap fragmentation — vision.md roadmap, ideas.md, backlog.md all have
 overlapping content with different structures. Could consolidate but that's
 a separate effort.
-5. No visual design iteration workflow — colors.html and components.html
-exist but no documented process for using them.
+5. Visual design iteration workflow — moments.html (build-generated),
+colors.html, and components.html now exist with process in visual-design.md.
 6. Component documentation is thin — visual-design.md has brief component
 patterns. Could expand as part of the design system work.
 

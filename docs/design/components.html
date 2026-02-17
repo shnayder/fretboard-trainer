@@ -239,6 +239,72 @@
       text-decoration: none;
     }
     .page-nav a:hover { text-decoration: underline; }
+
+    /* --- Variant comparison panels --- */
+    .variant-row {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      margin: 0.75rem 0;
+    }
+    .variant-panel {
+      flex: 1;
+      min-width: 180px;
+      border: 1px solid var(--color-border-light);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .variant-panel-label {
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--color-text-light);
+      padding: 0.4rem 0.75rem;
+      background: var(--color-surface);
+      border-bottom: 1px solid var(--color-border-lighter);
+    }
+    .variant-panel-body {
+      padding: 1rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    /* Variant A/B styles: answer buttons */
+    .variant-tinted .answer-btn {
+      background: hsl(90, 20%, 95%);
+    }
+    .variant-tinted .answer-btn:hover {
+      background: hsl(90, 20%, 90%);
+    }
+    .variant-tactile .answer-btn {
+      box-shadow: inset 0 -2px 0 var(--color-border);
+      border-color: var(--color-border);
+    }
+    .variant-tactile .answer-btn:active {
+      box-shadow: inset 0 1px 0 var(--color-border-light);
+    }
+
+    /* Variant A/B styles: countdown bar */
+    .variant-thick .quiz-countdown-bar {
+      height: 6px;
+      border-radius: 3px;
+      overflow: hidden;
+    }
+    .variant-thick .quiz-countdown-fill {
+      border-radius: 3px;
+    }
+    .variant-gradient .quiz-countdown-fill {
+      background: linear-gradient(to right, var(--color-error), hsl(45, 80%, 50%), var(--color-brand));
+    }
+
+    /* Variant A/B styles: feedback text */
+    .variant-bold-feedback .feedback {
+      font-size: var(--text-2xl);
+      font-weight: 700;
+    }
   </style>
 </head>
 <body>
@@ -248,6 +314,7 @@
     values from <code>src/styles.css</code>.
   </div>
   <div class="page-nav">
+    <a href="moments.html">Screen Moments &rarr;</a>
     <a href="colors.html">Color System &rarr;</a>
   </div>
 
@@ -985,6 +1052,112 @@
           </tr>
         </tbody>
       </table>
+    </div>
+  </div>
+
+  <!-- ================================================================== -->
+  <h2>Variant Comparisons</h2>
+  <p>Side-by-side A/B panels for design polish iteration. Variant CSS lives in this
+     page&rsquo;s <code>&lt;style&gt;</code> block &mdash; promote winner to
+     <code>styles.css</code>, delete losers.</p>
+
+  <h3>Answer Buttons</h3>
+  <p>Current vs. tinted background vs. tactile inset shadow.</p>
+  <div class="variant-row">
+    <div class="variant-panel">
+      <div class="variant-panel-label">Current</div>
+      <div class="variant-panel-body">
+        <div class="answer-buttons" style="max-width: 200px; margin: 0;">
+          <button class="answer-btn">C</button>
+          <button class="answer-btn">D</button>
+          <button class="answer-btn">E</button>
+          <button class="answer-btn">F</button>
+        </div>
+      </div>
+    </div>
+    <div class="variant-panel">
+      <div class="variant-panel-label">Tinted (light sage bg)</div>
+      <div class="variant-panel-body variant-tinted">
+        <div class="answer-buttons" style="max-width: 200px; margin: 0;">
+          <button class="answer-btn">C</button>
+          <button class="answer-btn">D</button>
+          <button class="answer-btn">E</button>
+          <button class="answer-btn">F</button>
+        </div>
+      </div>
+    </div>
+    <div class="variant-panel">
+      <div class="variant-panel-label">Tactile (inset shadow)</div>
+      <div class="variant-panel-body variant-tactile">
+        <div class="answer-buttons" style="max-width: 200px; margin: 0;">
+          <button class="answer-btn">C</button>
+          <button class="answer-btn">D</button>
+          <button class="answer-btn">E</button>
+          <button class="answer-btn">F</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <h3>Countdown Bar</h3>
+  <p>Current vs. thicker+rounded vs. 3-stage color gradient.</p>
+  <div class="variant-row">
+    <div class="variant-panel">
+      <div class="variant-panel-label">Current (4px flat)</div>
+      <div class="variant-panel-body">
+        <div style="width: 100%;">
+          <div class="quiz-countdown-bar" style="margin: 0;">
+            <div class="quiz-countdown-fill" style="width: 65%;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="variant-panel">
+      <div class="variant-panel-label">Thicker + rounded (6px)</div>
+      <div class="variant-panel-body variant-thick">
+        <div style="width: 100%;">
+          <div class="quiz-countdown-bar" style="margin: 0;">
+            <div class="quiz-countdown-fill" style="width: 65%;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="variant-panel">
+      <div class="variant-panel-label">3-stage gradient</div>
+      <div class="variant-panel-body variant-gradient">
+        <div style="width: 100%;">
+          <div class="quiz-countdown-bar" style="margin: 0;">
+            <div class="quiz-countdown-fill" style="width: 65%;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <h3>Feedback Text</h3>
+  <p>Current size vs. bolder/larger treatment.</p>
+  <div class="variant-row">
+    <div class="variant-panel">
+      <div class="variant-panel-label">Current (--text-xl, 600)</div>
+      <div class="variant-panel-body">
+        <div class="feedback" style="display:block; margin:0; min-height:auto;">
+          <span class="correct" style="font-weight:600;">Correct!</span>
+        </div>
+        <div class="feedback" style="display:block; margin:0; min-height:auto;">
+          <span class="incorrect" style="font-weight:600;">Wrong &mdash; it was C</span>
+        </div>
+      </div>
+    </div>
+    <div class="variant-panel">
+      <div class="variant-panel-label">Bolder (--text-2xl, 700)</div>
+      <div class="variant-panel-body variant-bold-feedback">
+        <div class="feedback" style="display:block; margin:0; min-height:auto;">
+          <span class="correct" style="font-weight:700;">Correct!</span>
+        </div>
+        <div class="feedback" style="display:block; margin:0; min-height:auto;">
+          <span class="incorrect" style="font-weight:700;">Wrong &mdash; it was C</span>
+        </div>
+      </div>
     </div>
   </div>
 

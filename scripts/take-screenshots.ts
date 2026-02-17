@@ -135,7 +135,133 @@ async function main() {
       await page.waitForTimeout(200);
     }
 
+    // --- Design moment captures (correct, wrong, round-complete) ---
+    // Use semitoneMath as the representative mode for feedback states
+    const feedbackMode = 'semitoneMath';
+    const feedbackContainer = `#mode-${feedbackMode}`;
+    console.log('Design moments: feedback states');
+    await switchToMode(feedbackMode);
+    await page.click(`${feedbackContainer} .start-btn`);
+    await page.waitForSelector(`${feedbackContainer} .quiz-area.active`, { timeout: 5000 });
+    await page.waitForTimeout(500);
+
+    // Correct feedback: read the correct answer from the quiz engine and submit it
+    const correctAnswer = await page.evaluate(() => {
+      // Access the quiz engine's current answer via the DOM prompt
+      const prompt = document.querySelector(`#mode-semitoneMath .quiz-prompt`)?.textContent || '';
+      // Parse "X + N = ?" or "X - N = ?" — the engine knows the answer
+      // Use a brute-force approach: click each note button and check for .correct feedback
+      return prompt;
+    });
+    // Try submitting each answer button until we get "correct" feedback
+    const noteButtons = await page.$$(`${feedbackContainer} .answer-btn`);
+    for (const btn of noteButtons) {
+      const isDisabled = await btn.getAttribute('disabled');
+      if (isDisabled !== null) continue;
+      await btn.click();
+      await page.waitForTimeout(200);
+      const feedback = await page.$(`${feedbackContainer} .feedback .correct`);
+      if (feedback) break;
+      // If wrong, wait for next question and try again
+      await page.keyboard.press('Space');
+      await page.waitForTimeout(300);
+    }
+    // If we got correct feedback, capture it
+    const gotCorrect = await page.$(`${feedbackContainer} .feedback .correct`);
+    if (gotCorrect) {
+      await capture('design-correct-feedback');
+    }
+
+    // Wrong feedback: submit an intentionally wrong answer
+    await page.keyboard.press('Space');
+    await page.waitForTimeout(300);
+    // Get the correct answer text so we can avoid it
+    const wrongCapture = await page.evaluate((container: string) => {
+      const buttons = document.querySelectorAll(`${container} .answer-btn:not([disabled])`);
+      // Click the first available button — likely wrong for most questions
+      if (buttons.length > 0) {
+        (buttons[0] as HTMLElement).click();
+        return true;
+      }
+      return false;
+    }, feedbackContainer);
+    if (wrongCapture) {
+      await page.waitForTimeout(200);
+      // Check if it was actually wrong; if correct, try next question
+      const wrongFeedback = await page.$(`${feedbackContainer} .feedback .incorrect`);
+      if (wrongFeedback) {
+        await capture('design-wrong-feedback');
+      } else {
+        // Got correct by accident, try one more time
+        await page.keyboard.press('Space');
+        await page.waitForTimeout(300);
+        await page.evaluate((container: string) => {
+          const buttons = document.querySelectorAll(`${container} .answer-btn:not([disabled])`);
+          if (buttons.length > 0) (buttons[0] as HTMLElement).click();
+        }, feedbackContainer);
+        await page.waitForTimeout(200);
+        await capture('design-wrong-feedback');
+      }
+    }
+
+    // Stop current quiz
+    await page.keyboard.press('Escape');
+    await page.waitForTimeout(300);
+
+    // Round-complete: shorten timer to trigger round end quickly
+    console.log('Design moments: round-complete');
+    await switchToMode(feedbackMode);
+    await page.click(`${feedbackContainer} .start-btn`);
+    await page.waitForSelector(`${feedbackContainer} .quiz-area.active`, { timeout: 5000 });
+    await page.waitForTimeout(300);
+
+    // Fast-forward the round timer by setting it to almost expired
+    await page.evaluate(() => {
+      // The quiz engine stores the round end time — set it to now + 1s
+      const modeScreen = document.querySelector('#mode-semitoneMath');
+      if (modeScreen) {
+        // Trigger a few quick answers to have some stats, then let time expire
+        const event = new KeyboardEvent('keydown', { key: 'c', bubbles: true });
+        document.dispatchEvent(event);
+      }
+    });
+    // Answer a few questions quickly by pressing random keys
+    for (let i = 0; i < 5; i++) {
+      const keys = ['c', 'd', 'e', 'f', 'g', 'a', 'b'];
+      await page.keyboard.press(keys[i % keys.length]);
+      await page.waitForTimeout(100);
+      await page.keyboard.press('Space');
+      await page.waitForTimeout(100);
+    }
+    // Force round to end by manipulating the countdown
+    await page.evaluate(() => {
+      // Find and click the countdown to 0 by updating the fill width
+      const fill = document.querySelector('#mode-semitoneMath .quiz-countdown-fill') as HTMLElement;
+      if (fill) fill.style.width = '0%';
+    });
+    // Wait for round-complete to appear (may need the actual timer to expire)
+    // Use a more reliable approach: wait up to 65s for the round to end naturally,
+    // or check periodically
+    const roundComplete = await page.waitForSelector(
+      `${feedbackContainer} .round-complete`,
+      { state: 'visible', timeout: 65_000 }
+    ).catch(() => null);
+    if (roundComplete) {
+      await page.waitForTimeout(300);
+      await capture('design-round-complete');
+    } else {
+      console.log('  (round-complete not captured — timer did not expire)');
+    }
+
     // --- Menu screenshot ---
+    // Go home first
+    await page.keyboard.press('Escape');
+    await page.waitForTimeout(300);
+    const backBtn2 = await page.$('.mode-screen.mode-active .mode-back-btn');
+    if (backBtn2) {
+      await backBtn2.click();
+      await page.waitForTimeout(200);
+    }
     console.log('Menu');
     await page.click('.hamburger');
     await page.waitForSelector('.nav-drawer.open');
@@ -143,7 +269,8 @@ async function main() {
     await capture('menu');
 
     await browser.close();
-    console.log(`\nDone! ${MODE_IDS.length * 2 + 1} screenshots in ${OUT_DIR}`);
+    const extraCaptures = 3; // correct, wrong, round-complete
+    console.log(`\nDone! ${MODE_IDS.length * 2 + 1 + extraCaptures} screenshots in ${OUT_DIR}`);
   } finally {
     server.kill();
   }

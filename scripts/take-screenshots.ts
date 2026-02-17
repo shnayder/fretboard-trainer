@@ -91,9 +91,9 @@ async function main() {
     // Helper: switch to a mode via home screen
     async function switchToMode(modeId: string) {
       // Go home first (click back button if in a mode)
-      const backBtn = await page.$('.mode-back-btn');
+      const backBtn = await page.$('.mode-screen.mode-active .mode-back-btn');
       if (backBtn) {
-        await page.click('.mode-back-btn');
+        await backBtn.click();
         await page.waitForTimeout(200);
       }
       await page.click(`[data-mode="${modeId}"]`);

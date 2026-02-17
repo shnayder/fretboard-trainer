@@ -1,17 +1,14 @@
 # Visual Design Guide
 
-Reference document for Fretboard Trainer's visual design system. All values
-are defined as CSS custom properties in `src/styles.css` `:root`. See the live
-color reference at `guides/design/colors.html`.
-
-**Related:** [layout-and-ia.md](layout-and-ia.md) covers screen layout,
-content hierarchy, and information architecture — *where things go and why*.
-
----
+Current-state reference for Fretboard Trainer's design system — colors,
+typography, spacing, and component patterns. All values are defined as CSS
+custom properties in `src/styles.css` `:root`. See the live color reference
+at `guides/design/colors.html`.
 
 For visual design principles (drill-first aesthetic, warmth, feedback clarity,
 information density, mobile-primary), see
-[design-principles.md](../design-principles.md).
+[design-principles.md](../design-principles.md). For layout and screen
+structure principles, see [layout-and-ia.md](layout-and-ia.md).
 
 ---
 

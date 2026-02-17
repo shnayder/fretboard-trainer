@@ -1,7 +1,8 @@
 # Design Principles
 
-Unified index of design principles governing Fretboard Trainer. Detailed rules
-and rationale live in the linked guides; this document provides the overview.
+Enduring design values that guide decisions across the app. These principles
+should outlast any particular implementation. For the product vision (who it's
+for, where it's headed), see [vision.md](vision.md).
 
 ---
 
@@ -10,36 +11,39 @@ and rationale live in the linked guides; this document provides the overview.
 How the product should work — what it does and doesn't do for users.
 
 1. **Drill, not instruction.** The app assumes the user knows the theory. It
-   trains speed and accuracy, not understanding. There are no lessons or
-   explanations — just questions and immediate feedback.
+   trains speed and accuracy, not understanding. No lessons or explanations —
+   just questions and immediate feedback.
 
-2. **Adaptive difficulty.** Practice what you're worst at. The adaptive
-   selector prioritizes items with slow response times and low recall. Items
-   you've mastered fade to the background.
+2. **Adaptive difficulty.** Practice what you're worst at. The system
+   prioritizes items with slow response times and low recall. Items you've
+   mastered fade to the background.
 
-3. **Progressive disclosure.** Consolidate before expanding. New material
-   (strings, distance groups, chord types) is gated behind mastery of what's
-   already been started. This prevents overwhelming the learner with too many
-   items at once.
+3. **Consolidate before expanding.** New material is gated behind mastery of
+   what's already been started. This applies within modes (item groups) and
+   across modes (the skill lifecycle — see [vision.md](vision.md#skill-lifecycle)).
 
-4. **Minimal friction.** Single-page app, instant start, works offline via
-   service worker. No login, no cloud sync, no setup. Open the page and start
-   drilling.
+4. **Minimal friction.** Zero barriers to drilling. No login required to start
+   practicing, no setup, no onboarding. Open the app and go.
 
-5. **Short-session friendly.** Users often practice in free moments — a few
-   minutes between activities. Every session should be productive without
-   warm-up overhead. State that matters (item deadlines, mastery data) persists
-   across sessions so progress carries over even when sessions are brief.
+5. **Short-session friendly.** 2-5 minutes should be productive. State that
+   matters persists across sessions so progress carries over even when sessions
+   are brief.
 
-6. **Fewer options.** Prefer smart defaults over user-facing toggles. Every
-   option adds cognitive overhead ("should I turn this on?") and creates
-   configurations to test. If the system can adapt automatically — via generous
-   cold starts, staircase adjustments, or baseline scaling — do that instead
-   of adding a setting.
+6. **Fewer options.** Prefer smart defaults over user-facing toggles. If the
+   system can adapt automatically, do that instead of adding a setting.
 
-7. **Personalized timing.** Motor baseline calibration means thresholds adapt
-   to each user's device and physical response speed. A phone user and a
-   desktop keyboard user get equivalently challenging targets.
+7. **Personalized timing.** Thresholds adapt to each user's device and physical
+   response speed. A phone user and a desktop keyboard user get equivalently
+   challenging targets.
+
+8. **Show data, not words.** The app mostly shouldn't talk. Show the user their
+   data and let them draw their own conclusions. "574 minutes of practice" and
+   a chart showing response times dropping from 9s to 1.2s — that's motivating
+   without being noisy.
+
+9. **Guide, don't gate.** The app recommends what to work on next — which mode,
+   which items — but the user can always choose something else. All modes remain
+   accessible. Guidance over enforcement.
 
 ---
 
@@ -99,9 +103,9 @@ rationale, and examples for each principle.
 Guidelines for designing new quiz modes, distilled from how existing modes
 were designed.
 
-- **Each mode independently useful.** No cross-mode gating — all modes
-  freely accessible from the hamburger menu. Recommended learning order is
-  documented but not enforced.
+- **Each mode independently useful.** Modes build on each other pedagogically
+  (fretboard → intervals → key signatures → chords), and the app recommends
+  a progression order, but every mode is accessible and self-contained.
 
 - **Bidirectional drilling when applicable.** Forward (key → note) and
   reverse (note → key) are tracked as separate items. Mixing directions

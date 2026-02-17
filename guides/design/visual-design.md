@@ -1,28 +1,14 @@
 # Visual Design Guide
 
-Reference document for Fretboard Trainer's visual design system. All values
-are defined as CSS custom properties in `src/styles.css` `:root`. See the live
-color reference at `guides/design/colors.html`.
+Current-state reference for Fretboard Trainer's design system — colors,
+typography, spacing, and component patterns. All values are defined as CSS
+custom properties in `src/styles.css` `:root`. See the live color reference
+at `guides/design/colors.html`.
 
-**Related:** [layout-and-ia.md](layout-and-ia.md) covers screen layout,
-content hierarchy, and information architecture — *where things go and why*.
-
----
-
-## Design Principles
-
-Aligned with the product vision in `guides/vision.md`:
-
-1. **Drill-first aesthetic** — nothing distracts from drilling. Chrome fades
-   away during quiz; visual weight goes to the question and answer buttons.
-2. **Warmth over sterility** — inviting, like a good practice space. Warm
-   neutrals, sage brand, no cold gray wireframe feel.
-3. **Feedback clarity** — correct/wrong instantly recognizable via distinct
-   semantic colors (green/red). Never use brand or heatmap colors for feedback.
-4. **Information density** — stats scannable at a glance, not decorative.
-   Heatmaps use accessible color scale; tables compact but readable.
-5. **Mobile-primary** — thumb-friendly 48px touch targets, no hover-dependent
-   interactions. All hover states are enhancements, not requirements.
+For visual design principles (drill-first aesthetic, warmth, feedback clarity,
+information density, mobile-primary), see
+[design-principles.md](../design-principles.md). For layout and screen
+structure principles, see [layout-and-ia.md](layout-and-ia.md).
 
 ---
 
@@ -67,13 +53,6 @@ light and dark backgrounds.
 **Rules:**
 - Brand color for CTAs and identity elements only
 - Never use brand color for correct/wrong feedback (use `--color-success`/`--color-error`)
-
-### Top Bar
-
-| Token | Value | Usage |
-|-------|-------|-------|
-| `--color-topbar-bg` | `hsl(100, 15%, 22%)` | Dark top bar background |
-| `--color-topbar-text` | `hsl(90, 10%, 95%)` | Top bar text, hamburger icon |
 
 ### Semantic Colors
 
@@ -160,8 +139,8 @@ SVG colors are applied via CSS rules (`.fretboard line`, `.note-circle`,
 | `--text-base` | 1rem | Body, buttons, nav items, hints |
 | `--text-md` | 1.125rem | Answer buttons, note buttons, chord slots |
 | `--text-lg` | 1.3rem | Mode title |
-| `--text-xl` | 1.5rem | Hamburger, settings gear, feedback, close buttons |
-| `--text-2xl` | 2rem | Quiz prompts |
+| `--text-xl` | 1.5rem | Back button, feedback, close buttons |
+| `--text-2xl` | 2rem | Home title, quiz prompts |
 
 Font weights: 400 (normal), 500 (medium — buttons/labels), 600 (semibold —
 headings, CTA).
@@ -211,38 +190,51 @@ buttons use `--color-surface-accent` background.
 
 ### Toggle Buttons (String, Distance)
 
-Same as before: `--color-surface` inactive, `--color-success` active. Now
-with transition and hover states.
+`--color-surface` inactive, `--color-toggle-active` active. 36px minimum size
+for touch targets. Transition and hover states.
 
 ### Stats Toggle (Recall / Speed)
 
 Uses `--color-brand` for active state instead of `--color-success`, providing
 visual distinction from content toggles.
 
-### Quiz Area Card
+### Home Screen
 
-Active quiz area gets `--color-surface` background, 12px border-radius, and
-`--space-5` padding for visual containment.
-
-### Navigation Drawer
-
-Grouped by mode category with uppercase labels. Active item uses brand sage
-left-border and `--color-brand-bg` background.
+Full-screen mode selector. Mode buttons are cards with name + description,
+grouped by category with uppercase labels. Settings button and version in
+footer.
 
 Groups:
-- **Fretboard:** Fretboard, Speed Tap
+- **Fretboard:** Guitar Fretboard, Ukulele Fretboard, Speed Tap
 - **Theory Lookup:** Note ↔ Semitones, Interval ↔ Semitones
 - **Calculation:** Semitone Math, Interval Math
 - **Keys & Chords:** Key Signatures, Scale Degrees, Diatonic Chords, Chord Spelling
 
-### Top Bar Icons
+### Mode Top Bar
 
-Hamburger (☰) and settings gear (⚙) must share the same `font-size`,
-`padding`, and `min-width`/`min-height` so the top bar height stays constant
-regardless of which icons are visible. Both use `--text-xl`,
-`padding: var(--space-2) var(--space-3)`, and 44×44px minimum touch targets.
-When the gear hides during an active quiz, use `visibility: hidden` (not
-`display: none`) so it reserves space and prevents layout shift.
+Each mode screen has a simple top bar: ← back button + mode title. Hidden
+during active quiz and calibration phases.
+
+### Practice Card
+
+Consolidated single card containing: status → recommendation → scope toggles
+→ Start Quiz CTA. Uses `--color-surface` background, 8px radius.
+
+### Quiz Session Info
+
+During active quiz: full-width countdown bar (4px, depletes over 60s, turns
+red in last 10s) + single compact info row (context, time, count, × close).
+
+### Quiz Area
+
+Active quiz area gets `--color-surface` background via phase class on the
+mode screen container. Lighter border (1px `--color-border-lighter`) and
+reduced padding during active state.
+
+### Round Complete Stats
+
+Three stats in a row: correct (x/y), median time, fluent (x/y). Round
+number in heading.
 
 ---
 
@@ -276,7 +268,7 @@ Mouse/touch users see no outline (`:focus:not(:focus-visible)` removes it).
 - Color changes: `0.15s ease`
 - Layout/size: `0.1s ease` (transform scale)
 - Progress bar: `0.3s ease` (width)
-- Nav drawer slide: `0.2s ease`
+- Countdown bar: `0.2s linear`
 
 ---
 

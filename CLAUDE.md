@@ -113,16 +113,35 @@ Bidirectional modes track each direction as a separate item.
 
 ## Guides
 
+**Aspirational** — where the product is headed:
+
 | Guide | Contents |
 |-------|----------|
-| [architecture.md](guides/architecture.md) | Module graph, build system, patterns, algorithms, adding new modes |
+| [vision.md](guides/vision.md) | Who it's for, what we're building, tone, skill lifecycle |
+
+**Enduring** — design values that should outlast any implementation:
+
+| Guide | Contents |
+|-------|----------|
+| [design-principles.md](guides/design-principles.md) | Product, visual, and UX design principles |
+| [layout-and-ia.md](guides/design/layout-and-ia.md) | Screen structure principles: states, hierarchy, grouping, labels |
+| [process-principles.md](guides/process-principles.md) | Development process values and improvement goals |
+
+**Current reference** — how things work today:
+
+| Guide | Contents |
+|-------|----------|
+| [architecture.md](guides/architecture.md) | Module graph, build system, patterns, algorithms, DOM layout, adding new modes |
+| [visual-design.md](guides/design/visual-design.md) | Color system, typography, spacing, component patterns |
 | [coding-style.md](guides/coding-style.md) | Naming, file structure, DOM rules, testing patterns |
+| [accidental-conventions.md](guides/accidental-conventions.md) | Sharp/flat naming rules by mode, rule priority |
+
+**Process** — how to work on the codebase:
+
+| Guide | Contents |
+|-------|----------|
 | [development.md](guides/development.md) | Commands, testing, versioning, branching, deployment, GitHub API |
 | [feature-process.md](guides/feature-process.md) | When/how to write plans, design spec + implementation plan templates |
-| [vision.md](guides/vision.md) | Product vision, design principles, roadmap |
-| [visual-design.md](guides/design/visual-design.md) | Color system, typography, spacing, component patterns |
-| [layout-and-ia.md](guides/design/layout-and-ia.md) | Screen states, content hierarchy, grouping, labels |
-| [accidental-conventions.md](guides/accidental-conventions.md) | Sharp/flat naming rules by mode, rule priority |
 | [tech-debt-tracker.md](plans/exec-plans/tech-debt-tracker.md) | Technical debt tracking |
 
 The review checklist (`.claude/commands/review-checklist.md`) verifies these

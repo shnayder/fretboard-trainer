@@ -2,8 +2,23 @@
 
 Current-state reference for Music Reps' design system — colors,
 typography, spacing, and component patterns. All values are defined as CSS
-custom properties in `src/styles.css` `:root`. See the live color reference
-at `guides/design/colors.html`.
+custom properties in `src/styles.css` `:root`.
+
+### Design reference pages
+
+Live HTML pages for visual iteration. Hand-written pages (`colors.html`,
+`components.html`) link directly to `src/styles.css` — just edit and refresh.
+`moments.html` is build-generated, so run `npx tsx build.ts` after edits.
+
+| Page | Contents | Source |
+|------|----------|--------|
+| [colors.html](colors.html) | Color swatches, heatmap scale, semantic tokens | Hand-written |
+| [components.html](components.html) | Isolated component specimens | Hand-written |
+| [moments.html](moments.html) | Assembled screen layouts at 402px (all phases) | **Build-generated** (`npx tsx build.ts`) |
+
+`moments.html` uses the same `modeScreen()`, `fretboardSVG()`, and button
+helpers as the production app, so it never drifts from reality. To add or
+change a moment, edit `buildMoments()` in `build.ts`.
 
 For visual design principles (drill-first aesthetic, warmth, feedback clarity,
 information density, mobile-primary), see

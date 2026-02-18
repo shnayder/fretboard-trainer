@@ -51,7 +51,9 @@ plans/                   # Design docs, product specs, execution plans
   exec-plans/            #   Implementation plans (active/ and completed/)
   generated/             #   Generated artifacts
   references/            #   Reference material
+backlogs/                # Per-workstream backlogs (product, design, engineering, process)
 docs/                    # Built output for GitHub Pages
+  design/                #   Design reference pages (copied from guides/design/)
 .github/workflows/       # CI: preview deploys for claude/* branches
 ```
 
@@ -146,6 +148,27 @@ Bidirectional modes track each direction as a separate item.
 
 The review checklist (`.claude/commands/review-checklist.md`) verifies these
 conventions — use `/review` to run it.
+
+## Workstreams
+
+Four parallel worktrees with long-lived branches. Single user — separation is
+about focus, not access control. Regular rebase from main keeps them in sync.
+
+| Workstream | Branch | Focus |
+|------------|--------|-------|
+| Product | workstream/product | Specs, vision, backlog, feedback (docs only) |
+| Design | workstream/design | HTML/CSS layers, visual design, component patterns |
+| Engineering | workstream/engineering | JS behavior, state, algorithms, build system |
+| Process | workstream/process | CI, Claude tooling, review commands, process docs |
+
+**Overlap zones** — `main.ts`/`build.ts` and quiz render functions are touched
+by both design and engineering. Rebase often; keep HTML/CSS and JS behavior
+cleanly separated.
+
+**Version bumps**: only engineering bumps the version number.
+
+**Backlogs**: each workstream has its own in `backlogs/`. The old monolithic
+`backlog.md` is archived at `backlogs/legacy.md`.
 
 ## GitHub API Access
 

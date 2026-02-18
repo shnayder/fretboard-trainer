@@ -86,6 +86,24 @@ Both `main.ts` (Deno) and `build.ts` (Node) contain identical HTML templates.
 Any change to one must be mirrored in the other. This includes: HTML structure,
 nav drawer buttons, mode screen divs, `<script>` file reads, version number.
 
+### Moments Page Generation
+
+`build.ts` also generates `guides/design/moments.html` — a design reference
+page showing assembled screen layouts at mobile width. It reuses the same HTML
+helpers (`modeScreen()`, `fretboardSVG()`, `pianoNoteButtons()`, etc.) as the
+production app, so the moments never drift from reality.
+
+Key functions in `build.ts`:
+- **`prepareMoment(html, overrides)`** — string replacement engine. Takes
+  generated mode-screen HTML and injects phase classes, quiz content, feedback,
+  toggle states, fretboard highlights, etc.
+- **`momentFrame(label, html, annotation)`** — wraps content in the moment
+  frame/label/annotation chrome.
+- **`buildMoments()`** — generates all moments and writes the file. Each moment
+  creates a fresh mode screen (via the HTML helpers) then applies overrides.
+
+The existing copy logic handles `docs/design/moments.html` automatically.
+
 ## Key Patterns
 
 ### State + Render

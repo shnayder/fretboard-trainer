@@ -781,12 +781,26 @@ export function createQuizEngine(mode, container) {
 
   function renderRoundComplete() {
     if (els.roundCompleteEl && state.phase === 'round-complete') {
+      // Context line: scope label + overall fluency
+      var contextEl = els.roundCompleteEl.querySelector('.round-complete-context');
+      if (contextEl) {
+        var label = mode.getPracticingLabel ? mode.getPracticingLabel() : '';
+        var fluencyText = state.masteredCount + ' / ' + state.totalEnabledCount + ' fluent';
+        contextEl.textContent = label ? label + ' \u00B7 ' + fluencyText : fluencyText;
+      }
+
+      // Heading (no round number)
       var heading = els.roundCompleteEl.querySelector('.round-complete-heading');
-      if (heading) heading.textContent = 'Round ' + state.roundNumber + ' complete';
+      if (heading) heading.textContent = 'Round complete';
 
+      // Correct count + round duration
       var correctEl = els.roundCompleteEl.querySelector('.round-stat-correct');
-      if (correctEl) correctEl.textContent = state.roundCorrect + ' / ' + state.roundAnswered;
+      if (correctEl) {
+        var durationSec = Math.round((state.roundDurationMs || 0) / 1000);
+        correctEl.textContent = state.roundCorrect + ' / ' + state.roundAnswered + ' correct \u00B7 ' + durationSec + 's';
+      }
 
+      // Median response time
       var medianEl = els.roundCompleteEl.querySelector('.round-stat-median');
       if (medianEl) {
         if (state.roundResponseTimes && state.roundResponseTimes.length > 0) {
@@ -795,14 +809,11 @@ export function createQuizEngine(mode, container) {
           var median = sorted.length % 2 === 0
             ? (sorted[mid - 1] + sorted[mid]) / 2
             : sorted[mid];
-          medianEl.textContent = (median / 1000).toFixed(1) + 's';
+          medianEl.textContent = (median / 1000).toFixed(1) + 's median response time';
         } else {
-          medianEl.textContent = '\u2014';
+          medianEl.textContent = '';
         }
       }
-
-      var fluentEl = els.roundCompleteEl.querySelector('.round-stat-fluent');
-      if (fluentEl) fluentEl.textContent = state.masteredCount + ' / ' + state.totalEnabledCount;
     }
   }
 
@@ -920,8 +931,10 @@ export function createQuizEngine(mode, container) {
   }
 
   function transitionToRoundComplete() {
+    var roundDurationMs = roundTimerStart ? Date.now() - roundTimerStart : 0;
     stopRoundTimer();
     state = engineRoundComplete(state);
+    state = { ...state, roundDurationMs: roundDurationMs };
     render();
   }
 

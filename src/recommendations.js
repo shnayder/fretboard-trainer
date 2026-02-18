@@ -16,9 +16,14 @@
  * @param {function} [options.sortUnstarted] - Comparator for unstarted items.
  *   If provided, sorts unstarted before picking next expansion.
  *   Default: no sort (use first unstarted as-is).
- * @returns {{ recommended: Set, enabled: Set|null }}
+ * @returns {{ recommended: Set, enabled: Set|null, consolidateIndices: number[],
+ *             consolidateDueCount: number, expandIndex: number|null, expandNewCount: number }}
  *   recommended: indices to highlight with orange borders
  *   enabled: indices to auto-select, or null if no data (first launch)
+ *   consolidateIndices: group indices needing consolidation work
+ *   consolidateDueCount: total items needing work in consolidation groups
+ *   expandIndex: group index being added for expansion, or null
+ *   expandNewCount: new items in expansion group
  */
 export function computeRecommendations(selector, allIndices, getItemIds, config, options) {
   const sortUnstarted = options && options.sortUnstarted;
@@ -28,7 +33,9 @@ export function computeRecommendations(selector, allIndices, getItemIds, config,
   const unstarted = recs.filter(r => r.unseenCount === r.totalCount);
 
   if (started.length === 0) {
-    return { recommended: new Set(), enabled: null };
+    return { recommended: new Set(), enabled: null,
+             consolidateIndices: [], consolidateDueCount: 0,
+             expandIndex: null, expandNewCount: 0 };
   }
 
   const totalSeen = started.reduce((sum, r) => sum + (r.masteredCount + r.dueCount), 0);
@@ -43,22 +50,34 @@ export function computeRecommendations(selector, allIndices, getItemIds, config,
   const medianWork = workCounts[Math.floor(workCounts.length / 2)];
   const recommended = new Set();
   const enabled = new Set();
+  const consolidateIndices = [];
+  let consolidateDueCount = 0;
   for (const r of startedByWork) {
     if (r.dueCount + r.unseenCount > medianWork) {
       recommended.add(r.string);
       enabled.add(r.string);
+      consolidateIndices.push(r.string);
+      consolidateDueCount += r.dueCount + r.unseenCount;
     }
   }
   if (enabled.size === 0) {
-    recommended.add(startedByWork[0].string);
-    enabled.add(startedByWork[0].string);
+    const r = startedByWork[0];
+    recommended.add(r.string);
+    enabled.add(r.string);
+    consolidateIndices.push(r.string);
+    consolidateDueCount += r.dueCount + r.unseenCount;
   }
 
+  let expandIndex = null;
+  let expandNewCount = 0;
   if (consolidatedRatio >= config.expansionThreshold && unstarted.length > 0) {
     const sorted = sortUnstarted ? [...unstarted].sort(sortUnstarted) : unstarted;
-    recommended.add(sorted[0].string);
-    enabled.add(sorted[0].string);
+    expandIndex = sorted[0].string;
+    expandNewCount = sorted[0].totalCount;
+    recommended.add(expandIndex);
+    enabled.add(expandIndex);
   }
 
-  return { recommended, enabled };
+  return { recommended, enabled, consolidateIndices, consolidateDueCount,
+           expandIndex, expandNewCount };
 }

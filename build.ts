@@ -107,7 +107,7 @@ const HOME_SCREEN_HTML = `  <div class="home-screen" id="home-screen">
     </div>
     <div class="home-footer">
       <button class="home-settings-btn" type="button">Settings</button>
-      <span class="version">v6.2</span>
+      <span class="version">v6.3</span>
     </div>
   </div>`;
 
@@ -283,10 +283,10 @@ interface MomentOverrides {
   infoCount?: string;
   progressPercent?: number;
   progressText?: string;
+  roundContext?: string;
   roundHeading?: string;
   roundCorrect?: string;
   roundMedian?: string;
-  roundFluent?: string;
   practiceStatusLabel?: string;
   practiceStatusDetail?: string;
   practiceRecText?: string;
@@ -379,21 +379,21 @@ function prepareMoment(source: string, o: MomentOverrides): string {
   );
 
   // Round complete
+  if (o.roundContext) r(
+    '<div class="round-complete-context"></div>',
+    `<div class="round-complete-context">${o.roundContext}</div>`,
+  );
   if (o.roundHeading) r(
     '<div class="round-complete-heading"></div>',
     `<div class="round-complete-heading">${o.roundHeading}</div>`,
   );
   if (o.roundCorrect) r(
-    '<span class="round-stat-value round-stat-correct"></span>',
-    `<span class="round-stat-value round-stat-correct">${o.roundCorrect}</span>`,
+    '<div class="round-stat-line round-stat-correct"></div>',
+    `<div class="round-stat-line round-stat-correct">${o.roundCorrect}</div>`,
   );
   if (o.roundMedian) r(
-    '<span class="round-stat-value round-stat-median"></span>',
-    `<span class="round-stat-value round-stat-median">${o.roundMedian}</span>`,
-  );
-  if (o.roundFluent) r(
-    '<span class="round-stat-value round-stat-fluent"></span>',
-    `<span class="round-stat-value round-stat-fluent">${o.roundFluent}</span>`,
+    '<div class="round-stat-line round-stat-median"></div>',
+    `<div class="round-stat-line round-stat-median">${o.roundMedian}</div>`,
   );
 
   // Practice card
@@ -609,15 +609,11 @@ function buildMoments(): void {
       phase: 'round-complete',
       quizAreaActive: true,
       countdown: 0,
-      infoContext: 'e, B strings',
-      infoTime: '1:00',
-      infoCount: '18 answers',
-      progressPercent: 65,
-      progressText: '12 / 18 fluent',
-      roundHeading: 'Round 3 complete',
-      roundCorrect: '16 / 18',
-      roundMedian: '0.9s',
-      roundFluent: '12 / 18',
+      infoTime: '0:00',
+      roundContext: 'e, B strings &middot; 12 / 18 fluent',
+      roundHeading: 'Round complete',
+      roundCorrect: '16 / 18 correct &middot; 63s',
+      roundMedian: '0.9s median response time',
     }),
     'phase-round-complete &middot; good stats: 89% correct, fast median',
   );
@@ -629,15 +625,11 @@ function buildMoments(): void {
       phase: 'round-complete',
       quizAreaActive: true,
       countdown: 0,
-      infoContext: 'all strings',
-      infoTime: '1:00',
-      infoCount: '9 answers',
-      progressPercent: 15,
-      progressText: '3 / 24 fluent',
-      roundHeading: 'Round 1 complete',
-      roundCorrect: '5 / 9',
-      roundMedian: '2.8s',
-      roundFluent: '3 / 24',
+      infoTime: '0:00',
+      roundContext: 'all strings &middot; 3 / 24 fluent',
+      roundHeading: 'Round complete',
+      roundCorrect: '5 / 9 correct &middot; 62s',
+      roundMedian: '2.8s median response time',
     }),
     'phase-round-complete &middot; rough stats: 56% correct, slow median',
   );
@@ -648,7 +640,7 @@ function buildMoments(): void {
     prepareMoment(fbScreen(), {
       practiceStatusLabel: 'Consolidating',
       practiceStatusDetail: 'Master current strings before adding more',
-      practiceRecText: 'Recommended: add string D',
+      practiceRecText: 'Suggestion: solidify e, B strings \u2014 8 slow items\nstart G string \u2014 13 new items',
       sessionSummary: '26 items across 2 strings',
       toggleState: { active: [0, 1], recommended: 3 },
     }),
@@ -661,7 +653,7 @@ function buildMoments(): void {
     prepareMoment(fbScreen(), {
       practiceStatusLabel: 'Ready to expand',
       practiceStatusDetail: 'Current strings mastered',
-      practiceRecText: 'Recommended: add string G',
+      practiceRecText: 'Suggestion: start G string \u2014 13 new items',
       sessionSummary: '39 items across 3 strings',
       showMastery: true,
       toggleState: { active: [0, 1, 3], recommended: 2 },

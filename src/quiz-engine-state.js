@@ -23,6 +23,7 @@ export function initialEngineState() {
     roundCorrect: 0,
     roundTimerExpired: false,
     roundResponseTimes: [],
+    roundDurationMs: 0,
 
     // Progress tracking
     masteredCount: 0,

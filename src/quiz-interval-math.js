@@ -18,11 +18,11 @@ function createIntervalMathMode() {
 
   // Distance groups: pairs of intervals by semitone count
   const DISTANCE_GROUPS = [
-    { distances: [1, 2],   label: 'm2,M2' },
-    { distances: [3, 4],   label: 'm3,M3' },
-    { distances: [5, 6],   label: 'P4,TT' },
-    { distances: [7, 8],   label: 'P5,m6' },
-    { distances: [9, 10],  label: 'M6,m7' },
+    { distances: [1, 2],   label: 'm2 M2' },
+    { distances: [3, 4],   label: 'm3 M3' },
+    { distances: [5, 6],   label: 'P4 TT' },
+    { distances: [7, 8],   label: 'P5 m6' },
+    { distances: [9, 10],  label: 'M6 m7' },
     { distances: [11],     label: 'M7' },
   ];
 
@@ -182,12 +182,21 @@ function createIntervalMathMode() {
 
     var result = getRecommendationResult();
     if (result.recommended.size > 0) {
-      var names = [];
-      var sorted = Array.from(result.recommended).sort(function(a, b) { return a - b; });
-      for (var k = 0; k < sorted.length; k++) {
-        names.push(DISTANCE_GROUPS[sorted[k]].label);
+      var parts = [];
+      if (result.consolidateIndices.length > 0) {
+        var cNames = result.consolidateIndices.sort(function(a, b) { return a - b; })
+          .map(function(g) { return DISTANCE_GROUPS[g].label; });
+        parts.push('solidify ' + cNames.join(', ')
+          + ' \u2014 ' + result.consolidateDueCount + ' slow item' + (result.consolidateDueCount !== 1 ? 's' : ''));
       }
-      recText.textContent = 'Recommended: ' + names.join(', ');
+      if (result.expandIndex !== null) {
+        parts.push('start ' + DISTANCE_GROUPS[result.expandIndex].label
+          + ' \u2014 ' + result.expandNewCount + ' new item' + (result.expandNewCount !== 1 ? 's' : ''));
+      }
+      recText.textContent = 'Suggestion: ' + parts.join('\n');
+      recBtn.classList.remove('hidden');
+    } else if (seen === 0) {
+      recText.textContent = 'Suggestion: start with ' + DISTANCE_GROUPS[0].label;
       recBtn.classList.remove('hidden');
     } else {
       recText.textContent = '';
@@ -240,7 +249,7 @@ function createIntervalMathMode() {
       if (enabledGroups.size === DISTANCE_GROUPS.length) return 'all intervals';
       const labels = [...enabledGroups].sort((a, b) => a - b)
         .map(g => DISTANCE_GROUPS[g].label);
-      return labels.join(', ');
+      return labels.join(', ') + ' intervals';
     },
 
     presentQuestion(itemId) {
@@ -301,6 +310,10 @@ function createIntervalMathMode() {
     container.querySelectorAll('.mode-tab').forEach(btn => {
       btn.addEventListener('click', () => switchTab(btn.dataset.tab));
     });
+
+    // Set section heading
+    var toggleLabel = container.querySelector('.toggle-group-label');
+    if (toggleLabel) toggleLabel.textContent = 'Intervals';
 
     // Generate distance group toggle buttons
     const togglesDiv = container.querySelector('.distance-toggles');

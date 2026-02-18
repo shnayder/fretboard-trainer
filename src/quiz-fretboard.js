@@ -285,12 +285,28 @@ function createFrettedInstrumentMode(instrument) {
     // Recommendation
     var result = getRecommendationResult();
     if (result.recommended.size > 0) {
-      var names = [];
-      var sorted = Array.from(result.recommended).sort(function(a, b) { return b - a; });
-      for (var k = 0; k < sorted.length; k++) {
-        names.push(displayNote(instrument.stringNames[sorted[k]]));
+      // Build rationale text
+      var parts = [];
+      if (result.consolidateIndices.length > 0) {
+        var cNames = result.consolidateIndices.sort(function(a, b) { return b - a; })
+          .map(function(s) { return displayNote(instrument.stringNames[s]); });
+        parts.push('solidify ' + cNames.join(', ') + ' string' + (cNames.length > 1 ? 's' : '')
+          + ' \u2014 ' + result.consolidateDueCount + ' slow item' + (result.consolidateDueCount !== 1 ? 's' : ''));
       }
-      recText.textContent = 'Recommended: ' + names.join(', ') + ' string' + (names.length > 1 ? 's' : '');
+      if (result.expandIndex !== null) {
+        parts.push('start ' + displayNote(instrument.stringNames[result.expandIndex]) + ' string'
+          + ' \u2014 ' + result.expandNewCount + ' new item' + (result.expandNewCount !== 1 ? 's' : ''));
+      }
+      recText.textContent = 'Suggestion: ' + parts.join('\n');
+      recBtn.classList.remove('hidden');
+    } else if (seen === 0) {
+      // Default suggestion for fresh start
+      var defaultNames = [];
+      var defaultStrings = [instrument.stringCount - 1, instrument.stringCount - 2];
+      for (var d = 0; d < defaultStrings.length; d++) {
+        if (defaultStrings[d] >= 0) defaultNames.push(displayNote(instrument.stringNames[defaultStrings[d]]));
+      }
+      recText.textContent = 'Suggestion: start with ' + defaultNames.join(', ') + ' strings';
       recBtn.classList.remove('hidden');
     } else {
       recText.textContent = '';
@@ -349,6 +365,7 @@ function createFrettedInstrumentMode(instrument) {
       currentNote = q.currentNote;
       // Highlight active position, rest stay at default blank fill
       setCircleFill(quizFretboard, q.currentString, q.currentFret, FB_QUIZ_HL);
+      container.querySelector('.quiz-prompt').textContent = 'Name this note.';
     },
 
     checkAnswer: function(itemId, input) {
@@ -438,15 +455,20 @@ function createFrettedInstrumentMode(instrument) {
       });
     });
 
-    // Naturals-only checkbox
-    var naturalsCheckbox = container.querySelector('#' + instrument.id + '-naturals-only');
-    if (naturalsCheckbox) {
-      naturalsCheckbox.addEventListener('change', function(e) {
-        naturalsOnly = e.target.checked;
+    // Notes toggles (natural / accidentals)
+    container.querySelectorAll('.notes-toggle').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        btn.classList.toggle('active');
+        // Ensure at least one is active
+        var anyActive = container.querySelector('.notes-toggle.active');
+        if (!anyActive) btn.classList.add('active');
+        var naturalActive = container.querySelector('.notes-toggle[data-notes="natural"].active');
+        var accActive = container.querySelector('.notes-toggle[data-notes="accidentals"].active');
+        naturalsOnly = naturalActive && !accActive;
         updateAccidentalButtons();
         refreshUI();
       });
-    }
+    });
 
     // Start button
     container.querySelector('.start-btn').addEventListener('click', function() { engine.start(); });

@@ -179,6 +179,7 @@ for the pattern.
 
 ## PR Requirements
 
-All PRs that change code (not just docs/plans) must pass `/review` before merging.
-**Always run `/review` before pushing final changes** — don't wait for the user
-to ask.
+All PRs that change code (not just docs/plans) follow this sequence:
+1. Run `/review` until approved — don't wait for the user to ask.
+2. Push the branch.
+3. Create a PR with `gh pr create` (summary + test plan).

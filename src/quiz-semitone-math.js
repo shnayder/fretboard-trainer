@@ -14,12 +14,12 @@ function createSemitoneMathMode() {
 
   // Distance groups: pairs of semitone distances
   const DISTANCE_GROUPS = [
-    { distances: [1, 2],   label: '1,2' },
-    { distances: [3, 4],   label: '3,4' },
-    { distances: [5, 6],   label: '5,6' },
-    { distances: [7, 8],   label: '7,8' },
-    { distances: [9, 10],  label: '9,10' },
-    { distances: [11],     label: '11' },
+    { distances: [1, 2],   label: '\u00B11\u20132' },
+    { distances: [3, 4],   label: '\u00B13\u20134' },
+    { distances: [5, 6],   label: '\u00B15\u20136' },
+    { distances: [7, 8],   label: '\u00B17\u20138' },
+    { distances: [9, 10],  label: '\u00B19\u201310' },
+    { distances: [11],     label: '\u00B111' },
   ];
 
   let enabledGroups = new Set([0]); // Default: first group only
@@ -176,12 +176,21 @@ function createSemitoneMathMode() {
 
     var result = getRecommendationResult();
     if (result.recommended.size > 0) {
-      var names = [];
-      var sorted = Array.from(result.recommended).sort(function(a, b) { return a - b; });
-      for (var k = 0; k < sorted.length; k++) {
-        names.push('\u00B1' + DISTANCE_GROUPS[sorted[k]].label);
+      var parts = [];
+      if (result.consolidateIndices.length > 0) {
+        var cNames = result.consolidateIndices.sort(function(a, b) { return a - b; })
+          .map(function(g) { return DISTANCE_GROUPS[g].label; });
+        parts.push('solidify ' + cNames.join(', ')
+          + ' \u2014 ' + result.consolidateDueCount + ' slow item' + (result.consolidateDueCount !== 1 ? 's' : ''));
       }
-      recText.textContent = 'Recommended: ' + names.join(', ');
+      if (result.expandIndex !== null) {
+        parts.push('start ' + DISTANCE_GROUPS[result.expandIndex].label
+          + ' \u2014 ' + result.expandNewCount + ' new item' + (result.expandNewCount !== 1 ? 's' : ''));
+      }
+      recText.textContent = 'Suggestion: ' + parts.join('\n');
+      recBtn.classList.remove('hidden');
+    } else if (seen === 0) {
+      recText.textContent = 'Suggestion: start with ' + DISTANCE_GROUPS[0].label;
       recBtn.classList.remove('hidden');
     } else {
       recText.textContent = '';
@@ -235,8 +244,8 @@ function createSemitoneMathMode() {
     getPracticingLabel() {
       if (enabledGroups.size === DISTANCE_GROUPS.length) return 'all distances';
       const labels = [...enabledGroups].sort((a, b) => a - b)
-        .map(g => '\u00B1' + DISTANCE_GROUPS[g].label);
-      return labels.join(', ');
+        .map(g => DISTANCE_GROUPS[g].label);
+      return labels.join(', ') + ' semitones';
     },
 
     presentQuestion(itemId) {
@@ -297,6 +306,10 @@ function createSemitoneMathMode() {
     container.querySelectorAll('.mode-tab').forEach(btn => {
       btn.addEventListener('click', () => switchTab(btn.dataset.tab));
     });
+
+    // Set section heading
+    var toggleLabel = container.querySelector('.toggle-group-label');
+    if (toggleLabel) toggleLabel.textContent = 'Distances';
 
     // Generate distance group toggle buttons
     const togglesDiv = container.querySelector('.distance-toggles');

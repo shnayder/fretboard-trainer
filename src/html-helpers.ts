@@ -175,17 +175,21 @@ export function tabbedIdleHTML(config: {
     </div>
     <div class="tab-content tab-practice active">
       <div class="practice-card">
-        <div class="practice-status">
-          <span class="practice-status-label"></span>
-          <span class="practice-status-detail"></span>
+        <div class="practice-zone practice-zone-status">
+          <div class="practice-status">
+            <span class="practice-status-label"></span>
+            <span class="practice-status-detail"></span>
+          </div>
         </div>
-        <div class="practice-recommendation">
-          <span class="practice-rec-text"></span>
-          <button class="practice-rec-btn">Use recommendation</button>
-        </div>${practiceScope}
-        <div class="practice-start">
-          <div class="session-summary-text"></div>
+        <div class="practice-zone practice-zone-scope">
+          <div class="practice-recommendation">
+            <span class="practice-rec-text"></span>
+            <button class="practice-rec-btn">Use suggestion</button>
+          </div>${practiceScope}
           <div class="mastery-message">Looks like you've got this!</div>
+        </div>
+        <div class="practice-zone practice-zone-action">
+          <div class="session-summary-text"></div>
           <button class="start-btn">Start Quiz</button>
         </div>
       </div>
@@ -209,12 +213,15 @@ export function fretboardIdleHTML(config: {
   fretboardSVG: string;
 }): string {
   const togglesHTML = stringToggles(config.stringNames, config.defaultString);
-  const naturalsHTML = `<label class="setting-group">
-            <input type="checkbox" id="${config.id}-naturals-only" checked>
-            Natural only
-          </label>`;
+  const notesHTML = `<div class="toggle-group">
+            <span class="toggle-group-label">Notes</span>
+            <div class="notes-toggles">
+              <button class="notes-toggle active" data-notes="natural">natural</button>
+              <button class="notes-toggle" data-notes="accidentals">accidentals</button>
+            </div>
+          </div>`;
   return tabbedIdleHTML({
-    practiceScope: togglesHTML + '\n          ' + naturalsHTML,
+    practiceScope: togglesHTML + '\n          ' + notesHTML,
     progressContent: config.fretboardSVG,
   });
 }
@@ -249,12 +256,14 @@ export function modeScreen(id: string, opts: ModeScreenOptions): string {
     </div>
     ${opts.idleHTML}
     <div class="quiz-session">
-      <div class="quiz-countdown-bar">
-        <div class="quiz-countdown-fill"></div>
+      <div class="quiz-countdown-row">
+        <div class="quiz-countdown-bar">
+          <div class="quiz-countdown-fill"></div>
+        </div>
+        <span class="quiz-info-time"></span>
       </div>
       <div class="quiz-session-info">
         <span class="quiz-info-context"></span>
-        <span class="quiz-info-time"></span>
         <span class="quiz-info-count"></span>
       </div>
       <button class="quiz-header-close" aria-label="Stop quiz">\u00D7</button>
@@ -270,20 +279,11 @@ export function modeScreen(id: string, opts: ModeScreenOptions): string {
       <div class="time-display"></div>
       <div class="hint"></div>
       <div class="round-complete">
+        <div class="round-complete-context"></div>
         <div class="round-complete-heading"></div>
         <div class="round-complete-stats">
-          <div class="round-stat">
-            <span class="round-stat-value round-stat-correct"></span>
-            <span class="round-stat-label">correct</span>
-          </div>
-          <div class="round-stat">
-            <span class="round-stat-value round-stat-median"></span>
-            <span class="round-stat-label">median time</span>
-          </div>
-          <div class="round-stat">
-            <span class="round-stat-value round-stat-fluent"></span>
-            <span class="round-stat-label">fluent</span>
-          </div>
+          <div class="round-stat-line round-stat-correct"></div>
+          <div class="round-stat-line round-stat-median"></div>
         </div>
         <div class="round-complete-actions">
           <button class="round-complete-continue">Keep Going</button>

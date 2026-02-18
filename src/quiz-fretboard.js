@@ -5,7 +5,8 @@
 // Depends on globals: NOTES, NATURAL_NOTES, GUITAR, UKULELE,
 // noteMatchesInput, createQuizEngine, createNoteKeyHandler, DEFAULT_CONFIG,
 // getAutomaticityColor, getSpeedHeatmapColor, buildStatsLegend,
-// computeRecommendations, createFretboardHelpers, toggleFretboardString
+// computeRecommendations, createFretboardHelpers, toggleFretboardString,
+// computeNotePrioritization
 
 function createFrettedInstrumentMode(instrument) {
   var container = document.getElementById('mode-' + instrument.id);
@@ -14,6 +15,7 @@ function createFrettedInstrumentMode(instrument) {
   var enabledStrings = new Set([instrument.defaultString]);
   var noteFilter = 'natural'; // 'natural', 'sharps-flats', or 'all'
   var recommendedStrings = new Set();
+  var lastNotePri = null;
   var allStrings = Array.from({length: instrument.stringCount}, function(_, i) { return i; });
 
   // --- Pure helpers (from quiz-fretboard-state.js) ---
@@ -236,7 +238,7 @@ function createFrettedInstrumentMode(instrument) {
   function getRecommendationResult() {
     return computeRecommendations(
       engine.selector, allStrings,
-      function(s) { return fb.getItemIdsForString(s, noteFilter); },
+      function(s) { return fb.getItemIdsForString(s, 'all'); },
       DEFAULT_CONFIG, recsOptions
     );
   }
@@ -309,6 +311,14 @@ function createFrettedInstrumentMode(instrument) {
 
     // Recommendation
     var result = getRecommendationResult();
+
+    // Note-type prioritization: naturals first, then add accidentals
+    var naturalStats = engine.selector.getStringRecommendations(
+      [...result.recommended],
+      function(s) { return fb.getItemIdsForString(s, 'natural'); }
+    );
+    lastNotePri = computeNotePrioritization(naturalStats, DEFAULT_CONFIG.expansionThreshold);
+
     if (result.recommended.size > 0) {
       // Build rationale text
       var parts = [];
@@ -322,7 +332,13 @@ function createFrettedInstrumentMode(instrument) {
         parts.push('start ' + displayNote(instrument.stringNames[result.expandIndex]) + ' string'
           + ' \u2014 ' + result.expandNewCount + ' new item' + (result.expandNewCount !== 1 ? 's' : ''));
       }
-      recText.textContent = 'Suggestion: ' + parts.join('\n');
+      // Append note filter suggestion
+      if (lastNotePri.suggestedFilter === 'natural') {
+        parts.push('naturals first');
+      } else {
+        parts.push('add sharps & flats');
+      }
+      recText.textContent = 'Suggestion: ' + parts.join(', ');
       recBtn.classList.remove('hidden');
     } else {
       recText.textContent = '';
@@ -510,6 +526,12 @@ function createFrettedInstrumentMode(instrument) {
     if (recBtn) {
       recBtn.addEventListener('click', function() {
         applyRecommendations(engine.selector);
+        if (lastNotePri) {
+          noteFilter = lastNotePri.suggestedFilter;
+          saveNoteFilter();
+          updateNoteToggles();
+          updateAccidentalButtons();
+        }
         refreshUI();
       });
     }
@@ -517,7 +539,7 @@ function createFrettedInstrumentMode(instrument) {
     // Hover card only on progress fretboard (not quiz — would reveal the answer)
     if (progressFretboard) setupHoverCard(progressFretboard);
 
-    applyRecommendations(engine.selector);
+    updateRecommendations(engine.selector);
     updateAccidentalButtons();
     updateStats(engine.selector);
     renderPracticeSummary();

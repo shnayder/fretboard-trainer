@@ -402,7 +402,7 @@ function createChordSpellingMode() {
       });
     }
 
-    applyRecommendations(engine.selector);
+    updateRecommendations(engine.selector);
     renderPracticeSummary();
     renderSessionSummary();
   }

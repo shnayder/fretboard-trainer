@@ -144,10 +144,13 @@ body {
 .mode-back-btn:hover { background: var(--color-surface-hover); }
 .mode-back-btn:active { background: var(--color-surface-pressed); }
 .mode-title { margin: 0; font-size: var(--text-lg); font-weight: 600; flex: 1; }
-/* Hide mode top bar during active quiz and calibration */
+/* Hide back button during active quiz and calibration; keep title visible */
+.phase-active .mode-back-btn,
+.phase-calibration .mode-back-btn,
+.phase-round-complete .mode-back-btn { display: none; }
 .phase-active .mode-top-bar,
 .phase-calibration .mode-top-bar,
-.phase-round-complete .mode-top-bar { display: none; }
+.phase-round-complete .mode-top-bar { margin-bottom: 0; }
 
 /* --- Settings modal --- */
 .settings-overlay {
@@ -357,7 +360,6 @@ body {
 .practice-rec-text {
   font-size: var(--text-sm);
   color: var(--color-text-muted);
-  white-space: pre-line;
 }
 .practice-rec-text:empty {
   display: none;
@@ -835,7 +837,10 @@ button {
 .phase-round-complete .hint,
 .phase-round-complete .time-display,
 .phase-round-complete .speed-tap-status,
-.phase-round-complete .fretboard-wrapper { display: none; }
+.phase-round-complete .fretboard-wrapper,
+.phase-round-complete .quiz-countdown-row,
+.phase-round-complete .quiz-session-info,
+.phase-round-complete .quiz-header-close { display: none; }
 
 /* --- Note buttons (piano-style layout) --- */
 .note-buttons {
@@ -1440,7 +1445,7 @@ button {
     </div>
     <div class="home-footer">
       <button class="home-settings-btn" type="button">Settings</button>
-      <span class="version">v6.4</span>
+      <span class="version">v6.5</span>
     </div>
   </div>
 
@@ -6063,6 +6068,31 @@ function createFretboardHelpers(musicData) {
   };
 }
 
+/**
+ * Compute which note filter to suggest based on natural-note mastery.
+ * Consolidate-before-expanding applied to note types: master naturals
+ * before adding accidentals.
+ *
+ * @param {Array<{masteredCount: number, dueCount: number, unseenCount: number, totalCount: number}>} naturalStats
+ *   Per-string stats for natural notes only (from getStringRecommendations
+ *   called with a natural-only getItemIds).
+ * @param {number} threshold - mastery ratio gate (e.g. 0.7)
+ * @returns {{ suggestedFilter: string, naturalMasteryRatio: number }}
+ */
+function computeNotePrioritization(naturalStats, threshold) {
+  let totalSeen = 0;
+  let totalMastered = 0;
+  for (const r of naturalStats) {
+    totalSeen += r.masteredCount + r.dueCount;
+    totalMastered += r.masteredCount;
+  }
+  const ratio = totalSeen > 0 ? totalMastered / totalSeen : 0;
+  if (totalSeen === 0 || ratio < threshold) {
+    return { suggestedFilter: 'natural', naturalMasteryRatio: ratio };
+  }
+  return { suggestedFilter: 'all', naturalMasteryRatio: ratio };
+}
+
 // Fretboard quiz mode: identify the note at a highlighted fretboard position.
 // Parameterized factory supports any fretted instrument (guitar, ukulele, etc.).
 // Plugs into the shared quiz engine via the mode interface.
@@ -6070,7 +6100,8 @@ function createFretboardHelpers(musicData) {
 // Depends on globals: NOTES, NATURAL_NOTES, GUITAR, UKULELE,
 // noteMatchesInput, createQuizEngine, createNoteKeyHandler, DEFAULT_CONFIG,
 // getAutomaticityColor, getSpeedHeatmapColor, buildStatsLegend,
-// computeRecommendations, createFretboardHelpers, toggleFretboardString
+// computeRecommendations, createFretboardHelpers, toggleFretboardString,
+// computeNotePrioritization
 
 function createFrettedInstrumentMode(instrument) {
   var container = document.getElementById('mode-' + instrument.id);
@@ -6079,6 +6110,7 @@ function createFrettedInstrumentMode(instrument) {
   var enabledStrings = new Set([instrument.defaultString]);
   var noteFilter = 'natural'; // 'natural', 'sharps-flats', or 'all'
   var recommendedStrings = new Set();
+  var lastNotePri = null;
   var allStrings = Array.from({length: instrument.stringCount}, function(_, i) { return i; });
 
   // --- Pure helpers (from quiz-fretboard-state.js) ---
@@ -6301,7 +6333,7 @@ function createFrettedInstrumentMode(instrument) {
   function getRecommendationResult() {
     return computeRecommendations(
       engine.selector, allStrings,
-      function(s) { return fb.getItemIdsForString(s, noteFilter); },
+      function(s) { return fb.getItemIdsForString(s, 'all'); },
       DEFAULT_CONFIG, recsOptions
     );
   }
@@ -6374,6 +6406,14 @@ function createFrettedInstrumentMode(instrument) {
 
     // Recommendation
     var result = getRecommendationResult();
+
+    // Note-type prioritization: naturals first, then add accidentals
+    var naturalStats = engine.selector.getStringRecommendations(
+      [...result.recommended],
+      function(s) { return fb.getItemIdsForString(s, 'natural'); }
+    );
+    lastNotePri = computeNotePrioritization(naturalStats, DEFAULT_CONFIG.expansionThreshold);
+
     if (result.recommended.size > 0) {
       // Build rationale text
       var parts = [];
@@ -6387,7 +6427,13 @@ function createFrettedInstrumentMode(instrument) {
         parts.push('start ' + displayNote(instrument.stringNames[result.expandIndex]) + ' string'
           + ' \u2014 ' + result.expandNewCount + ' new item' + (result.expandNewCount !== 1 ? 's' : ''));
       }
-      recText.textContent = 'Suggestion: ' + parts.join('\n');
+      // Append note filter suggestion
+      if (lastNotePri.suggestedFilter === 'natural') {
+        parts.push('naturals first');
+      } else {
+        parts.push('add sharps & flats');
+      }
+      recText.textContent = 'Suggestion: ' + parts.join(', ');
       recBtn.classList.remove('hidden');
     } else {
       recText.textContent = '';
@@ -6575,6 +6621,12 @@ function createFrettedInstrumentMode(instrument) {
     if (recBtn) {
       recBtn.addEventListener('click', function() {
         applyRecommendations(engine.selector);
+        if (lastNotePri) {
+          noteFilter = lastNotePri.suggestedFilter;
+          saveNoteFilter();
+          updateNoteToggles();
+          updateAccidentalButtons();
+        }
         refreshUI();
       });
     }
@@ -6582,7 +6634,7 @@ function createFrettedInstrumentMode(instrument) {
     // Hover card only on progress fretboard (not quiz — would reveal the answer)
     if (progressFretboard) setupHoverCard(progressFretboard);
 
-    applyRecommendations(engine.selector);
+    updateRecommendations(engine.selector);
     updateAccidentalButtons();
     updateStats(engine.selector);
     renderPracticeSummary();
@@ -7859,7 +7911,7 @@ function createSemitoneMathMode() {
       });
     }
 
-    applyRecommendations(engine.selector);
+    updateRecommendations(engine.selector);
     renderPracticeSummary();
     renderSessionSummary();
   }
@@ -8223,7 +8275,7 @@ function createIntervalMathMode() {
       });
     }
 
-    applyRecommendations(engine.selector);
+    updateRecommendations(engine.selector);
     renderPracticeSummary();
     renderSessionSummary();
   }
@@ -8622,7 +8674,7 @@ function createKeySignaturesMode() {
       });
     }
 
-    applyRecommendations(engine.selector);
+    updateRecommendations(engine.selector);
     renderPracticeSummary();
     renderSessionSummary();
   }
@@ -9007,7 +9059,7 @@ function createScaleDegreesMode() {
       });
     }
 
-    applyRecommendations(engine.selector);
+    updateRecommendations(engine.selector);
     renderPracticeSummary();
     renderSessionSummary();
   }
@@ -9392,7 +9444,7 @@ function createDiatonicChordsMode() {
       });
     }
 
-    applyRecommendations(engine.selector);
+    updateRecommendations(engine.selector);
     renderPracticeSummary();
     renderSessionSummary();
   }
@@ -9814,7 +9866,7 @@ function createChordSpellingMode() {
       });
     }
 
-    applyRecommendations(engine.selector);
+    updateRecommendations(engine.selector);
     renderPracticeSummary();
     renderSessionSummary();
   }

@@ -365,7 +365,7 @@ function createDiatonicChordsMode() {
       });
     }
 
-    applyRecommendations(engine.selector);
+    updateRecommendations(engine.selector);
     renderPracticeSummary();
     renderSessionSummary();
   }

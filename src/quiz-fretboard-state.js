@@ -129,3 +129,28 @@ export function createFretboardHelpers(musicData) {
     getItemIdsForString,
   };
 }
+
+/**
+ * Compute which note filter to suggest based on natural-note mastery.
+ * Consolidate-before-expanding applied to note types: master naturals
+ * before adding accidentals.
+ *
+ * @param {Array<{masteredCount: number, dueCount: number, unseenCount: number, totalCount: number}>} naturalStats
+ *   Per-string stats for natural notes only (from getStringRecommendations
+ *   called with a natural-only getItemIds).
+ * @param {number} threshold - mastery ratio gate (e.g. 0.7)
+ * @returns {{ suggestedFilter: string, naturalMasteryRatio: number }}
+ */
+export function computeNotePrioritization(naturalStats, threshold) {
+  let totalSeen = 0;
+  let totalMastered = 0;
+  for (const r of naturalStats) {
+    totalSeen += r.masteredCount + r.dueCount;
+    totalMastered += r.masteredCount;
+  }
+  const ratio = totalSeen > 0 ? totalMastered / totalSeen : 0;
+  if (totalSeen === 0 || ratio < threshold) {
+    return { suggestedFilter: 'natural', naturalMasteryRatio: ratio };
+  }
+  return { suggestedFilter: 'all', naturalMasteryRatio: ratio };
+}

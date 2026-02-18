@@ -13,12 +13,29 @@ Branch: workstream/design
     - if we're going to have hovers/taps for more details, need that in other modes too.
   - in quiz mode:
     - on desktop, pointers changes to pointer hand over fretboard positions, but there is no hover or anything to click on.
+    - keyboard input needs tweaking -- I usually can't type "G#" fast enough to register. Accept 's' or '#' perhaps? And other cleanups for keyboard mode. 
+      - timing feels awkward -- waiting for second char, so I can't move on.
+      - Later -- focus on phone, computer mostly for testing.
+    - also keyboard -- escape should get me from quiz mode to main page. later.
 
 
   -> waiting for web site to come back. plans/design-docs/2026-02-17-fretboard-polish.md
 
 ## Backlog
 - Quiz view
+1. Let's keep "mode" header all quiz states. e.g. "Guitar Fretboard" should be visible during quiz, round complete states, and speed check. Put the timeout bar elements just below it.
+1. selected strings still not persisting across reload -- are we overwriting with suggestion? not saving? Logic should be outside UI layer, tested.
+1. suggestions should not depend on naturals/accidental toggle, just on your recall status. The mode should have some prioritization logic -- in case of fretboard, learn all naturals, then add accidentals, then polish everything.  General rule: Page logic should flow top to bottom. 
+  - Future: We might have multiple suggestions later. e.g. "Learn accidentals on E string" & "Solidify A and D strings" at the same time user can pick one or both. Later.
+1. round complete state:
+  - see timeout bar, almost but not completely full. No timeout bar should be visible.
+  - next to timeout bar, see "11 answers". Shouldn't be there. We have that info in the main card.
+
+
+- speed tap, fretboard, chord spelling
+  - are our stats adjusted by incorrect answers? how?
+
+- semitone quiz
 
 - perhaps give "last question" mode a timeout. Say 30s.
 - Color system and brand identity

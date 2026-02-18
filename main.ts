@@ -159,7 +159,7 @@ async function buildHTML(): Promise<string> {
     </div>
     <div class="home-footer">
       <button class="home-settings-btn" type="button">Settings</button>
-      <span class="version">v6.4</span>
+      <span class="version">v6.5</span>
     </div>
   </div>
 

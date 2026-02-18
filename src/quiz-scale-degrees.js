@@ -176,12 +176,18 @@ function createScaleDegreesMode() {
 
     var result = getRecommendationResult();
     if (result.recommended.size > 0) {
-      var names = [];
-      var sorted = Array.from(result.recommended).sort(function(a, b) { return a - b; });
-      for (var k = 0; k < sorted.length; k++) {
-        names.push(DEGREE_GROUPS[sorted[k]].label);
+      var parts = [];
+      if (result.consolidateIndices.length > 0) {
+        var cNames = result.consolidateIndices.sort(function(a, b) { return a - b; })
+          .map(function(g) { return DEGREE_GROUPS[g].label; });
+        parts.push('solidify ' + cNames.join(', ')
+          + ' \u2014 ' + result.consolidateDueCount + ' slow item' + (result.consolidateDueCount !== 1 ? 's' : ''));
       }
-      recText.textContent = 'Recommended: ' + names.join(', ');
+      if (result.expandIndex !== null) {
+        parts.push('start ' + DEGREE_GROUPS[result.expandIndex].label
+          + ' \u2014 ' + result.expandNewCount + ' new item' + (result.expandNewCount !== 1 ? 's' : ''));
+      }
+      recText.textContent = 'Suggestion: ' + parts.join('\n');
       recBtn.classList.remove('hidden');
     } else {
       recText.textContent = '';
@@ -233,9 +239,10 @@ function createScaleDegreesMode() {
 
     getPracticingLabel() {
       if (enabledGroups.size === DEGREE_GROUPS.length) return 'all degrees';
-      const labels = [...enabledGroups].sort((a, b) => a - b)
-        .map(g => DEGREE_GROUPS[g].label);
-      return labels.join(', ');
+      const degrees = [...enabledGroups].sort((a, b) => a - b)
+        .flatMap(g => DEGREE_GROUPS[g].degrees)
+        .sort((a, b) => a - b);
+      return degrees.map(d => DEGREE_LABELS[d - 1]).join(', ') + ' degrees';
     },
 
     presentQuestion(itemId) {
@@ -315,6 +322,10 @@ function createScaleDegreesMode() {
       btn.addEventListener('click', () => switchTab(btn.dataset.tab));
     });
 
+    // Set section heading
+    var toggleLabel = container.querySelector('.toggle-group-label');
+    if (toggleLabel) toggleLabel.textContent = 'Degrees';
+
     const togglesDiv = container.querySelector('.distance-toggles');
     DEGREE_GROUPS.forEach((group, i) => {
       const btn = document.createElement('button');
@@ -352,7 +363,7 @@ function createScaleDegreesMode() {
       });
     }
 
-    applyRecommendations(engine.selector);
+    updateRecommendations(engine.selector);
     renderPracticeSummary();
     renderSessionSummary();
   }
@@ -361,7 +372,7 @@ function createScaleDegreesMode() {
     mode,
     engine,
     init,
-    activate() { engine.attach(); refreshNoteButtonLabels(container); refreshUI(); engine.showCalibrationIfNeeded(); },
+    activate() { engine.attach(); refreshNoteButtonLabels(container); refreshUI(); },
     deactivate() {
       if (engine.isRunning) engine.stop();
       engine.detach();

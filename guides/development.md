@@ -118,16 +118,19 @@ and commits the output to `docs/preview/<branch-name>/` on main.
   directory when the branch is deleted or PR is closed.
 - **PR comment:** the deploy workflow posts the preview URL on any associated PR.
 
-## Code Review
+## Code Review & PR
 
-Run `/review` **before pushing final changes** on every branch. This is not
-optional — it catches template sync issues, architecture violations, missing
-tests, and convention drift that are easy to miss during implementation.
+Every branch that changes code follows these steps before merging:
 
-Use the `/review` slash command to run the code-reviewer subagent, which
-applies the checklist in `.claude/commands/review-checklist.md`. The reviewer
-checks for common issues: build file sync, architecture pattern violations,
-missing tests, and more.
+1. **Run `/review`** — catches template sync issues, architecture violations,
+   missing tests, and convention drift. Fix any critical findings and re-run
+   until approved.
+2. **Push the branch** — `git push -u origin <branch-name>`
+3. **Create a PR** — `gh pr create` with a summary of changes and a test plan.
+
+`/review` is not optional — it's the gate before pushing. Use the `/review`
+slash command to run the code-reviewer subagent, which applies the checklist in
+`.claude/commands/review-checklist.md`.
 
 Review scopes:
 - `/review` — review working tree diff (default)

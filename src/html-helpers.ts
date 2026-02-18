@@ -169,39 +169,55 @@ export function tabbedIdleHTML(config: {
   const practiceScope = config.practiceScope
     ? `\n      <div class="practice-scope">\n        <div class="settings-row">\n          ${config.practiceScope}\n        </div>\n      </div>`
     : '';
+  // When no practiceScope, fold recommendation + mastery into the status zone
+  // to avoid an empty scope zone with double dividers.
+  const recBlock = `<div class="practice-recommendation">
+            <span class="practice-rec-text"></span>
+            <button class="practice-rec-btn">Use suggestion</button>
+          </div>`;
+  const masteryBlock = `<div class="mastery-message">Looks like you've got this!</div>`;
+  const statusExtra = config.practiceScope ? '' : `\n          ${recBlock}\n          ${masteryBlock}`;
+  const scopeZone = config.practiceScope
+    ? `\n        <div class="practice-zone practice-zone-scope">\n          ${recBlock}${practiceScope}\n          ${masteryBlock}\n        </div>`
+    : '';
   return `<div class="mode-tabs">
       <button class="mode-tab active" data-tab="practice">Practice</button>
       <button class="mode-tab" data-tab="progress">Progress</button>
     </div>
     <div class="tab-content tab-practice active">
       <div class="practice-card">
-        <div class="practice-status">
-          <span class="practice-status-label"></span>
-          <span class="practice-status-detail"></span>
-        </div>
-        <div class="practice-recommendation">
-          <span class="practice-rec-text"></span>
-          <button class="practice-rec-btn">Use recommendation</button>
-        </div>${practiceScope}
-        <div class="practice-start">
+        <div class="practice-zone practice-zone-status">
+          <div class="practice-status">
+            <span class="practice-status-label"></span>
+            <span class="practice-status-detail"></span>
+          </div>${statusExtra}
+        </div>${scopeZone}
+        <div class="practice-zone practice-zone-action">
           <div class="session-summary-text"></div>
-          <div class="mastery-message">Looks like you've got this!</div>
           <button class="start-btn">Start Quiz</button>
         </div>
       </div>
-      <details class="practice-advanced">
-        <summary>Advanced</summary>
-        <button class="recalibrate-btn">Redo speed check</button>
-      </details>
     </div>
     <div class="tab-content tab-progress">
       ${config.progressContent || ''}
-      <div class="stats-container"></div>
+      <div class="baseline-info"></div>
       <div class="stats-controls">
         <div class="stats-toggle"><button class="stats-toggle-btn active" data-mode="retention">Recall</button><button class="stats-toggle-btn" data-mode="speed">Speed</button></div>
         <span class="stats"></span>
       </div>
+      <div class="stats-container"></div>
     </div>`;
+}
+
+/** Notes toggle HTML (natural / sharps & flats). Reused by fretboard and speed tap. */
+export function notesToggleHTML(): string {
+  return `<div class="toggle-group">
+            <span class="toggle-group-label">Notes</span>
+            <div class="notes-toggles">
+              <button class="notes-toggle active" data-notes="natural">natural</button>
+              <button class="notes-toggle" data-notes="sharps-flats">sharps &amp; flats</button>
+            </div>
+          </div>`;
 }
 
 /** Build the tab-based idle content for a fretted instrument mode. */
@@ -212,12 +228,8 @@ export function fretboardIdleHTML(config: {
   fretboardSVG: string;
 }): string {
   const togglesHTML = stringToggles(config.stringNames, config.defaultString);
-  const naturalsHTML = `<label class="setting-group">
-            <input type="checkbox" id="${config.id}-naturals-only" checked>
-            Natural only
-          </label>`;
   return tabbedIdleHTML({
-    practiceScope: togglesHTML + '\n          ' + naturalsHTML,
+    practiceScope: togglesHTML + '\n          ' + notesToggleHTML(),
     progressContent: config.fretboardSVG,
   });
 }
@@ -252,41 +264,37 @@ export function modeScreen(id: string, opts: ModeScreenOptions): string {
     </div>
     ${opts.idleHTML}
     <div class="quiz-session">
-      <div class="quiz-countdown-bar">
-        <div class="quiz-countdown-fill"></div>
+      <div class="quiz-countdown-row">
+        <div class="quiz-countdown-bar">
+          <div class="quiz-countdown-fill"></div>
+        </div>
+        <span class="quiz-info-time"></span>
       </div>
       <div class="quiz-session-info">
         <span class="quiz-info-context"></span>
-        <span class="quiz-info-time"></span>
         <span class="quiz-info-count"></span>
-        <button class="quiz-header-close" aria-label="Stop quiz">\u00D7</button>
       </div>
+      <button class="quiz-header-close" aria-label="Stop quiz">\u00D7</button>
       <div class="progress-bar">
         <div class="progress-fill" style="width: 0%"></div>
         <div class="progress-text">0 / 0 fluent</div>
       </div>
     </div>
     <div class="quiz-area">
-      <div class="quiz-prompt"></div>
+      <div class="quiz-prompt-row">
+        <div class="quiz-prompt"></div>
+        <div class="quiz-last-question"></div>
+      </div>
       ${opts.quizAreaContent}
       <div class="feedback"></div>
       <div class="time-display"></div>
       <div class="hint"></div>
       <div class="round-complete">
+        <div class="round-complete-context"></div>
         <div class="round-complete-heading"></div>
         <div class="round-complete-stats">
-          <div class="round-stat">
-            <span class="round-stat-value round-stat-correct"></span>
-            <span class="round-stat-label">correct</span>
-          </div>
-          <div class="round-stat">
-            <span class="round-stat-value round-stat-median"></span>
-            <span class="round-stat-label">median time</span>
-          </div>
-          <div class="round-stat">
-            <span class="round-stat-value round-stat-fluent"></span>
-            <span class="round-stat-label">fluent</span>
-          </div>
+          <div class="round-stat-line round-stat-correct"></div>
+          <div class="round-stat-line round-stat-median"></div>
         </div>
         <div class="round-complete-actions">
           <button class="round-complete-continue">Keep Going</button>

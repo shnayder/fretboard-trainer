@@ -366,8 +366,8 @@ function runCalibration(opts) {
     }
 
     prevBtn = targetBtn;
-    if (els.progressText) els.progressText.textContent = (trialIndex + 1) + ' / ' + TRIAL_COUNT;
-    if (els.progressFill) els.progressFill.style.width = Math.round(((trialIndex + 1) / TRIAL_COUNT) * 100) + '%';
+    if (els.progressText) els.progressText.textContent = trialIndex + ' / ' + TRIAL_COUNT;
+    if (els.progressFill) els.progressFill.style.width = Math.round((trialIndex / TRIAL_COUNT) * 100) + '%';
   }
 
   function recordPress() {
@@ -582,12 +582,13 @@ export function createQuizEngine(mode, container) {
     quizArea: container.querySelector('.quiz-area'),
     quizPrompt: container.querySelector('.quiz-prompt'),
     masteryMessage: container.querySelector('.mastery-message'),
-    recalibrateBtn: container.querySelector('.recalibrate-btn'),
+    baselineInfo: container.querySelector('.baseline-info'),
     quizHeaderClose: container.querySelector('.quiz-header-close'),
     countdownFill: container.querySelector('.quiz-countdown-fill'),
     countdownBar: container.querySelector('.quiz-countdown-bar'),
     quizInfoContext: container.querySelector('.quiz-info-context'),
     quizInfoTime: container.querySelector('.quiz-info-time'),
+    quizLastQuestion: container.querySelector('.quiz-last-question'),
     quizInfoCount: container.querySelector('.quiz-info-count'),
     progressFill: container.querySelector('.progress-fill'),
     progressText: container.querySelector('.progress-text'),
@@ -752,9 +753,6 @@ export function createQuizEngine(mode, container) {
       els.masteryMessage.textContent = state.masteryText;
       els.masteryMessage.classList.toggle('mastery-visible', state.showMastery);
     }
-    if (els.recalibrateBtn) {
-      els.recalibrateBtn.classList.toggle('has-baseline', !!motorBaseline);
-    }
   }
 
   function renderSessionStats() {
@@ -784,12 +782,26 @@ export function createQuizEngine(mode, container) {
 
   function renderRoundComplete() {
     if (els.roundCompleteEl && state.phase === 'round-complete') {
+      // Context line: scope label + overall fluency
+      var contextEl = els.roundCompleteEl.querySelector('.round-complete-context');
+      if (contextEl) {
+        var label = mode.getPracticingLabel ? mode.getPracticingLabel() : '';
+        var fluencyText = state.masteredCount + ' / ' + state.totalEnabledCount + ' fluent';
+        contextEl.textContent = label ? label + ' \u00B7 ' + fluencyText : fluencyText;
+      }
+
+      // Heading (no round number)
       var heading = els.roundCompleteEl.querySelector('.round-complete-heading');
-      if (heading) heading.textContent = 'Round ' + state.roundNumber + ' complete';
+      if (heading) heading.textContent = 'Round complete';
 
+      // Correct count + round duration
       var correctEl = els.roundCompleteEl.querySelector('.round-stat-correct');
-      if (correctEl) correctEl.textContent = state.roundCorrect + ' / ' + state.roundAnswered;
+      if (correctEl) {
+        var durationSec = Math.round((state.roundDurationMs || 0) / 1000);
+        correctEl.textContent = state.roundCorrect + ' / ' + state.roundAnswered + ' correct \u00B7 ' + durationSec + 's';
+      }
 
+      // Median response time
       var medianEl = els.roundCompleteEl.querySelector('.round-stat-median');
       if (medianEl) {
         if (state.roundResponseTimes && state.roundResponseTimes.length > 0) {
@@ -798,14 +810,11 @@ export function createQuizEngine(mode, container) {
           var median = sorted.length % 2 === 0
             ? (sorted[mid - 1] + sorted[mid]) / 2
             : sorted[mid];
-          medianEl.textContent = (median / 1000).toFixed(1) + 's';
+          medianEl.textContent = (median / 1000).toFixed(1) + 's median response time';
         } else {
-          medianEl.textContent = '\u2014';
+          medianEl.textContent = '';
         }
       }
-
-      var fluentEl = els.roundCompleteEl.querySelector('.round-stat-fluent');
-      if (fluentEl) fluentEl.textContent = state.masteredCount + ' / ' + state.totalEnabledCount;
     }
   }
 
@@ -815,6 +824,25 @@ export function createQuizEngine(mode, container) {
     } else if (state.phase === 'calibration-results' && !calibrationContentEl) {
       renderCalibrationResults();
     }
+  }
+
+  function renderBaselineInfo() {
+    if (!els.baselineInfo) return;
+    els.baselineInfo.textContent = '';
+    var text = document.createElement('span');
+    var btn = document.createElement('button');
+    btn.className = 'baseline-rerun-btn';
+    btn.addEventListener('click', function() { startCalibration(); });
+    if (motorBaseline) {
+      text.textContent = 'Response time baseline: ' + formatMs(motorBaseline) + ' ';
+      btn.textContent = 'Rerun speed check';
+    } else {
+      text.textContent = 'Response time baseline: 1s (default). '
+        + 'Do a speed check (10 taps, ~15s) to track progress more accurately. ';
+      btn.textContent = 'Speed check';
+    }
+    els.baselineInfo.appendChild(text);
+    els.baselineInfo.appendChild(btn);
   }
 
   function render() {
@@ -878,8 +906,12 @@ export function createQuizEngine(mode, container) {
     }
     roundTimerStart = null;
     if (els.countdownFill) els.countdownFill.style.width = '100%';
-    if (els.countdownBar) els.countdownBar.classList.remove('round-timer-warning');
+    if (els.countdownBar) {
+      els.countdownBar.classList.remove('round-timer-warning');
+      els.countdownBar.classList.remove('last-question');
+    }
     if (els.quizInfoTime) els.quizInfoTime.textContent = '';
+    if (els.quizLastQuestion) els.quizLastQuestion.textContent = '';
   }
 
   /**
@@ -896,14 +928,18 @@ export function createQuizEngine(mode, container) {
     if (state.answered) {
       // User is on the feedback screen — transition now
       transitionToRoundComplete();
+    } else {
+      // User is mid-question — signal "last question" next to the prompt
+      if (els.quizLastQuestion) els.quizLastQuestion.textContent = 'Last question';
+      if (els.countdownBar) els.countdownBar.classList.add('last-question');
     }
-    // Otherwise: user is mid-question. They'll finish, and nextQuestion()
-    // or submitAnswer() will check roundTimerExpired.
   }
 
   function transitionToRoundComplete() {
+    var roundDurationMs = roundTimerStart ? Date.now() - roundTimerStart : 0;
     stopRoundTimer();
     state = engineRoundComplete(state);
+    state = { ...state, roundDurationMs: roundDurationMs };
     render();
   }
 
@@ -923,11 +959,27 @@ export function createQuizEngine(mode, container) {
 
   // --- Baseline application ---
 
+  /**
+   * Sync baseline from localStorage (another mode may have completed
+   * calibration since this engine was created). Called on attach().
+   */
+  function syncBaselineFromStorage() {
+    if (motorBaseline) return; // already have one
+    const stored = localStorage.getItem(baselineKey);
+    if (stored) {
+      const parsed = parseInt(stored, 10);
+      if (parsed > 0) {
+        applyBaseline(parsed);
+      }
+    }
+  }
+
   function applyBaseline(baseline) {
     motorBaseline = baseline;
     localStorage.setItem(baselineKey, String(baseline));
     const scaledConfig = deriveScaledConfig(baseline, DEFAULT_CONFIG);
     selector.updateConfig(scaledConfig);
+    renderBaselineInfo();
   }
 
   // --- Calibration ---
@@ -962,7 +1014,7 @@ export function createQuizEngine(mode, container) {
   }
 
   function getCalibrationTrialHint() {
-    if (hasSearchCalibration()) return 'Find and press the button';
+    if (hasSearchCalibration()) return ''; // prompt already tells user what to press
     return undefined; // use default (highlight mode)
   }
 
@@ -1117,10 +1169,6 @@ export function createQuizEngine(mode, container) {
     nextQuestion();
   }
 
-  function recalibrate() {
-    startCalibration();
-  }
-
   function updateIdleMessage() {
     if (state.phase !== 'idle') return;
     const items = mode.getEnabledItems();
@@ -1183,6 +1231,7 @@ export function createQuizEngine(mode, container) {
   // Also refreshes notation-dependent content (button labels, stats table)
   // so that a mode activated after a global notation change shows current labels.
   function attach() {
+    syncBaselineFromStorage();
     document.addEventListener('keydown', handleKeydown);
     container.addEventListener('click', handleClick);
     refreshNoteButtonLabels(container);
@@ -1193,11 +1242,6 @@ export function createQuizEngine(mode, container) {
   function detach() {
     document.removeEventListener('keydown', handleKeydown);
     container.removeEventListener('click', handleClick);
-  }
-
-  // Wire up recalibrate button
-  if (els.recalibrateBtn) {
-    els.recalibrateBtn.addEventListener('click', recalibrate);
   }
 
   // Wire up quiz header close button
@@ -1222,24 +1266,18 @@ export function createQuizEngine(mode, container) {
    * engine was created (e.g. guitar and ukulele both use 'button').
    */
   function showCalibrationIfNeeded() {
-    if (!motorBaseline) {
-      const stored = localStorage.getItem(baselineKey);
-      if (stored) {
-        const parsed = parseInt(stored, 10);
-        if (parsed > 0) {
-          applyBaseline(parsed);
-        }
-      }
-    }
+    syncBaselineFromStorage();
     if (!motorBaseline && state.phase === 'idle') {
       startCalibration();
     }
   }
 
+  // Render baseline info once at initialization
+  renderBaselineInfo();
+
   return {
     start,
     stop,
-    recalibrate,
     showCalibrationIfNeeded,
     submitAnswer,
     nextQuestion,

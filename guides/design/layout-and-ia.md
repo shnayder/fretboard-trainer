@@ -72,7 +72,7 @@ Settings that configure the same concern should be visually grouped with a
 clear label. Don't scatter related controls across different visual sections.
 
 **Examples of concerns:**
-- "What to practice" — string toggles, group toggles, naturals-only
+- "What to practice" — string toggles, group toggles, notes filter
 - "View my progress" — Recall/Speed toggle, heatmap, legend
 - "Quiz actions" — Start/Stop
 
@@ -139,7 +139,7 @@ Settings, stats, and non-essential metadata should be hidden.
 **Why:** This is the core interaction — the user is under time pressure,
 focused on identifying a note and tapping an answer. Every pixel of screen
 space should serve that goal. Quiz-configuration controls (which strings are
-enabled, whether to show accidentals) aren't actionable mid-quiz and shouldn't
+enabled, which notes to include) aren't actionable mid-quiz and shouldn't
 compete for attention.
 
 **What to keep during quiz:**
@@ -151,7 +151,7 @@ compete for attention.
 
 **What to hide during quiz:**
 - Stats heatmaps and legends
-- Configuration toggles (string selection, group selection, naturals-only)
+- Configuration toggles (string selection, group selection, notes filter)
 - Recall/Speed toggle
 - Recalibrate button
 - Mode top bar (back button + title)
@@ -234,11 +234,8 @@ new users and hard to scan without support.
 
 ## UX Terminology
 
-Terms used in the UI and codebase with specific meanings in this app:
-
-| Term | Meaning | Why this word |
-|------|---------|---------------|
-| **fluent** | An item the user can recall quickly and accurately right now (automaticity above threshold). Used in the progress bar: "5 / 78 fluent". | "Mastered" implies permanent learning, but you'll forget by next session. "Fluent" captures speed + accuracy without claiming permanence — you can be fluent today and rusty tomorrow. Matches the underlying automaticity metric. |
+See [terminology.md](../terminology.md) for the canonical list of user-facing
+terms and their internal equivalents.
 
 ---
 
@@ -315,7 +312,7 @@ Define system-wide component roles and never reuse styles across roles:
 |-----------|------|---------|
 | Tabs | Mode/view switching | Practice / Progress |
 | Pills/chips | Multi-select filters | String selection |
-| Toggle | Binary rule | Natural notes only |
+| Toggle | Multi-select filter | Notes: natural / sharps & flats / all |
 | Button | Action | Start Quiz, Redo speed check |
 
 **Why:** When tabs, pills, toggles, and buttons all look similar or the same

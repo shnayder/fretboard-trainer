@@ -14,11 +14,11 @@ function createKeySignaturesMode() {
 
   // Group definitions: keys grouped by accidental count
   const KEY_GROUPS = [
-    { keys: ['C', 'G', 'F'],     label: '0-1' },
-    { keys: ['D', 'Bb'],         label: '2' },
-    { keys: ['A', 'Eb'],         label: '3' },
-    { keys: ['E', 'Ab'],         label: '4' },
-    { keys: ['B', 'Db', 'F#'],   label: '5+' },
+    { keys: ['C', 'G', 'F'],     label: 'C G F' },
+    { keys: ['D', 'Bb'],         label: 'D B\u266D' },
+    { keys: ['A', 'Eb'],         label: 'A E\u266D' },
+    { keys: ['E', 'Ab'],         label: 'E A\u266D' },
+    { keys: ['B', 'Db', 'F#'],   label: 'B D\u266D F\u266F' },
   ];
 
   let enabledGroups = new Set([0, 1]); // Default: groups 0+1
@@ -167,12 +167,18 @@ function createKeySignaturesMode() {
 
     var result = getRecommendationResult();
     if (result.recommended.size > 0) {
-      var names = [];
-      var sorted = Array.from(result.recommended).sort(function(a, b) { return a - b; });
-      for (var k = 0; k < sorted.length; k++) {
-        names.push(KEY_GROUPS[sorted[k]].label);
+      var parts = [];
+      if (result.consolidateIndices.length > 0) {
+        var cNames = result.consolidateIndices.sort(function(a, b) { return a - b; })
+          .map(function(g) { return KEY_GROUPS[g].label; });
+        parts.push('solidify ' + cNames.join(', ')
+          + ' \u2014 ' + result.consolidateDueCount + ' slow item' + (result.consolidateDueCount !== 1 ? 's' : ''));
       }
-      recText.textContent = 'Recommended: ' + names.join(', ');
+      if (result.expandIndex !== null) {
+        parts.push('start ' + KEY_GROUPS[result.expandIndex].label
+          + ' \u2014 ' + result.expandNewCount + ' new item' + (result.expandNewCount !== 1 ? 's' : ''));
+      }
+      recText.textContent = 'Suggestion: ' + parts.join('\n');
       recBtn.classList.remove('hidden');
     } else {
       recText.textContent = '';
@@ -232,7 +238,8 @@ function createKeySignaturesMode() {
     getPracticingLabel() {
       if (enabledGroups.size === KEY_GROUPS.length) return 'all keys';
       const keys = [...enabledGroups].sort((a, b) => a - b)
-        .flatMap(g => KEY_GROUPS[g].keys);
+        .flatMap(g => KEY_GROUPS[g].keys)
+        .map(k => displayNote(k));
       return keys.join(', ');
     },
 
@@ -331,6 +338,10 @@ function createKeySignaturesMode() {
       btn.addEventListener('click', () => switchTab(btn.dataset.tab));
     });
 
+    // Set section heading
+    var toggleLabel = container.querySelector('.toggle-group-label');
+    if (toggleLabel) toggleLabel.textContent = 'Keys';
+
     const togglesDiv = container.querySelector('.distance-toggles');
     KEY_GROUPS.forEach((group, i) => {
       const btn = document.createElement('button');
@@ -368,7 +379,7 @@ function createKeySignaturesMode() {
       });
     }
 
-    applyRecommendations(engine.selector);
+    updateRecommendations(engine.selector);
     renderPracticeSummary();
     renderSessionSummary();
   }
@@ -377,7 +388,7 @@ function createKeySignaturesMode() {
     mode,
     engine,
     init,
-    activate() { engine.attach(); refreshNoteButtonLabels(container); refreshUI(); engine.showCalibrationIfNeeded(); },
+    activate() { engine.attach(); refreshNoteButtonLabels(container); refreshUI(); },
     deactivate() {
       if (engine.isRunning) engine.stop();
       engine.detach();

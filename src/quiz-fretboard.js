@@ -5,14 +5,17 @@
 // Depends on globals: NOTES, NATURAL_NOTES, GUITAR, UKULELE,
 // noteMatchesInput, createQuizEngine, createNoteKeyHandler, DEFAULT_CONFIG,
 // getAutomaticityColor, getSpeedHeatmapColor, buildStatsLegend,
-// computeRecommendations, createFretboardHelpers, toggleFretboardString
+// computeRecommendations, createFretboardHelpers, toggleFretboardString,
+// computeNotePrioritization
 
 function createFrettedInstrumentMode(instrument) {
   var container = document.getElementById('mode-' + instrument.id);
   var STRINGS_KEY = instrument.storageNamespace + '_enabledStrings';
+  var NOTE_FILTER_KEY = instrument.storageNamespace + '_noteFilter';
   var enabledStrings = new Set([instrument.defaultString]);
-  var naturalsOnly = true;
+  var noteFilter = 'natural'; // 'natural', 'sharps-flats', or 'all'
   var recommendedStrings = new Set();
+  var lastNotePri = null;
   var allStrings = Array.from({length: instrument.stringCount}, function(_, i) { return i; });
 
   // --- Pure helpers (from quiz-fretboard-state.js) ---
@@ -144,6 +147,27 @@ function createFrettedInstrumentMode(instrument) {
     refreshUI();
   }
 
+  // --- Note filter persistence ---
+
+  function loadNoteFilter() {
+    var saved = localStorage.getItem(NOTE_FILTER_KEY);
+    if (saved && (saved === 'natural' || saved === 'sharps-flats' || saved === 'all')) {
+      noteFilter = saved;
+    }
+    updateNoteToggles();
+  }
+
+  function saveNoteFilter() {
+    try { localStorage.setItem(NOTE_FILTER_KEY, noteFilter); } catch (_) {}
+  }
+
+  function updateNoteToggles() {
+    var naturalBtn = container.querySelector('.notes-toggle[data-notes="natural"]');
+    var accBtn = container.querySelector('.notes-toggle[data-notes="sharps-flats"]');
+    if (naturalBtn) naturalBtn.classList.toggle('active', noteFilter === 'natural' || noteFilter === 'all');
+    if (accBtn) accBtn.classList.toggle('active', noteFilter === 'sharps-flats' || noteFilter === 'all');
+  }
+
   // --- Tab switching ---
 
   function switchTab(tabName) {
@@ -208,11 +232,14 @@ function createFrettedInstrumentMode(instrument) {
 
   // --- Recommendations ---
 
+  // Sort unstarted strings: lowest pitch first (highest string index = lowest pitch)
+  var recsOptions = { sortUnstarted: function(a, b) { return b.string - a.string; } };
+
   function getRecommendationResult() {
     return computeRecommendations(
       engine.selector, allStrings,
-      function(s) { return fb.getItemIdsForString(s, naturalsOnly); },
-      DEFAULT_CONFIG, {}
+      function(s) { return fb.getItemIdsForString(s, 'all'); },
+      DEFAULT_CONFIG, recsOptions
     );
   }
 
@@ -261,7 +288,7 @@ function createFrettedInstrumentMode(instrument) {
     }
 
     // All items (not just enabled)
-    var allItems = fb.getFretboardEnabledItems(new Set(allStrings), naturalsOnly);
+    var allItems = fb.getFretboardEnabledItems(new Set(allStrings), noteFilter);
     var allFluent = 0;
     for (var j = 0; j < allItems.length; j++) {
       var a2 = engine.selector.getAutomaticity(allItems[j]);
@@ -284,13 +311,34 @@ function createFrettedInstrumentMode(instrument) {
 
     // Recommendation
     var result = getRecommendationResult();
+
+    // Note-type prioritization: naturals first, then add accidentals
+    var naturalStats = engine.selector.getStringRecommendations(
+      [...result.recommended],
+      function(s) { return fb.getItemIdsForString(s, 'natural'); }
+    );
+    lastNotePri = computeNotePrioritization(naturalStats, DEFAULT_CONFIG.expansionThreshold);
+
     if (result.recommended.size > 0) {
-      var names = [];
-      var sorted = Array.from(result.recommended).sort(function(a, b) { return b - a; });
-      for (var k = 0; k < sorted.length; k++) {
-        names.push(displayNote(instrument.stringNames[sorted[k]]));
+      // Build rationale text
+      var parts = [];
+      if (result.consolidateIndices.length > 0) {
+        var cNames = result.consolidateIndices.sort(function(a, b) { return b - a; })
+          .map(function(s) { return displayNote(instrument.stringNames[s]); });
+        parts.push('solidify ' + cNames.join(', ') + ' string' + (cNames.length > 1 ? 's' : '')
+          + ' \u2014 ' + result.consolidateDueCount + ' slow item' + (result.consolidateDueCount !== 1 ? 's' : ''));
       }
-      recText.textContent = 'Recommended: ' + names.join(', ') + ' string' + (names.length > 1 ? 's' : '');
+      if (result.expandIndex !== null) {
+        parts.push('start ' + displayNote(instrument.stringNames[result.expandIndex]) + ' string'
+          + ' \u2014 ' + result.expandNewCount + ' new item' + (result.expandNewCount !== 1 ? 's' : ''));
+      }
+      // Append note filter suggestion
+      if (lastNotePri.suggestedFilter === 'natural') {
+        parts.push('naturals first');
+      } else {
+        parts.push('add sharps & flats');
+      }
+      recText.textContent = 'Suggestion: ' + parts.join(', ');
       recBtn.classList.remove('hidden');
     } else {
       recText.textContent = '';
@@ -301,22 +349,28 @@ function createFrettedInstrumentMode(instrument) {
 
   // --- Session summary ---
 
+  function noteFilterLabel() {
+    if (noteFilter === 'natural') return 'natural notes';
+    if (noteFilter === 'sharps-flats') return 'sharps and flats';
+    return 'all notes';
+  }
+
   function renderSessionSummary() {
     var el = container.querySelector('.session-summary-text');
     if (!el) return;
     var count = enabledStrings.size;
-    var noteType = naturalsOnly ? 'natural notes' : 'all notes';
-    el.textContent = count + ' string' + (count !== 1 ? 's' : '') + ' \u00B7 ' + noteType + ' \u00B7 60s';
+    el.textContent = count + ' string' + (count !== 1 ? 's' : '') + ' \u00B7 ' + noteFilterLabel() + ' \u00B7 60s';
   }
 
   // --- Accidental buttons ---
 
   function updateAccidentalButtons() {
+    var hideAcc = noteFilter === 'natural';
     container.querySelectorAll('.note-btn.accidental').forEach(function(btn) {
-      btn.classList.toggle('hidden', naturalsOnly);
+      btn.classList.toggle('hidden', hideAcc);
     });
     var accRow = container.querySelector('.note-row-accidentals');
-    if (accRow) accRow.classList.toggle('hidden', naturalsOnly);
+    if (accRow) accRow.classList.toggle('hidden', hideAcc);
   }
 
   // --- Quiz mode interface ---
@@ -331,14 +385,20 @@ function createFrettedInstrumentMode(instrument) {
     storageNamespace: instrument.storageNamespace,
 
     getEnabledItems: function() {
-      return fb.getFretboardEnabledItems(enabledStrings, naturalsOnly);
+      return fb.getFretboardEnabledItems(enabledStrings, noteFilter);
     },
 
     getPracticingLabel: function() {
-      if (enabledStrings.size === instrument.stringCount) return 'all strings';
-      var names = Array.from(enabledStrings).sort(function(a, b) { return b - a; })
-        .map(function(s) { return displayNote(instrument.stringNames[s]); });
-      return names.join(', ') + ' string' + (names.length === 1 ? '' : 's');
+      var parts = [];
+      if (enabledStrings.size < instrument.stringCount) {
+        var names = Array.from(enabledStrings).sort(function(a, b) { return b - a; })
+          .map(function(s) { return displayNote(instrument.stringNames[s]); });
+        parts.push(names.join(', ') + ' string' + (names.length === 1 ? '' : 's'));
+      } else {
+        parts.push('all strings');
+      }
+      if (noteFilter !== 'all') parts.push(noteFilterLabel());
+      return parts.join(', ');
     },
 
     presentQuestion: function(itemId) {
@@ -349,6 +409,7 @@ function createFrettedInstrumentMode(instrument) {
       currentNote = q.currentNote;
       // Highlight active position, rest stay at default blank fill
       setCircleFill(quizFretboard, q.currentString, q.currentFret, FB_QUIZ_HL);
+      container.querySelector('.quiz-prompt').textContent = 'Name this note.';
     },
 
     checkAnswer: function(itemId, input) {
@@ -399,7 +460,7 @@ function createFrettedInstrumentMode(instrument) {
   // Keyboard handler
   var noteKeyHandler = createAdaptiveKeyHandler(
     function(input) { engine.submitAnswer(input); },
-    function() { return !naturalsOnly; }
+    function() { return noteFilter !== 'natural'; }
   );
 
   // Pre-cache all positions
@@ -415,6 +476,7 @@ function createFrettedInstrumentMode(instrument) {
 
   function init() {
     loadEnabledStrings();
+    loadNoteFilter();
 
     // Tab switching
     container.querySelectorAll('.mode-tab').forEach(function(btn) {
@@ -438,15 +500,23 @@ function createFrettedInstrumentMode(instrument) {
       });
     });
 
-    // Naturals-only checkbox
-    var naturalsCheckbox = container.querySelector('#' + instrument.id + '-naturals-only');
-    if (naturalsCheckbox) {
-      naturalsCheckbox.addEventListener('change', function(e) {
-        naturalsOnly = e.target.checked;
+    // Notes toggles (natural / sharps & flats)
+    container.querySelectorAll('.notes-toggle').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        btn.classList.toggle('active');
+        // Ensure at least one is active
+        var anyActive = container.querySelector('.notes-toggle.active');
+        if (!anyActive) btn.classList.add('active');
+        var naturalActive = container.querySelector('.notes-toggle[data-notes="natural"].active');
+        var accActive = container.querySelector('.notes-toggle[data-notes="sharps-flats"].active');
+        if (naturalActive && accActive) noteFilter = 'all';
+        else if (accActive) noteFilter = 'sharps-flats';
+        else noteFilter = 'natural';
+        saveNoteFilter();
         updateAccidentalButtons();
         refreshUI();
       });
-    }
+    });
 
     // Start button
     container.querySelector('.start-btn').addEventListener('click', function() { engine.start(); });
@@ -456,6 +526,12 @@ function createFrettedInstrumentMode(instrument) {
     if (recBtn) {
       recBtn.addEventListener('click', function() {
         applyRecommendations(engine.selector);
+        if (lastNotePri) {
+          noteFilter = lastNotePri.suggestedFilter;
+          saveNoteFilter();
+          updateNoteToggles();
+          updateAccidentalButtons();
+        }
         refreshUI();
       });
     }
@@ -463,7 +539,7 @@ function createFrettedInstrumentMode(instrument) {
     // Hover card only on progress fretboard (not quiz — would reveal the answer)
     if (progressFretboard) setupHoverCard(progressFretboard);
 
-    applyRecommendations(engine.selector);
+    updateRecommendations(engine.selector);
     updateAccidentalButtons();
     updateStats(engine.selector);
     renderPracticeSummary();
@@ -478,7 +554,6 @@ function createFrettedInstrumentMode(instrument) {
       engine.attach();
       refreshNoteButtonLabels(container);
       refreshUI();
-      engine.showCalibrationIfNeeded();
     },
     deactivate: function() {
       if (engine.isRunning) engine.stop();

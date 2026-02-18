@@ -137,6 +137,7 @@ Bidirectional modes track each direction as a separate item.
 | [visual-design.md](guides/design/visual-design.md) | Color system, typography, spacing, component patterns |
 | [coding-style.md](guides/coding-style.md) | Naming, file structure, DOM rules, testing patterns |
 | [accidental-conventions.md](guides/accidental-conventions.md) | Sharp/flat naming rules by mode, rule priority |
+| [terminology.md](guides/terminology.md) | User-facing terms and their internal equivalents |
 
 **Process** — how to work on the codebase:
 
@@ -178,6 +179,7 @@ for the pattern.
 
 ## PR Requirements
 
-All PRs that change code (not just docs/plans) must pass `/review` before merging.
-**Always run `/review` before pushing final changes** — don't wait for the user
-to ask.
+All PRs that change code (not just docs/plans) follow this sequence:
+1. Run `/review` until approved — don't wait for the user to ask.
+2. Push the branch.
+3. Create a PR with `gh pr create` (summary + test plan).

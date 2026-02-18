@@ -192,12 +192,12 @@ export function tabbedIdleHTML(config: {
     </div>
     <div class="tab-content tab-progress">
       ${config.progressContent || ''}
-      <div class="baseline-info"></div>
-      <div class="stats-container"></div>
       <div class="stats-controls">
         <div class="stats-toggle"><button class="stats-toggle-btn active" data-mode="retention">Recall</button><button class="stats-toggle-btn" data-mode="speed">Speed</button></div>
         <span class="stats"></span>
       </div>
+      <div class="stats-container"></div>
+      <div class="baseline-info"></div>
     </div>`;
 }
 
@@ -256,8 +256,8 @@ export function modeScreen(id: string, opts: ModeScreenOptions): string {
         <span class="quiz-info-context"></span>
         <span class="quiz-info-time"></span>
         <span class="quiz-info-count"></span>
-        <button class="quiz-header-close" aria-label="Stop quiz">\u00D7</button>
       </div>
+      <button class="quiz-header-close" aria-label="Stop quiz">\u00D7</button>
       <div class="progress-bar">
         <div class="progress-fill" style="width: 0%"></div>
         <div class="progress-text">0 / 0 fluent</div>

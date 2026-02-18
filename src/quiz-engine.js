@@ -366,8 +366,8 @@ function runCalibration(opts) {
     }
 
     prevBtn = targetBtn;
-    if (els.progressText) els.progressText.textContent = (trialIndex + 1) + ' / ' + TRIAL_COUNT;
-    if (els.progressFill) els.progressFill.style.width = Math.round(((trialIndex + 1) / TRIAL_COUNT) * 100) + '%';
+    if (els.progressText) els.progressText.textContent = trialIndex + ' / ' + TRIAL_COUNT;
+    if (els.progressFill) els.progressFill.style.width = Math.round((trialIndex / TRIAL_COUNT) * 100) + '%';
   }
 
   function recordPress() {
@@ -941,6 +941,21 @@ export function createQuizEngine(mode, container) {
 
   // --- Baseline application ---
 
+  /**
+   * Sync baseline from localStorage (another mode may have completed
+   * calibration since this engine was created). Called on attach().
+   */
+  function syncBaselineFromStorage() {
+    if (motorBaseline) return; // already have one
+    const stored = localStorage.getItem(baselineKey);
+    if (stored) {
+      const parsed = parseInt(stored, 10);
+      if (parsed > 0) {
+        applyBaseline(parsed);
+      }
+    }
+  }
+
   function applyBaseline(baseline) {
     motorBaseline = baseline;
     localStorage.setItem(baselineKey, String(baseline));
@@ -981,7 +996,7 @@ export function createQuizEngine(mode, container) {
   }
 
   function getCalibrationTrialHint() {
-    if (hasSearchCalibration()) return 'Find and press the button';
+    if (hasSearchCalibration()) return ''; // prompt already tells user what to press
     return undefined; // use default (highlight mode)
   }
 
@@ -1198,6 +1213,7 @@ export function createQuizEngine(mode, container) {
   // Also refreshes notation-dependent content (button labels, stats table)
   // so that a mode activated after a global notation change shows current labels.
   function attach() {
+    syncBaselineFromStorage();
     document.addEventListener('keydown', handleKeydown);
     container.addEventListener('click', handleClick);
     refreshNoteButtonLabels(container);
@@ -1232,15 +1248,7 @@ export function createQuizEngine(mode, container) {
    * engine was created (e.g. guitar and ukulele both use 'button').
    */
   function showCalibrationIfNeeded() {
-    if (!motorBaseline) {
-      const stored = localStorage.getItem(baselineKey);
-      if (stored) {
-        const parsed = parseInt(stored, 10);
-        if (parsed > 0) {
-          applyBaseline(parsed);
-        }
-      }
-    }
+    syncBaselineFromStorage();
     if (!motorBaseline && state.phase === 'idle') {
       startCalibration();
     }

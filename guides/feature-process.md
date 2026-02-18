@@ -287,3 +287,20 @@ Also update `CLAUDE.md` if the change affects the top-level overview
 - If code review or bug fixes identified untracked existing debt, add it too.
 - If the implementation resolved an existing debt item, move it to the "Fixed"
   section with a brief note on how it was resolved.
+
+## Backlog conventions
+
+Each workstream backlog (`backlogs/*.md`) uses lightweight inline tags:
+
+- **Priority**: `[P1]` soon, `[P2]` when I can, `[--]` unprioritized/someday.
+- **Categories**: 
+   - kind: `#bug`, `#polish`, `#feature`, `#tooling`
+   - sizes: `#XL` (break down), `#L/#M/#S/#XS`
+   - workflow status: `#clarify`, `
+   - plus other backlog-specific tags. Keep the sets small.
+ 
+- **Format**: `- [P1] Description of item #tag1 #tag2`
+
+Priorities reflect the backlog's own prioritization principles, not urgency.
+Re-triage periodically — items that stay `[--]` for a long time should be
+dropped or promoted.

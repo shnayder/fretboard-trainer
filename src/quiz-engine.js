@@ -828,18 +828,21 @@ export function createQuizEngine(mode, container) {
 
   function renderBaselineInfo() {
     if (!els.baselineInfo) return;
+    els.baselineInfo.textContent = '';
+    var text = document.createElement('span');
+    var btn = document.createElement('button');
+    btn.className = 'baseline-rerun-btn';
+    btn.addEventListener('click', function() { startCalibration(); });
     if (motorBaseline) {
-      els.baselineInfo.innerHTML = 'Response time baseline: ' + formatMs(motorBaseline)
-        + ' <button class="baseline-rerun-btn">Rerun speed check</button>';
+      text.textContent = 'Response time baseline: ' + formatMs(motorBaseline) + ' ';
+      btn.textContent = 'Rerun speed check';
     } else {
-      els.baselineInfo.innerHTML = 'Response time baseline: 1s <span class="baseline-default-tag">default</span>. '
-        + 'Do a speed check (10 taps, ~15s) to track progress more accurately. '
-        + '<button class="baseline-rerun-btn">Speed check</button>';
+      text.textContent = 'Response time baseline: 1s (default). '
+        + 'Do a speed check (10 taps, ~15s) to track progress more accurately. ';
+      btn.textContent = 'Speed check';
     }
-    var btn = els.baselineInfo.querySelector('.baseline-rerun-btn');
-    if (btn) {
-      btn.addEventListener('click', function() { startCalibration(); });
-    }
+    els.baselineInfo.appendChild(text);
+    els.baselineInfo.appendChild(btn);
   }
 
   function render() {

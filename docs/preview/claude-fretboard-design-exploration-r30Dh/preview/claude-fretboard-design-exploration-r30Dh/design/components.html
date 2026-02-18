@@ -239,72 +239,6 @@
       text-decoration: none;
     }
     .page-nav a:hover { text-decoration: underline; }
-
-    /* --- Variant comparison panels --- */
-    .variant-row {
-      display: flex;
-      gap: 1rem;
-      flex-wrap: wrap;
-      margin: 0.75rem 0;
-    }
-    .variant-panel {
-      flex: 1;
-      min-width: 180px;
-      border: 1px solid var(--color-border-light);
-      border-radius: 8px;
-      overflow: hidden;
-    }
-    .variant-panel-label {
-      font-size: 0.7rem;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.04em;
-      color: var(--color-text-light);
-      padding: 0.4rem 0.75rem;
-      background: var(--color-surface);
-      border-bottom: 1px solid var(--color-border-lighter);
-    }
-    .variant-panel-body {
-      padding: 1rem;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 0.5rem;
-    }
-
-    /* Variant A/B styles: answer buttons */
-    .variant-tinted .answer-btn {
-      background: hsl(90, 20%, 95%);
-    }
-    .variant-tinted .answer-btn:hover {
-      background: hsl(90, 20%, 90%);
-    }
-    .variant-tactile .answer-btn {
-      box-shadow: inset 0 -2px 0 var(--color-border);
-      border-color: var(--color-border);
-    }
-    .variant-tactile .answer-btn:active {
-      box-shadow: inset 0 1px 0 var(--color-border-light);
-    }
-
-    /* Variant A/B styles: countdown bar */
-    .variant-thick .quiz-countdown-bar {
-      height: 6px;
-      border-radius: 3px;
-      overflow: hidden;
-    }
-    .variant-thick .quiz-countdown-fill {
-      border-radius: 3px;
-    }
-    .variant-gradient .quiz-countdown-fill {
-      background: linear-gradient(to right, var(--color-error), hsl(45, 80%, 50%), var(--color-brand));
-    }
-
-    /* Variant A/B styles: feedback text */
-    .variant-bold-feedback .feedback {
-      font-size: var(--text-2xl);
-      font-weight: 700;
-    }
   </style>
 </head>
 <body>
@@ -314,7 +248,6 @@
     values from <code>src/styles.css</code>.
   </div>
   <div class="page-nav">
-    <a href="moments.html">Screen Moments &rarr;</a>
     <a href="colors.html">Color System &rarr;</a>
   </div>
 
@@ -1055,112 +988,6 @@
     </div>
   </div>
 
-  <!-- ================================================================== -->
-  <h2>Variant Comparisons</h2>
-  <p>Side-by-side A/B panels for design polish iteration. Variant CSS lives in this
-     page&rsquo;s <code>&lt;style&gt;</code> block &mdash; promote winner to
-     <code>styles.css</code>, delete losers.</p>
-
-  <h3>Answer Buttons</h3>
-  <p>Current vs. tinted background vs. tactile inset shadow.</p>
-  <div class="variant-row">
-    <div class="variant-panel">
-      <div class="variant-panel-label">Current</div>
-      <div class="variant-panel-body">
-        <div class="answer-buttons" style="max-width: 200px; margin: 0;">
-          <button class="answer-btn">C</button>
-          <button class="answer-btn">D</button>
-          <button class="answer-btn">E</button>
-          <button class="answer-btn">F</button>
-        </div>
-      </div>
-    </div>
-    <div class="variant-panel">
-      <div class="variant-panel-label">Tinted (light sage bg)</div>
-      <div class="variant-panel-body variant-tinted">
-        <div class="answer-buttons" style="max-width: 200px; margin: 0;">
-          <button class="answer-btn">C</button>
-          <button class="answer-btn">D</button>
-          <button class="answer-btn">E</button>
-          <button class="answer-btn">F</button>
-        </div>
-      </div>
-    </div>
-    <div class="variant-panel">
-      <div class="variant-panel-label">Tactile (inset shadow)</div>
-      <div class="variant-panel-body variant-tactile">
-        <div class="answer-buttons" style="max-width: 200px; margin: 0;">
-          <button class="answer-btn">C</button>
-          <button class="answer-btn">D</button>
-          <button class="answer-btn">E</button>
-          <button class="answer-btn">F</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <h3>Countdown Bar</h3>
-  <p>Current vs. thicker+rounded vs. 3-stage color gradient.</p>
-  <div class="variant-row">
-    <div class="variant-panel">
-      <div class="variant-panel-label">Current (4px flat)</div>
-      <div class="variant-panel-body">
-        <div style="width: 100%;">
-          <div class="quiz-countdown-bar" style="margin: 0;">
-            <div class="quiz-countdown-fill" style="width: 65%;"></div>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div class="variant-panel">
-      <div class="variant-panel-label">Thicker + rounded (6px)</div>
-      <div class="variant-panel-body variant-thick">
-        <div style="width: 100%;">
-          <div class="quiz-countdown-bar" style="margin: 0;">
-            <div class="quiz-countdown-fill" style="width: 65%;"></div>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div class="variant-panel">
-      <div class="variant-panel-label">3-stage gradient</div>
-      <div class="variant-panel-body variant-gradient">
-        <div style="width: 100%;">
-          <div class="quiz-countdown-bar" style="margin: 0;">
-            <div class="quiz-countdown-fill" style="width: 65%;"></div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <h3>Feedback Text</h3>
-  <p>Current size vs. bolder/larger treatment.</p>
-  <div class="variant-row">
-    <div class="variant-panel">
-      <div class="variant-panel-label">Current (--text-xl, 600)</div>
-      <div class="variant-panel-body">
-        <div class="feedback" style="display:block; margin:0; min-height:auto;">
-          <span class="correct" style="font-weight:600;">Correct!</span>
-        </div>
-        <div class="feedback" style="display:block; margin:0; min-height:auto;">
-          <span class="incorrect" style="font-weight:600;">Wrong &mdash; it was C</span>
-        </div>
-      </div>
-    </div>
-    <div class="variant-panel">
-      <div class="variant-panel-label">Bolder (--text-2xl, 700)</div>
-      <div class="variant-panel-body variant-bold-feedback">
-        <div class="feedback" style="display:block; margin:0; min-height:auto;">
-          <span class="correct" style="font-weight:700;">Correct!</span>
-        </div>
-        <div class="feedback" style="display:block; margin:0; min-height:auto;">
-          <span class="incorrect" style="font-weight:700;">Wrong &mdash; it was C</span>
-        </div>
-      </div>
-    </div>
-  </div>
-
   <script>
     function v(name) {
       return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
@@ -1317,45 +1144,52 @@
       function buildFretboard(opts) {
         var sc = opts.stringCount || 6;
         var fc = opts.fretCount || 13;
-        var padY = 18, gap = 38;
-        var h = (sc - 1) * gap + padY * 2;
-        var r = 10;
+        var h = sc * 40;
+        var r = opts.circleRadius || 15;
+        var fontSize = opts.fontSize || 12;
         var svg = '';
 
-        function noteY(s) { return padY + s * gap; }
-
-        // Fret marker dots
+        // Fret marker dots (between strings, at marker frets)
         var midY = h / 2;
         for (var m = 0; m < markers.length; m++) {
           var fret = markers[m];
           if (fret >= fc) continue;
           var mx = (fretPositions[fret] + fretPositions[fret + 1]) / 2;
           if (fret === 12) {
-            svg += '<circle class="fb-marker" cx="' + mx + '" cy="' + ((noteY(1) + noteY(2)) / 2) + '" r="4"/>';
-            svg += '<circle class="fb-marker" cx="' + mx + '" cy="' + ((noteY(sc - 3) + noteY(sc - 2)) / 2) + '" r="4"/>';
+            // Double dot at fret 12
+            var dotY1 = 20 + 1 * 40;
+            var dotY2 = 20 + (sc - 2) * 40;
+            svg += '<circle class="fret-marker" cx="' + mx + '" cy="' + dotY1 + '" r="5"/>';
+            svg += '<circle class="fret-marker" cx="' + mx + '" cy="' + dotY2 + '" r="5"/>';
           } else {
-            svg += '<circle class="fb-marker" cx="' + mx + '" cy="' + midY + '" r="4"/>';
+            svg += '<circle class="fret-marker" cx="' + mx + '" cy="' + midY + '" r="5"/>';
           }
         }
 
-        // Nut
-        svg += '<rect class="fb-nut" x="' + (fretPositions[1] - 2) + '" y="0" width="4" height="' + h + '" rx="1"/>';
-        // Frets
+        // Nut (wide bar)
+        svg += '<rect class="fretboard-nut" x="' + (fretPositions[1] - 3) + '" y="0" width="6" height="' + h + '" rx="1"/>';
+        // Frets (start from index 2; index 1 is the nut)
         for (var i = 2; i < fretPositions.length; i++) {
-          svg += '<line class="fb-fret" x1="' + fretPositions[i] + '" y1="0" x2="' + fretPositions[i] + '" y2="' + h + '" stroke-width="1"/>';
+          svg += '<line x1="' + fretPositions[i] + '" y1="0" x2="' + fretPositions[i] + '" y2="' + h + '" stroke="var(--color-fretboard-line)" stroke-width="1"/>';
         }
         // Strings
         for (var s = 0; s < sc; s++) {
-          var thickness = 1 + s * 0.4;
-          svg += '<line class="fb-string" x1="0" y1="' + noteY(s) + '" x2="600" y2="' + noteY(s) + '" stroke-width="' + thickness + '"/>';
+          var thickness = 1 + s * 0.5;
+          svg += '<line x1="0" y1="' + (20 + s * 40) + '" x2="600" y2="' + (20 + s * 40) + '" stroke="var(--color-fretboard-line)" stroke-width="' + thickness + '"/>';
         }
-        // Position circles
+        // Notes
         for (var si = 0; si < sc; si++) {
           for (var fi = 0; fi < fc; fi++) {
             var x = noteX(fi);
-            var y = noteY(si);
-            var fill = opts.fillFn ? opts.fillFn(si, fi) : 'hsl(30, 5%, 90%)';
-            svg += '<circle class="fb-pos" cx="' + x + '" cy="' + y + '" r="' + r + '" style="fill:' + fill + '"/>';
+            var y = 20 + si * 40;
+            var fill = opts.fillFn ? opts.fillFn(si, fi) : 'var(--color-bg)';
+            var stroke = 'var(--color-fretboard-line)';
+            var label = opts.labelFn ? opts.labelFn(si, fi) : '';
+            var textFill = opts.textFillFn ? opts.textFillFn(si, fi) : 'var(--color-text)';
+            svg += '<circle cx="' + x + '" cy="' + y + '" r="' + r + '" fill="' + fill + '" stroke="' + stroke + '" stroke-width="1"/>';
+            if (label) {
+              svg += '<text x="' + x + '" y="' + y + '" text-anchor="middle" dominant-baseline="central" font-size="' + fontSize + '" fill="' + textFill + '" font-weight="600">' + label + '</text>';
+            }
           }
         }
 
@@ -1366,30 +1200,38 @@
           + '</div></div>';
       }
 
-      var blank = 'hsl(30, 5%, 90%)';
-
-      // --- Full fretboard ---
+      // --- Full fretboard with all notes ---
       document.getElementById('fretboard-full').innerHTML = buildFretboard({
+        labelFn: function(s, f) { return getNoteAt(s, f); },
       }) + '<div class="anno-block">'
-        + 'viewBox: 0 0 600 226 &middot; scales to 100% width &middot; 6 strings &times; 13 frets<br>'
-        + 'circle r=10, no text, no stroke, string spacing 38px, padY 18px'
+        + 'viewBox: 0 0 600 240 &middot; scales to 100% width &middot; 6 strings &times; 13 frets<br>'
+        + 'circle r=15, font-size=12, font-weight=600, string spacing 40px &middot; nut stroke-width: 4'
         + '</div>';
 
       // --- Quiz highlight states ---
-      var quizHl = 'hsl(50, 100%, 50%)';
+      var highlight = v('--color-highlight');
       var success = v('--color-success');
       var error = v('--color-error');
       document.getElementById('fretboard-states').innerHTML = buildFretboard({
         stringCount: 3, fretCount: 7,
         fillFn: function(s, f) {
-          if (s === 1 && f === 3) return quizHl;
+          if (s === 1 && f === 3) return highlight;
           if (s === 0 && f === 5) return success;
           if (s === 2 && f === 1) return error;
-          return blank;
+          return 'var(--color-bg)';
+        },
+        labelFn: function(s, f) {
+          if (s === 0 && f === 5) return 'A';
+          if (s === 2 && f === 1) return 'F';
+          return '';
+        },
+        textFillFn: function(s, f) {
+          if (s === 0 && f === 5 || s === 2 && f === 1) return 'white';
+          return 'var(--color-text)';
         },
       }) + '<div class="showcase-row" style="margin-top:0.5rem;">'
-        + '<span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:' + quizHl + ';border:1px solid var(--color-border);"></span>'
-        + '<span class="anno">question (hsl(50, 100%, 50%))</span>'
+        + '<span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:' + highlight + ';border:1px solid var(--color-border);"></span>'
+        + '<span class="anno">question (--color-highlight)</span>'
         + '<span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:' + success + ';margin-left:0.5rem;"></span>'
         + '<span class="anno">correct (--color-success)</span>'
         + '<span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:' + error + ';margin-left:0.5rem;"></span>'
@@ -1399,9 +1241,10 @@
       // --- Fret markers demo ---
       document.getElementById('fretboard-markers-demo').innerHTML = buildFretboard({
         stringCount: 4, fretCount: 13,
+        labelFn: function() { return ''; },
       }) + '<div class="anno-block">'
         + 'single dot: frets 3, 5, 7, 9 (centered between strings)<br>'
-        + 'double dot: fret 12 (between string pairs 1-2 and (n-3)-(n-2)) &middot; r=4, class: fb-marker'
+        + 'double dot: fret 12 (between string pairs) &middot; r=5, fill: --color-border-light, opacity 0.6'
         + '</div>';
     })();
   </script>

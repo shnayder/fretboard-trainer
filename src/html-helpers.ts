@@ -189,13 +189,10 @@ export function tabbedIdleHTML(config: {
           <button class="start-btn">Start Quiz</button>
         </div>
       </div>
-      <details class="practice-advanced">
-        <summary>Advanced</summary>
-        <button class="recalibrate-btn">Redo speed check</button>
-      </details>
     </div>
     <div class="tab-content tab-progress">
       ${config.progressContent || ''}
+      <div class="baseline-info"></div>
       <div class="stats-container"></div>
       <div class="stats-controls">
         <div class="stats-toggle"><button class="stats-toggle-btn active" data-mode="retention">Recall</button><button class="stats-toggle-btn" data-mode="speed">Speed</button></div>

@@ -582,7 +582,7 @@ export function createQuizEngine(mode, container) {
     quizArea: container.querySelector('.quiz-area'),
     quizPrompt: container.querySelector('.quiz-prompt'),
     masteryMessage: container.querySelector('.mastery-message'),
-    recalibrateBtn: container.querySelector('.recalibrate-btn'),
+    baselineInfo: container.querySelector('.baseline-info'),
     quizHeaderClose: container.querySelector('.quiz-header-close'),
     countdownFill: container.querySelector('.quiz-countdown-fill'),
     countdownBar: container.querySelector('.quiz-countdown-bar'),
@@ -752,9 +752,6 @@ export function createQuizEngine(mode, container) {
       els.masteryMessage.textContent = state.masteryText;
       els.masteryMessage.classList.toggle('mastery-visible', state.showMastery);
     }
-    if (els.recalibrateBtn) {
-      els.recalibrateBtn.classList.toggle('has-baseline', !!motorBaseline);
-    }
   }
 
   function renderSessionStats() {
@@ -814,6 +811,22 @@ export function createQuizEngine(mode, container) {
       renderCalibrationIntro();
     } else if (state.phase === 'calibration-results' && !calibrationContentEl) {
       renderCalibrationResults();
+    }
+  }
+
+  function renderBaselineInfo() {
+    if (!els.baselineInfo) return;
+    if (motorBaseline) {
+      els.baselineInfo.innerHTML = 'Response time baseline: ' + formatMs(motorBaseline)
+        + ' <button class="baseline-rerun-btn">Rerun speed check</button>';
+    } else {
+      els.baselineInfo.innerHTML = 'Response time baseline: 1s <span class="baseline-default-tag">default</span>. '
+        + 'Do a speed check (10 taps, ~15s) to track progress more accurately. '
+        + '<button class="baseline-rerun-btn">Speed check</button>';
+    }
+    var btn = els.baselineInfo.querySelector('.baseline-rerun-btn');
+    if (btn) {
+      btn.addEventListener('click', function() { startCalibration(); });
     }
   }
 
@@ -878,7 +891,10 @@ export function createQuizEngine(mode, container) {
     }
     roundTimerStart = null;
     if (els.countdownFill) els.countdownFill.style.width = '100%';
-    if (els.countdownBar) els.countdownBar.classList.remove('round-timer-warning');
+    if (els.countdownBar) {
+      els.countdownBar.classList.remove('round-timer-warning');
+      els.countdownBar.classList.remove('last-question');
+    }
     if (els.quizInfoTime) els.quizInfoTime.textContent = '';
   }
 
@@ -896,9 +912,11 @@ export function createQuizEngine(mode, container) {
     if (state.answered) {
       // User is on the feedback screen — transition now
       transitionToRoundComplete();
+    } else {
+      // User is mid-question — signal "last question"
+      if (els.quizInfoTime) els.quizInfoTime.textContent = 'Last question';
+      if (els.countdownBar) els.countdownBar.classList.add('last-question');
     }
-    // Otherwise: user is mid-question. They'll finish, and nextQuestion()
-    // or submitAnswer() will check roundTimerExpired.
   }
 
   function transitionToRoundComplete() {
@@ -928,6 +946,7 @@ export function createQuizEngine(mode, container) {
     localStorage.setItem(baselineKey, String(baseline));
     const scaledConfig = deriveScaledConfig(baseline, DEFAULT_CONFIG);
     selector.updateConfig(scaledConfig);
+    renderBaselineInfo();
   }
 
   // --- Calibration ---
@@ -1117,10 +1136,6 @@ export function createQuizEngine(mode, container) {
     nextQuestion();
   }
 
-  function recalibrate() {
-    startCalibration();
-  }
-
   function updateIdleMessage() {
     if (state.phase !== 'idle') return;
     const items = mode.getEnabledItems();
@@ -1195,11 +1210,6 @@ export function createQuizEngine(mode, container) {
     container.removeEventListener('click', handleClick);
   }
 
-  // Wire up recalibrate button
-  if (els.recalibrateBtn) {
-    els.recalibrateBtn.addEventListener('click', recalibrate);
-  }
-
   // Wire up quiz header close button
   if (els.quizHeaderClose) {
     els.quizHeaderClose.addEventListener('click', stop);
@@ -1236,10 +1246,12 @@ export function createQuizEngine(mode, container) {
     }
   }
 
+  // Render baseline info once at initialization
+  renderBaselineInfo();
+
   return {
     start,
     stop,
-    recalibrate,
     showCalibrationIfNeeded,
     submitAnswer,
     nextQuestion,

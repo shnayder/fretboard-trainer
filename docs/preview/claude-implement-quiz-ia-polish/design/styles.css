@@ -134,10 +134,13 @@ body {
 .mode-back-btn:hover { background: var(--color-surface-hover); }
 .mode-back-btn:active { background: var(--color-surface-pressed); }
 .mode-title { margin: 0; font-size: var(--text-lg); font-weight: 600; flex: 1; }
-/* Hide mode top bar during active quiz and calibration */
+/* Hide back button during active quiz and calibration; keep title visible */
+.phase-active .mode-back-btn,
+.phase-calibration .mode-back-btn,
+.phase-round-complete .mode-back-btn { display: none; }
 .phase-active .mode-top-bar,
 .phase-calibration .mode-top-bar,
-.phase-round-complete .mode-top-bar { display: none; }
+.phase-round-complete .mode-top-bar { margin-bottom: 0; }
 
 /* --- Settings modal --- */
 .settings-overlay {
@@ -347,7 +350,6 @@ body {
 .practice-rec-text {
   font-size: var(--text-sm);
   color: var(--color-text-muted);
-  white-space: pre-line;
 }
 .practice-rec-text:empty {
   display: none;
@@ -825,7 +827,10 @@ button {
 .phase-round-complete .hint,
 .phase-round-complete .time-display,
 .phase-round-complete .speed-tap-status,
-.phase-round-complete .fretboard-wrapper { display: none; }
+.phase-round-complete .fretboard-wrapper,
+.phase-round-complete .quiz-countdown-row,
+.phase-round-complete .quiz-session-info,
+.phase-round-complete .quiz-header-close { display: none; }
 
 /* --- Note buttons (piano-style layout) --- */
 .note-buttons {

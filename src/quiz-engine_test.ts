@@ -39,6 +39,18 @@ describe("createNoteKeyHandler", () => {
     assert.deepEqual(submitted, ["C#"]);
   });
 
+  it("submits sharp when s follows a letter", () => {
+    const submitted: string[] = [];
+    const handler = createNoteKeyHandler(
+      (input: string) => submitted.push(input),
+      () => true,
+    );
+    handler.handleKey({ key: "f", preventDefault() {} } as any);
+    assert.equal(submitted.length, 0); // pending
+    handler.handleKey({ key: "s", shiftKey: false, preventDefault() {} } as any);
+    assert.deepEqual(submitted, ["F#"]);
+  });
+
   it("submits flat when b follows a letter", () => {
     const submitted: string[] = [];
     const handler = createNoteKeyHandler(

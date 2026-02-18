@@ -12,7 +12,7 @@
 // engineRoundComplete, engineContinueRound
 
 /**
- * Create a keyboard handler for note input (C D E F G A B + #/b for accidentals).
+ * Create a keyboard handler for note input (C D E F G A B + #/s/b for accidentals).
  * Used by any mode where the answer is a note name.
  *
  * The handler keeps an internal timeout to allow a short window after a note key
@@ -37,9 +37,9 @@ export function createNoteKeyHandler(submitAnswer, allowAccidentals = () => true
   function handleKey(e) {
     const key = e.key.toUpperCase();
 
-    // Handle # for sharps or b for flats after a pending note
+    // Handle #/s for sharps or b for flats after a pending note
     if (pendingNote && allowAccidentals()) {
-      if (e.key === '#' || (e.shiftKey && e.key === '3')) {
+      if (e.key === '#' || e.key === 's' || e.key === 'S' || (e.shiftKey && e.key === '3')) {
         e.preventDefault();
         clearTimeout(pendingTimeout);
         submitAnswer(pendingNote + '#');
@@ -424,9 +424,9 @@ function runCalibration(opts) {
     if (isSearchMode()) {
       const key = e.key.toUpperCase();
 
-      // Handle # or b after a pending note letter
+      // Handle #/s or b after a pending note letter
       if (pendingNote) {
-        if (e.key === '#' || (e.shiftKey && e.key === '3')) {
+        if (e.key === '#' || e.key === 's' || e.key === 'S' || (e.shiftKey && e.key === '3')) {
           e.preventDefault();
           clearTimeout(pendingNoteTimeout);
           const combined = pendingNote + '#';
@@ -1198,6 +1198,7 @@ export function createQuizEngine(mode, container) {
     const routed = engineRouteKey(state, e.key);
     switch (routed.action) {
       case 'stop':
+        e.stopImmediatePropagation();
         stop();
         break;
       case 'next':

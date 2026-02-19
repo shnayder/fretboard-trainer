@@ -6,27 +6,28 @@ and more. Multiple quiz modes accessed via hamburger menu.
 ## Quick Start
 
 ```bash
-deno run --allow-net --allow-read main.ts          # Dev server
-deno run --allow-write --allow-read main.ts --build # Build (Deno)
-npx tsx build.ts                                    # Build (Node)
-npx tsx --test src/*_test.ts                        # Run tests
+deno run --allow-net --allow-read --allow-run main.ts          # Dev server
+deno run --allow-write --allow-read --allow-run main.ts --build # Build (Deno)
+npx tsx build.ts                                                # Build (Node)
+npx tsx --test src/*_test.ts                                    # Run tests
 ```
 
-**Always bump the version** (`<div class="version">` in both `main.ts` and
-`build.ts`) with every change — even tiny fixes. Bump by 1 for normal changes
-(v3.13 → v3.14 → v3.15). Bump the major version for large overhauls
-(v3.x → v4.0).
+**Always bump the version** (`VERSION` in `src/build-template.ts`) with every
+change — even tiny fixes. Bump by 1 for normal changes (v3.13 → v3.14 →
+v3.15). Bump the major version for large overhauls (v3.x → v4.0).
 
-**Both `main.ts` and `build.ts` use the same HTML template via shared helpers
-in `src/html-helpers.ts`.** Mode-specific content is passed as arguments to
-`modeScreen()`. Only the nav/header chrome and mode-specific quiz-area content
-live directly in the build scripts.
+**The HTML template lives in `src/build-template.ts`** — the single source of
+truth for the page structure and version number. `main.ts` and `build.ts` only
+differ in how they invoke esbuild and what they do with the output (serve vs.
+write). Mode-specific content is passed as arguments to `modeScreen()` in
+`src/html-helpers.ts`.
 
 ## Structure
 
 ```
-main.ts / build.ts       # Dual build scripts (Deno + Node), must stay in sync
+main.ts / build.ts       # Dual build scripts (Deno + Node)
 src/
+  build-template.ts      # Shared template, version (TS)
   html-helpers.ts        # Build-time HTML: mode scaffold, button blocks (TS)
   fretboard.ts           # Build-time SVG: fret/string/note generation (TS)
   adaptive.js            # Adaptive question selector (ES module)
@@ -59,8 +60,8 @@ docs/                    # Built output for GitHub Pages
 
 ## Architecture
 
-Single-page vanilla JS app. All source files concatenated into one `<script>`
-at build time — no framework, no bundler. Key patterns:
+Single-page vanilla JS app. Source files are ES modules bundled by esbuild
+into a single IIFE `<script>` at build time — no framework. Key patterns:
 
 - **State + Render** — pure state transitions in `*-state.js` files, thin
   declarative `render()` in main files. Eliminates ordering and stale-UI bugs.
@@ -69,8 +70,8 @@ at build time — no framework, no bundler. Key patterns:
   `onStart`/`onStop`, plus `init`/`activate`/`deactivate` lifecycle hooks.
 - **QuizEngine** — shared lifecycle (adaptive selection, 60-second round timer,
   feedback, keyboard/tap). Each mode gets its own engine instance.
-- **Factory Pattern** — `createFretboardHelpers(musicData)` injects globals
-  for testability without ES imports in concatenated code.
+- **Factory Pattern** — `createFretboardHelpers(musicData)` injects
+  dependencies for testability and multi-instrument reuse.
 - **Adaptive Selector** — weighted random selection (unseen boost + EWMA).
   Injected storage for testability. Per-item forgetting model with half-life
   spaced repetition.
@@ -81,8 +82,8 @@ at build time — no framework, no bundler. Key patterns:
 - **CSS Custom Properties** — color palette, heatmap scale, and semantic tokens
   defined as `--color-*` and `--heatmap-*` variables in `:root`. JS reads
   heatmap colors via `getComputedStyle` with hardcoded fallbacks for tests.
-- **Build System** — `readModule()` strips `export` for browser; `read()` for
-  plain scripts. Concatenation order = dependency order.
+- **Build System** — esbuild bundles `src/app.js` (entry point) into a single
+  IIFE. Both build scripts share the HTML template via `assembleHTML()`.
 
 See [guides/architecture.md](guides/architecture.md) for module dependency
 graph, algorithm details, and step-by-step "adding a new quiz mode" checklist.

@@ -67,6 +67,20 @@ function createNavigation() {
       });
     });
 
+    // Escape key navigates home when idle on a mode screen.
+    // During active quiz/calibration the container has phase-active,
+    // phase-calibration, or phase-round-complete — we only act on phase-idle
+    // so the quiz engine handles Escape independently in other phases.
+    document.addEventListener('keydown', function(e) {
+      if (e.key !== 'Escape' || !currentModeId) return;
+      // Don't interfere with open modals (e.g. settings)
+      if (document.querySelector('.settings-overlay.open')) return;
+      // Only navigate home when the quiz is idle (not running/calibrating)
+      var modeScreen = document.getElementById('mode-' + currentModeId);
+      if (modeScreen && !modeScreen.classList.contains('phase-idle')) return;
+      navigateHome();
+    });
+
     // Initialize all registered modes
     for (const id of Object.keys(modes)) {
       modes[id].init();

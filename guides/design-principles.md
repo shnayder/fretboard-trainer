@@ -75,6 +75,12 @@ How the app should look and feel. See
    enhancements, not requirements. Every tap should produce immediate visual
    confirmation that the input registered.
 
+6. **Keyboard-fast** — on desktop, everything reachable from the keyboard.
+   Drilling is a tight input loop; every mouse reach breaks flow. Note entry,
+   accidentals, advancing, stopping, and navigating back should all be
+   fast and convenient keystrokes so the user can focus on learning music,
+   not futzing with the mouse.
+
 ---
 
 ## UX & Layout Principles

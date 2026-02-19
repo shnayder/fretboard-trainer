@@ -108,10 +108,10 @@ Bidirectional modes track each direction as a separate item.
 
 - `C D E F G A B` — natural note (letter mode)
 - `do re mi fa so la si` — natural note (solfège mode, case-insensitive)
-- Letter/syllable + `#` / `b` — sharp/flat
+- Letter/syllable + `#` / `b` — sharp/flat (`s` also works for sharp in letter mode)
 - `0-9` — number (semitone modes)
 - `Space` / `Enter` — next question
-- `Escape` — stop quiz
+- `Escape` — stop quiz / return to home screen
 
 ## Guides
 

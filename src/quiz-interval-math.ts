@@ -1,68 +1,88 @@
-// Key Signatures quiz mode: key name <-> accidental count.
-// Forward: "D major -> ?" -> "2#", Reverse: "3b -> ?" -> Eb
-// 24 items: 12 major keys x 2 directions.
-// Grouped by accidental count for progressive unlocking.
+// Interval Math quiz mode: note +/- interval = note.
+// "C + m3 = ?" -> D#/Eb,  "G - P4 = ?" -> D
+// 264 items: 12 notes x 11 intervals (m2-M7) x 2 directions (+/-).
+// Excludes octave/P8 (adding 12 semitones gives same note).
+// Grouped by interval pair into 6 distance groups for progressive unlocking.
 
 import {
   displayNote,
-  keySignatureLabel,
-  MAJOR_KEYS,
-  spelledNoteMatchesSemitone,
-} from './music-data.js';
-import { DEFAULT_CONFIG } from './adaptive.js';
+  INTERVALS,
+  noteAdd,
+  noteMatchesInput,
+  NOTES,
+  noteSub,
+  pickAccidentalName,
+} from './music-data.ts';
+import { DEFAULT_CONFIG } from './adaptive.ts';
 import {
   createAdaptiveKeyHandler,
   createQuizEngine,
   pickCalibrationButton,
   refreshNoteButtonLabels,
-} from './quiz-engine.js';
+} from './quiz-engine.ts';
 import {
   buildStatsLegend,
   createStatsControls,
-  renderStatsTable,
-} from './stats-display.js';
-import { computeRecommendations } from './recommendations.js';
+  renderStatsGrid,
+} from './stats-display.ts';
+import { computeRecommendations } from './recommendations.ts';
 
-export function createKeySignaturesMode() {
-  const container = document.getElementById('mode-keySignatures');
-  const GROUPS_KEY = 'keySignatures_enabledGroups';
+export function createIntervalMathMode() {
+  const container = document.getElementById('mode-intervalMath');
+  const GROUPS_KEY = 'intervalMath_enabledGroups';
 
-  // Group definitions: keys grouped by accidental count
-  const KEY_GROUPS = [
-    { keys: ['C', 'G', 'F'], label: 'C G F' },
-    { keys: ['D', 'Bb'], label: 'D B\u266D' },
-    { keys: ['A', 'Eb'], label: 'A E\u266D' },
-    { keys: ['E', 'Ab'], label: 'E A\u266D' },
-    { keys: ['B', 'Db', 'F#'], label: 'B D\u266D F\u266F' },
+  // Intervals 1-11 only (no octave)
+  const MATH_INTERVALS = INTERVALS.filter((i) => i.num >= 1 && i.num <= 11);
+
+  // Distance groups: pairs of intervals by semitone count
+  const DISTANCE_GROUPS = [
+    { distances: [1, 2], label: 'm2 M2' },
+    { distances: [3, 4], label: 'm3 M3' },
+    { distances: [5, 6], label: 'P4 TT' },
+    { distances: [7, 8], label: 'P5 m6' },
+    { distances: [9, 10], label: 'M6 m7' },
+    { distances: [11], label: 'M7' },
   ];
 
-  let enabledGroups = new Set([0, 1]); // Default: groups 0+1
+  let enabledGroups = new Set([0]); // Default: first group only
   let recommendedGroups = new Set();
 
-  // Build full item list
+  // Build full item list (for preloading & stats display)
   const ALL_ITEMS = [];
-  for (const key of MAJOR_KEYS) {
-    ALL_ITEMS.push(key.root + ':fwd');
-    ALL_ITEMS.push(key.root + ':rev');
+  for (const note of NOTES) {
+    for (const interval of MATH_INTERVALS) {
+      ALL_ITEMS.push(note.name + '+' + interval.abbrev);
+      ALL_ITEMS.push(note.name + '-' + interval.abbrev);
+    }
   }
 
   function parseItem(itemId) {
-    const [rootName, dir] = itemId.split(':');
-    const key = MAJOR_KEYS.find((k) => k.root === rootName);
-    return { key, dir };
+    const match = itemId.match(/^([A-G]#?)([+-])(.+)$/);
+    const noteName = match[1];
+    const op = match[2];
+    const abbrev = match[3];
+    const note = NOTES.find((n) => n.name === noteName);
+    const interval = MATH_INTERVALS.find((i) => i.abbrev === abbrev);
+    const answer = op === '+'
+      ? noteAdd(note.num, interval.num)
+      : noteSub(note.num, interval.num);
+    return { note, op, interval, answer };
   }
 
+  // --- Distance group helpers ---
+
   function getItemIdsForGroup(groupIndex) {
-    const roots = KEY_GROUPS[groupIndex].keys;
+    const distances = DISTANCE_GROUPS[groupIndex].distances;
+    const intervals = MATH_INTERVALS.filter((i) => distances.includes(i.num));
     const items = [];
-    for (const root of roots) {
-      items.push(root + ':fwd');
-      items.push(root + ':rev');
+    for (const note of NOTES) {
+      for (const interval of intervals) {
+        items.push(note.name + '+' + interval.abbrev);
+        items.push(note.name + '-' + interval.abbrev);
+      }
     }
     return items;
   }
-
-  // --- Group management ---
 
   function loadEnabledGroups() {
     const saved = localStorage.getItem(GROUPS_KEY);
@@ -89,7 +109,7 @@ export function createKeySignaturesMode() {
   const recsOptions = { sortUnstarted: (a, b) => a.string - b.string };
 
   function getRecommendationResult() {
-    const allGroups = KEY_GROUPS.map((_, i) => i);
+    const allGroups = DISTANCE_GROUPS.map((_, i) => i);
     return computeRecommendations(
       engine.selector,
       allGroups,
@@ -205,7 +225,7 @@ export function createKeySignaturesMode() {
           return a - b;
         })
           .map(function (g) {
-            return KEY_GROUPS[g].label;
+            return DISTANCE_GROUPS[g].label;
           });
         parts.push(
           'solidify ' + cNames.join(', ') +
@@ -215,7 +235,7 @@ export function createKeySignaturesMode() {
       }
       if (result.expandIndex !== null) {
         parts.push(
-          'start ' + KEY_GROUPS[result.expandIndex].label +
+          'start ' + DISTANCE_GROUPS[result.expandIndex].label +
             ' \u2014 ' + result.expandNewCount + ' new item' +
             (result.expandNewCount !== 1 ? 's' : ''),
         );
@@ -239,26 +259,21 @@ export function createKeySignaturesMode() {
 
   let currentItem = null;
 
-  function getTableRows() {
-    return MAJOR_KEYS.map((key) => ({
-      label: displayNote(key.root) + ' major',
-      sublabel: keySignatureLabel(key),
-      _colHeader: 'Key',
-      fwdItemId: key.root + ':fwd',
-      revItemId: key.root + ':rev',
-    }));
-  }
-
   const statsControls = createStatsControls(container, (mode, el) => {
-    const tableDiv = document.createElement('div');
-    el.appendChild(tableDiv);
-    renderStatsTable(
+    const colLabels = MATH_INTERVALS.map((i) => i.abbrev);
+    const gridDiv = document.createElement('div');
+    gridDiv.className = 'stats-grid-wrapper';
+    el.appendChild(gridDiv);
+    renderStatsGrid(
       engine.selector,
-      getTableRows(),
-      'Key\u2192Sig',
-      'Sig\u2192Key',
+      colLabels,
+      (noteName, colIdx) => {
+        const abbrev = MATH_INTERVALS[colIdx].abbrev;
+        return [noteName + '+' + abbrev, noteName + '-' + abbrev];
+      },
       mode,
-      tableDiv,
+      gridDiv,
+      undefined,
       engine.baseline,
     );
     const legendDiv = document.createElement('div');
@@ -268,13 +283,10 @@ export function createKeySignaturesMode() {
 
   // --- Quiz mode interface ---
 
-  let pendingSigDigit = null;
-  let pendingSigTimeout = null;
-
   const mode = {
-    id: 'keySignatures',
-    name: 'Key Signatures',
-    storageNamespace: 'keySignatures',
+    id: 'intervalMath',
+    name: 'Interval Math',
+    storageNamespace: 'intervalMath',
 
     getEnabledItems() {
       const items = [];
@@ -285,39 +297,42 @@ export function createKeySignaturesMode() {
     },
 
     getPracticingLabel() {
-      if (enabledGroups.size === KEY_GROUPS.length) return 'all keys';
-      const keys = [...enabledGroups].sort((a, b) => a - b)
-        .flatMap((g) => KEY_GROUPS[g].keys)
-        .map((k) => displayNote(k));
-      return keys.join(', ');
+      if (enabledGroups.size === DISTANCE_GROUPS.length) return 'all intervals';
+      const labels = [...enabledGroups].sort((a, b) => a - b)
+        .map((g) => DISTANCE_GROUPS[g].label);
+      return labels.join(', ') + ' intervals';
     },
 
     presentQuestion(itemId) {
       currentItem = parseItem(itemId);
+      currentItem.useFlats = currentItem.op === '-'; // sharps ascending, flats descending
       const prompt = container.querySelector('.quiz-prompt');
-      const sigButtons = container.querySelector('.answer-buttons-keysig');
-      const noteButtons = container.querySelector('.answer-buttons-notes');
-
-      if (currentItem.dir === 'fwd') {
-        prompt.textContent = displayNote(currentItem.key.root) + ' major';
-        sigButtons.classList.remove('answer-group-hidden');
-        noteButtons.classList.add('answer-group-hidden');
-      } else {
-        const label = keySignatureLabel(currentItem.key);
-        prompt.textContent = label + ' major';
-        sigButtons.classList.add('answer-group-hidden');
-        noteButtons.classList.remove('answer-group-hidden');
-      }
+      const noteName = displayNote(
+        pickAccidentalName(currentItem.note.displayName, currentItem.useFlats),
+      );
+      prompt.textContent = noteName + ' ' + currentItem.op + ' ' +
+        currentItem.interval.abbrev;
+      container.querySelectorAll('.answer-btn-note').forEach((btn) => {
+        const note = NOTES.find((n) => n.name === btn.dataset.note);
+        if (note) {
+          btn.textContent = displayNote(
+            pickAccidentalName(note.displayName, currentItem.useFlats),
+          );
+        }
+      });
     },
 
     checkAnswer(_itemId, input) {
-      if (currentItem.dir === 'fwd') {
-        const expected = keySignatureLabel(currentItem.key);
-        return { correct: input === expected, correctAnswer: expected };
-      } else {
-        const correct = spelledNoteMatchesSemitone(currentItem.key.root, input);
-        return { correct, correctAnswer: displayNote(currentItem.key.root) };
-      }
+      const correct = noteMatchesInput(currentItem.answer, input);
+      return {
+        correct,
+        correctAnswer: displayNote(
+          pickAccidentalName(
+            currentItem.answer.displayName,
+            currentItem.useFlats,
+          ),
+        ),
+      };
     },
 
     onStart() {
@@ -327,40 +342,15 @@ export function createKeySignaturesMode() {
 
     onStop() {
       noteKeyHandler.reset();
+      refreshNoteButtonLabels(container);
       if (activeTab === 'progress') {
         statsControls.show('retention');
       }
       refreshUI();
     },
 
-    handleKey(e, { submitAnswer }) {
-      if (currentItem.dir === 'rev') {
-        return noteKeyHandler.handleKey(e);
-      }
-      // Forward: number keys for sig selection
-      if (e.key >= '0' && e.key <= '7') {
-        e.preventDefault();
-        if (pendingSigTimeout) clearTimeout(pendingSigTimeout);
-        pendingSigDigit = e.key;
-        pendingSigTimeout = setTimeout(() => {
-          if (pendingSigDigit === '0') {
-            submitAnswer('0');
-          }
-          pendingSigDigit = null;
-          pendingSigTimeout = null;
-        }, 600);
-        return true;
-      }
-      if (pendingSigDigit !== null && (e.key === '#' || e.key === 'b')) {
-        e.preventDefault();
-        clearTimeout(pendingSigTimeout);
-        const answer = pendingSigDigit + e.key;
-        pendingSigDigit = null;
-        pendingSigTimeout = null;
-        submitAnswer(answer);
-        return true;
-      }
-      return false;
+    handleKey(e, { submitAnswer: _submitAnswer }) {
+      return noteKeyHandler.handleKey(e);
     },
 
     getCalibrationButtons() {
@@ -389,10 +379,11 @@ export function createKeySignaturesMode() {
 
     // Set section heading
     const toggleLabel = container.querySelector('.toggle-group-label');
-    if (toggleLabel) toggleLabel.textContent = 'Keys';
+    if (toggleLabel) toggleLabel.textContent = 'Intervals';
 
+    // Generate distance group toggle buttons
     const togglesDiv = container.querySelector('.distance-toggles');
-    KEY_GROUPS.forEach((group, i) => {
+    DISTANCE_GROUPS.forEach((group, i) => {
       const btn = document.createElement('button');
       btn.className = 'distance-toggle';
       btn.dataset.group = String(i);
@@ -403,13 +394,7 @@ export function createKeySignaturesMode() {
 
     loadEnabledGroups();
 
-    container.querySelectorAll('.answer-btn-keysig').forEach((btn) => {
-      btn.addEventListener('click', () => {
-        if (!engine.isActive || engine.isAnswered) return;
-        engine.submitAnswer(btn.dataset.sig);
-      });
-    });
-
+    // Note answer buttons
     container.querySelectorAll('.answer-btn-note').forEach((btn) => {
       btn.addEventListener('click', () => {
         if (!engine.isActive || engine.isAnswered) return;
@@ -449,8 +434,6 @@ export function createKeySignaturesMode() {
       if (engine.isRunning) engine.stop();
       engine.detach();
       noteKeyHandler.reset();
-      if (pendingSigTimeout) clearTimeout(pendingSigTimeout);
-      pendingSigDigit = null;
     },
   };
 }

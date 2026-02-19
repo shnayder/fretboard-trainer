@@ -7,12 +7,12 @@ import {
   NOTES,
   STRING_OFFSETS,
   UKULELE,
-} from './music-data.js';
+} from './music-data.ts';
 import {
   computeNotePrioritization,
   createFretboardHelpers,
   toggleFretboardString,
-} from './quiz-fretboard-state.js';
+} from './quiz-fretboard-state.ts';
 
 // ---------------------------------------------------------------------------
 // Guitar helpers (backward compat — uses legacy STRING_OFFSETS)

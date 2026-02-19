@@ -9,7 +9,7 @@ function resolve(rel: string): string {
 }
 
 async function bundleJS(): Promise<string> {
-  const entryPoint = resolve('./src/app.js');
+  const entryPoint = resolve('./src/app.ts');
   const cmd = new Deno.Command('npx', {
     args: ['esbuild', '--bundle', '--format=iife', entryPoint],
     stdout: 'piped',

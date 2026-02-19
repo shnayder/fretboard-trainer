@@ -1,38 +1,39 @@
-// Scale Degrees quiz mode: key + degree <-> note name.
-// Forward: "5th of D major?" -> A, Reverse: "In D major, A is the ?" -> 5th
+// Diatonic Chords quiz mode: key + roman numeral <-> chord root.
+// Forward: "IV in Bb major?" -> Eb, Reverse: "Dm is what in C major?" -> ii
 // 168 items: 12 keys x 7 degrees x 2 directions.
-// Grouped by degree (not by key) for progressive unlocking.
+// Grouped by degree importance for progressive unlocking.
 
 import {
+  DIATONIC_CHORDS,
   displayNote,
   getScaleDegreeNote,
   MAJOR_KEYS,
+  ROMAN_NUMERALS,
   spelledNoteMatchesSemitone,
-} from './music-data.js';
-import { DEFAULT_CONFIG } from './adaptive.js';
+} from './music-data.ts';
+import { DEFAULT_CONFIG } from './adaptive.ts';
 import {
   createAdaptiveKeyHandler,
   createQuizEngine,
   pickCalibrationButton,
   refreshNoteButtonLabels,
-} from './quiz-engine.js';
+} from './quiz-engine.ts';
 import {
   buildStatsLegend,
   createStatsControls,
   renderStatsGrid,
-} from './stats-display.js';
-import { computeRecommendations } from './recommendations.js';
+} from './stats-display.ts';
+import { computeRecommendations } from './recommendations.ts';
 
-export function createScaleDegreesMode() {
-  const container = document.getElementById('mode-scaleDegrees');
-  const GROUPS_KEY = 'scaleDegrees_enabledGroups';
+export function createDiatonicChordsMode() {
+  const container = document.getElementById('mode-diatonicChords');
+  const GROUPS_KEY = 'diatonicChords_enabledGroups';
 
-  // Groups by degree
-  const DEGREE_GROUPS = [
-    { degrees: [1, 5], label: '1st,5th' },
-    { degrees: [4], label: '4th' },
-    { degrees: [3, 7], label: '3rd,7th' },
-    { degrees: [2, 6], label: '2nd,6th' },
+  // Groups by degree importance
+  const CHORD_GROUPS = [
+    { degrees: [1, 4, 5], label: 'I,IV,V' },
+    { degrees: [2, 6], label: 'ii,vi' },
+    { degrees: [3, 7], label: 'iii,vii\u00B0' },
   ];
 
   let enabledGroups = new Set([0]);
@@ -47,20 +48,19 @@ export function createScaleDegreesMode() {
     }
   }
 
-  const DEGREE_LABELS = ['1st', '2nd', '3rd', '4th', '5th', '6th', '7th'];
-
   function parseItem(itemId) {
     const parts = itemId.split(':');
     const keyRoot = parts[0];
     const degree = parseInt(parts[1]);
     const dir = parts[2];
     const key = MAJOR_KEYS.find((k) => k.root === keyRoot);
-    const noteName = getScaleDegreeNote(keyRoot, degree);
-    return { key, degree, dir, noteName };
+    const chord = DIATONIC_CHORDS[degree - 1];
+    const rootNote = getScaleDegreeNote(keyRoot, degree);
+    return { key, degree, dir, chord, rootNote };
   }
 
   function getItemIdsForGroup(groupIndex) {
-    const degrees = DEGREE_GROUPS[groupIndex].degrees;
+    const degrees = CHORD_GROUPS[groupIndex].degrees;
     const items = [];
     for (const key of MAJOR_KEYS) {
       for (const d of degrees) {
@@ -98,7 +98,7 @@ export function createScaleDegreesMode() {
   const recsOptions = { sortUnstarted: (a, b) => a.string - b.string };
 
   function getRecommendationResult() {
-    const allGroups = DEGREE_GROUPS.map((_, i) => i);
+    const allGroups = CHORD_GROUPS.map((_, i) => i);
     return computeRecommendations(
       engine.selector,
       allGroups,
@@ -214,7 +214,7 @@ export function createScaleDegreesMode() {
           return a - b;
         })
           .map(function (g) {
-            return DEGREE_GROUPS[g].label;
+            return CHORD_GROUPS[g].label;
           });
         parts.push(
           'solidify ' + cNames.join(', ') +
@@ -224,7 +224,7 @@ export function createScaleDegreesMode() {
       }
       if (result.expandIndex !== null) {
         parts.push(
-          'start ' + DEGREE_GROUPS[result.expandIndex].label +
+          'start ' + CHORD_GROUPS[result.expandIndex].label +
             ' \u2014 ' + result.expandNewCount + ' new item' +
             (result.expandNewCount !== 1 ? 's' : ''),
         );
@@ -249,7 +249,7 @@ export function createScaleDegreesMode() {
   let currentItem = null;
 
   const statsControls = createStatsControls(container, (mode, el) => {
-    const colLabels = DEGREE_LABELS;
+    const colLabels = ROMAN_NUMERALS;
     const gridDiv = document.createElement('div');
     gridDiv.className = 'stats-grid-wrapper';
     el.appendChild(gridDiv);
@@ -277,9 +277,9 @@ export function createScaleDegreesMode() {
   // --- Quiz mode interface ---
 
   const mode = {
-    id: 'scaleDegrees',
-    name: 'Scale Degrees',
-    storageNamespace: 'scaleDegrees',
+    id: 'diatonicChords',
+    name: 'Diatonic Chords',
+    storageNamespace: 'diatonicChords',
 
     getEnabledItems() {
       const items = [];
@@ -290,41 +290,48 @@ export function createScaleDegreesMode() {
     },
 
     getPracticingLabel() {
-      if (enabledGroups.size === DEGREE_GROUPS.length) return 'all degrees';
-      const degrees = [...enabledGroups].sort((a, b) => a - b)
-        .flatMap((g) => DEGREE_GROUPS[g].degrees)
-        .sort((a, b) => a - b);
-      return degrees.map((d) => DEGREE_LABELS[d - 1]).join(', ') + ' degrees';
+      if (enabledGroups.size === CHORD_GROUPS.length) return 'all chords';
+      const numerals = [...enabledGroups].sort((a, b) => a - b)
+        .flatMap((g) => CHORD_GROUPS[g].degrees)
+        .sort((a, b) => a - b)
+        .map((d) => ROMAN_NUMERALS[d - 1]);
+      return numerals.join(', ') + ' chords';
     },
 
     presentQuestion(itemId) {
       currentItem = parseItem(itemId);
       const prompt = container.querySelector('.quiz-prompt');
       const noteButtons = container.querySelector('.answer-buttons-notes');
-      const degreeButtons = container.querySelector('.answer-buttons-degrees');
+      const numeralButtons = container.querySelector(
+        '.answer-buttons-numerals',
+      );
 
       if (currentItem.dir === 'fwd') {
-        prompt.textContent = DEGREE_LABELS[currentItem.degree - 1] + ' of ' +
+        prompt.textContent = currentItem.chord.numeral + ' in ' +
           displayNote(currentItem.key.root) + ' major';
         noteButtons.classList.remove('answer-group-hidden');
-        degreeButtons.classList.add('answer-group-hidden');
+        numeralButtons.classList.add('answer-group-hidden');
       } else {
-        prompt.textContent = displayNote(currentItem.key.root) + ' major: ' +
-          displayNote(currentItem.noteName);
+        const chordName = displayNote(currentItem.rootNote) +
+          currentItem.chord.qualityLabel;
+        prompt.textContent = chordName + ' in ' +
+          displayNote(currentItem.key.root) + ' major';
         noteButtons.classList.add('answer-group-hidden');
-        degreeButtons.classList.remove('answer-group-hidden');
+        numeralButtons.classList.remove('answer-group-hidden');
       }
     },
 
     checkAnswer(_itemId, input) {
       if (currentItem.dir === 'fwd') {
-        const correct = spelledNoteMatchesSemitone(currentItem.noteName, input);
-        return { correct, correctAnswer: displayNote(currentItem.noteName) };
+        const correct = spelledNoteMatchesSemitone(currentItem.rootNote, input);
+        const fullAnswer = displayNote(currentItem.rootNote) + ' ' +
+          currentItem.chord.quality;
+        return { correct, correctAnswer: fullAnswer };
       } else {
-        const expectedDegree = String(currentItem.degree);
+        const expectedNumeral = currentItem.chord.numeral;
         return {
-          correct: input === expectedDegree,
-          correctAnswer: DEGREE_LABELS[currentItem.degree - 1],
+          correct: input === expectedNumeral,
+          correctAnswer: expectedNumeral,
         };
       }
     },
@@ -346,10 +353,10 @@ export function createScaleDegreesMode() {
       if (currentItem.dir === 'fwd') {
         return noteKeyHandler.handleKey(e);
       }
-      // Reverse: number keys 1-7
+      // Reverse: number keys 1-7 for roman numeral
       if (e.key >= '1' && e.key <= '7') {
         e.preventDefault();
-        submitAnswer(e.key);
+        submitAnswer(ROMAN_NUMERALS[parseInt(e.key) - 1]);
         return true;
       }
       return false;
@@ -381,10 +388,10 @@ export function createScaleDegreesMode() {
 
     // Set section heading
     const toggleLabel = container.querySelector('.toggle-group-label');
-    if (toggleLabel) toggleLabel.textContent = 'Degrees';
+    if (toggleLabel) toggleLabel.textContent = 'Chords';
 
     const togglesDiv = container.querySelector('.distance-toggles');
-    DEGREE_GROUPS.forEach((group, i) => {
+    CHORD_GROUPS.forEach((group, i) => {
       const btn = document.createElement('button');
       btn.className = 'distance-toggle';
       btn.dataset.group = String(i);
@@ -402,10 +409,10 @@ export function createScaleDegreesMode() {
       });
     });
 
-    container.querySelectorAll('.answer-btn-degree').forEach((btn) => {
+    container.querySelectorAll('.answer-btn-numeral').forEach((btn) => {
       btn.addEventListener('click', () => {
         if (!engine.isActive || engine.isAnswered) return;
-        engine.submitAnswer(btn.dataset.degree);
+        engine.submitAnswer(btn.dataset.numeral);
       });
     });
 

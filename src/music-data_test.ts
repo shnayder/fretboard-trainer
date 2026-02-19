@@ -35,7 +35,7 @@ import {
   spelledNoteName,
   spelledNoteSemitone,
   STRING_OFFSETS,
-} from './music-data.js';
+} from './music-data.ts';
 
 describe('NOTES', () => {
   it('has 12 entries numbered 0–11', () => {

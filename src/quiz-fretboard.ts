@@ -9,26 +9,26 @@ import {
   noteMatchesInput,
   NOTES,
   UKULELE,
-} from './music-data.js';
-import { DEFAULT_CONFIG } from './adaptive.js';
+} from './music-data.ts';
+import { DEFAULT_CONFIG } from './adaptive.ts';
 import {
   createAdaptiveKeyHandler,
   createQuizEngine,
   pickCalibrationButton,
   refreshNoteButtonLabels,
-} from './quiz-engine.js';
+} from './quiz-engine.ts';
 import {
   buildStatsLegend,
   createStatsControls,
   getAutomaticityColor,
   getSpeedHeatmapColor,
-} from './stats-display.js';
-import { computeRecommendations } from './recommendations.js';
+} from './stats-display.ts';
+import { computeRecommendations } from './recommendations.ts';
 import {
   computeNotePrioritization,
   createFretboardHelpers,
   toggleFretboardString,
-} from './quiz-fretboard-state.js';
+} from './quiz-fretboard-state.ts';
 
 function createFrettedInstrumentMode(instrument) {
   const container = document.getElementById('mode-' + instrument.id);

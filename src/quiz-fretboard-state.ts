@@ -1,7 +1,7 @@
 // Pure state and helpers for fretboard quiz modes (guitar, ukulele, etc.).
 // No DOM, no side effects — testable logic extracted from quiz-fretboard.js.
 
-import { displayNote } from './music-data.js';
+import { displayNote } from './music-data.ts';
 
 /**
  * Toggle a string in the enabled set. Returns a new Set.

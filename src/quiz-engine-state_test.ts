@@ -16,7 +16,7 @@ import {
   engineUpdateMasteryAfterAnswer,
   engineUpdateProgress,
   initialEngineState,
-} from './quiz-engine-state.js';
+} from './quiz-engine-state.ts';
 
 describe('initialEngineState', () => {
   it('returns idle phase', () => {

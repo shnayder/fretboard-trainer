@@ -30,18 +30,18 @@ src/
   build-template.ts      # Shared template, version (TS)
   html-helpers.ts        # Build-time HTML: mode scaffold, button blocks (TS)
   fretboard.ts           # Build-time SVG: fret/string/note generation (TS)
-  adaptive.js            # Adaptive question selector (ES module)
-  music-data.js          # Shared music theory data (ES module)
-  quiz-engine-state.js   # Pure engine state transitions (ES module)
-  quiz-engine.js         # Shared quiz lifecycle (ES module)
-  stats-display.js       # Stats color functions, rendering (ES module)
-  recommendations.js     # Consolidate-before-expanding algorithm (ES module)
-  quiz-fretboard-state.js  # Pure fretboard helpers (ES module)
-  quiz-fretboard.js      # Fretboard mode
-  quiz-speed-tap.js      # Speed Tap mode
-  quiz-note-semitones.js .. quiz-chord-spelling.js  # 8 more quiz modes
-  navigation.js          # Hamburger menu, mode switching
-  app.js                 # Init: registers all modes (loaded last)
+  adaptive.ts            # Adaptive question selector (ES module)
+  music-data.ts          # Shared music theory data (ES module)
+  quiz-engine-state.ts   # Pure engine state transitions (ES module)
+  quiz-engine.ts         # Shared quiz lifecycle (ES module)
+  stats-display.ts       # Stats color functions, rendering (ES module)
+  recommendations.ts     # Consolidate-before-expanding algorithm (ES module)
+  quiz-fretboard-state.ts  # Pure fretboard helpers (ES module)
+  quiz-fretboard.ts      # Fretboard mode
+  quiz-speed-tap.ts      # Speed Tap mode
+  quiz-note-semitones.ts .. quiz-chord-spelling.ts  # 8 more quiz modes
+  navigation.ts          # Hamburger menu, mode switching
+  app.ts                 # Init: registers all modes (loaded last)
   styles.css             # Inlined CSS
   *_test.ts              # Tests (node:test)
 scripts/take-screenshots.ts  # Playwright screenshots
@@ -63,7 +63,7 @@ docs/                    # Built output for GitHub Pages
 Single-page vanilla JS app. Source files are ES modules bundled by esbuild into
 a single IIFE `<script>` at build time — no framework. Key patterns:
 
-- **State + Render** — pure state transitions in `*-state.js` files, thin
+- **State + Render** — pure state transitions in `*-state.ts` files, thin
   declarative `render()` in main files. Eliminates ordering and stale-UI bugs.
 - **Mode Plugin Interface** — each mode is a `createXxxMode()` factory providing
   `getEnabledItems`, `presentQuestion`, `checkAnswer`, `handleKey`,
@@ -82,7 +82,7 @@ a single IIFE `<script>` at build time — no framework. Key patterns:
 - **CSS Custom Properties** — color palette, heatmap scale, and semantic tokens
   defined as `--color-*` and `--heatmap-*` variables in `:root`. JS reads
   heatmap colors via `getComputedStyle` with hardcoded fallbacks for tests.
-- **Build System** — esbuild bundles `src/app.js` (entry point) into a single
+- **Build System** — esbuild bundles `src/app.ts` (entry point) into a single
   IIFE. Both build scripts share the HTML template via `assembleHTML()`.
 
 See [guides/architecture.md](guides/architecture.md) for module dependency

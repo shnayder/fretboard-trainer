@@ -1,6 +1,6 @@
 import { describe, it } from 'node:test';
 import { strict as assert } from 'node:assert';
-import { computeRecommendations } from './recommendations.js';
+import { computeRecommendations } from './recommendations.ts';
 
 // Helper: create a mock selector whose getStringRecommendations returns
 // pre-built data keyed by index.

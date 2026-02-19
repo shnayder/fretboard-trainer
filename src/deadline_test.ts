@@ -5,8 +5,8 @@ import {
   computeInitialDeadline,
   createDeadlineTracker,
   DEFAULT_DEADLINE_CONFIG,
-} from './deadline.js';
-import { createMemoryStorage, DEFAULT_CONFIG } from './adaptive.js';
+} from './deadline.ts';
+import { createMemoryStorage, DEFAULT_CONFIG } from './adaptive.ts';
 
 const dlCfg = DEFAULT_DEADLINE_CONFIG;
 

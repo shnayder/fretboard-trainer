@@ -3364,7 +3364,7 @@ button {
 
   <script>
 (() => {
-  // src/music-data.js
+  // src/music-data.ts
   var NOTES = [
     { name: "C", displayName: "C", num: 0, accepts: ["c"] },
     { name: "C#", displayName: "C#/Db", num: 1, accepts: ["c#", "db"] },
@@ -3759,7 +3759,7 @@ button {
     return out + acc;
   }
 
-  // src/adaptive.js
+  // src/adaptive.ts
   var DEFAULT_CONFIG = {
     minTime: 1e3,
     unseenBoost: 3,
@@ -4123,7 +4123,7 @@ button {
     };
   }
 
-  // src/quiz-engine-state.js
+  // src/quiz-engine-state.ts
   function initialEngineState() {
     return {
       phase: "idle",
@@ -4310,7 +4310,7 @@ button {
     return { action: "ignore" };
   }
 
-  // src/quiz-engine.js
+  // src/quiz-engine.ts
   function createNoteKeyHandler(submitAnswer, allowAccidentals = () => true) {
     let pendingNote = null;
     let pendingTimeout = null;
@@ -5323,7 +5323,7 @@ button {
     };
   }
 
-  // src/stats-display.js
+  // src/stats-display.ts
   var _heatmapColors = null;
   function cssVar(name) {
     try {
@@ -5522,7 +5522,7 @@ button {
     return html;
   }
 
-  // src/recommendations.js
+  // src/recommendations.ts
   function computeRecommendations(selector, allIndices, getItemIds, config, options) {
     const sortUnstarted = options && options.sortUnstarted;
     const recs = selector.getStringRecommendations(allIndices, getItemIds);
@@ -5599,7 +5599,7 @@ button {
     };
   }
 
-  // src/quiz-fretboard-state.js
+  // src/quiz-fretboard-state.ts
   function toggleFretboardString(enabledStrings, string) {
     const next = new Set(enabledStrings);
     if (next.has(string)) {
@@ -5679,7 +5679,7 @@ button {
     return { suggestedFilter: "all", naturalMasteryRatio: ratio };
   }
 
-  // src/quiz-fretboard.js
+  // src/quiz-fretboard.ts
   function createFrettedInstrumentMode(instrument) {
     const container = document.getElementById("mode-" + instrument.id);
     const STRINGS_KEY = instrument.storageNamespace + "_enabledStrings";
@@ -6213,7 +6213,7 @@ button {
     return createFrettedInstrumentMode(UKULELE);
   }
 
-  // src/quiz-speed-tap.js
+  // src/quiz-speed-tap.ts
   function createSpeedTapMode() {
     const container = document.getElementById("mode-speedTap");
     const NOTE_FILTER_KEY = "speedTap_noteFilter";
@@ -6555,7 +6555,7 @@ button {
     };
   }
 
-  // src/quiz-note-semitones.js
+  // src/quiz-note-semitones.ts
   function createNoteSemitonesMode() {
     const container = document.getElementById("mode-noteSemitones");
     const ALL_ITEMS = [];
@@ -6791,7 +6791,7 @@ button {
     };
   }
 
-  // src/quiz-interval-semitones.js
+  // src/quiz-interval-semitones.ts
   function createIntervalSemitonesMode() {
     const container = document.getElementById("mode-intervalSemitones");
     const ALL_ITEMS = [];
@@ -7019,7 +7019,7 @@ button {
     };
   }
 
-  // src/quiz-semitone-math.js
+  // src/quiz-semitone-math.ts
   function createSemitoneMathMode() {
     const container = document.getElementById("mode-semitoneMath");
     const GROUPS_KEY = "semitoneMath_enabledGroups";
@@ -7354,7 +7354,7 @@ button {
     };
   }
 
-  // src/quiz-interval-math.js
+  // src/quiz-interval-math.ts
   function createIntervalMathMode() {
     const container = document.getElementById("mode-intervalMath");
     const GROUPS_KEY = "intervalMath_enabledGroups";
@@ -7691,7 +7691,7 @@ button {
     };
   }
 
-  // src/quiz-key-signatures.js
+  // src/quiz-key-signatures.ts
   function createKeySignaturesMode() {
     const container = document.getElementById("mode-keySignatures");
     const GROUPS_KEY = "keySignatures_enabledGroups";
@@ -8050,7 +8050,7 @@ button {
     };
   }
 
-  // src/quiz-scale-degrees.js
+  // src/quiz-scale-degrees.ts
   function createScaleDegreesMode() {
     const container = document.getElementById("mode-scaleDegrees");
     const GROUPS_KEY = "scaleDegrees_enabledGroups";
@@ -8398,7 +8398,7 @@ button {
     };
   }
 
-  // src/quiz-diatonic-chords.js
+  // src/quiz-diatonic-chords.ts
   function createDiatonicChordsMode() {
     const container = document.getElementById("mode-diatonicChords");
     const GROUPS_KEY = "diatonicChords_enabledGroups";
@@ -8749,7 +8749,7 @@ button {
     };
   }
 
-  // src/quiz-chord-spelling.js
+  // src/quiz-chord-spelling.ts
   function createChordSpellingMode() {
     const container = document.getElementById("mode-chordSpelling");
     const GROUPS_KEY = "chordSpelling_enabledGroups";
@@ -9128,7 +9128,7 @@ button {
     };
   }
 
-  // src/navigation.js
+  // src/navigation.ts
   function createNavigation() {
     const LAST_MODE_KEY = "fretboard_lastMode";
     const modes = {};
@@ -9193,7 +9193,7 @@ button {
     return { registerMode, switchTo, navigateHome, init };
   }
 
-  // src/settings.js
+  // src/settings.ts
   function createSettingsModal(options) {
     const onNotationChange = options.onNotationChange || function() {
     };
@@ -9241,7 +9241,7 @@ button {
     return { open, close };
   }
 
-  // src/app.js
+  // src/app.ts
   var nav = createNavigation();
   var guitar = createGuitarFretboardMode();
   nav.registerMode("fretboard", {

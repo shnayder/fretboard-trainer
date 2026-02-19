@@ -1,88 +1,77 @@
-// Interval Math quiz mode: note +/- interval = note.
-// "C + m3 = ?" -> D#/Eb,  "G - P4 = ?" -> D
-// 264 items: 12 notes x 11 intervals (m2-M7) x 2 directions (+/-).
-// Excludes octave/P8 (adding 12 semitones gives same note).
-// Grouped by interval pair into 6 distance groups for progressive unlocking.
+// Chord Spelling quiz mode: spell out all notes of a chord in root-up order.
+// "Cm7" -> user enters C, Eb, G, Bb in sequence.
+// ~132 items: 12 roots x chord types, grouped by chord type.
 
 import {
+  CHORD_ROOTS,
+  CHORD_TYPES,
   displayNote,
-  INTERVALS,
-  noteAdd,
-  noteMatchesInput,
-  NOTES,
-  noteSub,
-  pickAccidentalName,
-} from './music-data.js';
-import { DEFAULT_CONFIG } from './adaptive.js';
+  getChordTones,
+  spelledNoteMatchesInput,
+  spelledNoteMatchesSemitone,
+} from './music-data.ts';
+import { DEFAULT_CONFIG } from './adaptive.ts';
 import {
   createAdaptiveKeyHandler,
   createQuizEngine,
   pickCalibrationButton,
   refreshNoteButtonLabels,
-} from './quiz-engine.js';
+} from './quiz-engine.ts';
 import {
   buildStatsLegend,
   createStatsControls,
   renderStatsGrid,
-} from './stats-display.js';
-import { computeRecommendations } from './recommendations.js';
+} from './stats-display.ts';
+import { computeRecommendations } from './recommendations.ts';
 
-export function createIntervalMathMode() {
-  const container = document.getElementById('mode-intervalMath');
-  const GROUPS_KEY = 'intervalMath_enabledGroups';
+export function createChordSpellingMode() {
+  const container = document.getElementById('mode-chordSpelling');
+  const GROUPS_KEY = 'chordSpelling_enabledGroups';
 
-  // Intervals 1-11 only (no octave)
-  const MATH_INTERVALS = INTERVALS.filter((i) => i.num >= 1 && i.num <= 11);
+  // Group chord types by their group index
+  const SPELLING_GROUPS = [];
+  let maxGroup = 0;
+  for (const ct of CHORD_TYPES) {
+    if (ct.group > maxGroup) maxGroup = ct.group;
+  }
+  for (let g = 0; g <= maxGroup; g++) {
+    const types = CHORD_TYPES.filter((t) => t.group === g);
+    const label = types.map((t) => t.symbol || 'maj').join(', ');
+    SPELLING_GROUPS.push({ types, label });
+  }
 
-  // Distance groups: pairs of intervals by semitone count
-  const DISTANCE_GROUPS = [
-    { distances: [1, 2], label: 'm2 M2' },
-    { distances: [3, 4], label: 'm3 M3' },
-    { distances: [5, 6], label: 'P4 TT' },
-    { distances: [7, 8], label: 'P5 m6' },
-    { distances: [9, 10], label: 'M6 m7' },
-    { distances: [11], label: 'M7' },
-  ];
-
-  let enabledGroups = new Set([0]); // Default: first group only
+  let enabledGroups = new Set([0]);
   let recommendedGroups = new Set();
 
-  // Build full item list (for preloading & stats display)
+  // Build full item list
   const ALL_ITEMS = [];
-  for (const note of NOTES) {
-    for (const interval of MATH_INTERVALS) {
-      ALL_ITEMS.push(note.name + '+' + interval.abbrev);
-      ALL_ITEMS.push(note.name + '-' + interval.abbrev);
+  for (const root of CHORD_ROOTS) {
+    for (const type of CHORD_TYPES) {
+      ALL_ITEMS.push(root + ':' + type.name);
     }
   }
 
   function parseItem(itemId) {
-    const match = itemId.match(/^([A-G]#?)([+-])(.+)$/);
-    const noteName = match[1];
-    const op = match[2];
-    const abbrev = match[3];
-    const note = NOTES.find((n) => n.name === noteName);
-    const interval = MATH_INTERVALS.find((i) => i.abbrev === abbrev);
-    const answer = op === '+'
-      ? noteAdd(note.num, interval.num)
-      : noteSub(note.num, interval.num);
-    return { note, op, interval, answer };
+    const colonIdx = itemId.indexOf(':');
+    const rootName = itemId.substring(0, colonIdx);
+    const typeName = itemId.substring(colonIdx + 1);
+    const chordType = CHORD_TYPES.find((t) => t.name === typeName);
+    const tones = getChordTones(rootName, chordType);
+    return { rootName, chordType, tones };
   }
 
-  // --- Distance group helpers ---
-
   function getItemIdsForGroup(groupIndex) {
-    const distances = DISTANCE_GROUPS[groupIndex].distances;
-    const intervals = MATH_INTERVALS.filter((i) => distances.includes(i.num));
+    const types = SPELLING_GROUPS[groupIndex].types;
     const items = [];
-    for (const note of NOTES) {
-      for (const interval of intervals) {
-        items.push(note.name + '+' + interval.abbrev);
-        items.push(note.name + '-' + interval.abbrev);
+    for (const root of CHORD_ROOTS) {
+      for (const type of types) {
+        items.push(root + ':' + type.name);
       }
     }
     return items;
   }
+
+  // --- Group management ---
 
   function loadEnabledGroups() {
     const saved = localStorage.getItem(GROUPS_KEY);
@@ -109,7 +98,7 @@ export function createIntervalMathMode() {
   const recsOptions = { sortUnstarted: (a, b) => a.string - b.string };
 
   function getRecommendationResult() {
-    const allGroups = DISTANCE_GROUPS.map((_, i) => i);
+    const allGroups = SPELLING_GROUPS.map((_, i) => i);
     return computeRecommendations(
       engine.selector,
       allGroups,
@@ -225,7 +214,7 @@ export function createIntervalMathMode() {
           return a - b;
         })
           .map(function (g) {
-            return DISTANCE_GROUPS[g].label;
+            return SPELLING_GROUPS[g].label;
           });
         parts.push(
           'solidify ' + cNames.join(', ') +
@@ -235,7 +224,7 @@ export function createIntervalMathMode() {
       }
       if (result.expandIndex !== null) {
         parts.push(
-          'start ' + DISTANCE_GROUPS[result.expandIndex].label +
+          'start ' + SPELLING_GROUPS[result.expandIndex].label +
             ' \u2014 ' + result.expandNewCount + ' new item' +
             (result.expandNewCount !== 1 ? 's' : ''),
         );
@@ -255,25 +244,70 @@ export function createIntervalMathMode() {
     el.textContent = items.length + ' items \u00B7 60s';
   }
 
-  // --- Stats ---
+  // --- Multi-note entry state ---
 
   let currentItem = null;
+  let enteredTones = [];
+
+  function renderSlots() {
+    const slotsDiv = container.querySelector('.chord-slots');
+    if (!currentItem) {
+      slotsDiv.innerHTML = '';
+      return;
+    }
+    let html = '';
+    for (let i = 0; i < currentItem.tones.length; i++) {
+      let cls = 'chord-slot';
+      let content = '_';
+      if (i < enteredTones.length) {
+        content = enteredTones[i].display;
+        cls += enteredTones[i].correct ? ' correct' : ' wrong';
+      } else if (i === enteredTones.length) {
+        cls += ' active';
+      }
+      html += '<span class="' + cls + '">' + content + '</span>';
+    }
+    slotsDiv.innerHTML = html;
+  }
+
+  function submitTone(input) {
+    if (!engine.isActive || engine.isAnswered) return;
+    if (!currentItem || enteredTones.length >= currentItem.tones.length) return;
+
+    const idx = enteredTones.length;
+    const expected = currentItem.tones[idx];
+    const isCorrect = spelledNoteMatchesInput(expected, input);
+
+    enteredTones.push({
+      input,
+      display: isCorrect ? displayNote(expected) : displayNote(input),
+      correct: isCorrect,
+    });
+    renderSlots();
+
+    if (enteredTones.length === currentItem.tones.length) {
+      const allCorrect = enteredTones.every((t) => t.correct);
+      engine.submitAnswer(allCorrect ? '__correct__' : '__wrong__');
+    }
+  }
+
+  // --- Stats ---
 
   const statsControls = createStatsControls(container, (mode, el) => {
-    const colLabels = MATH_INTERVALS.map((i) => i.abbrev);
+    const colLabels = CHORD_TYPES.map((t) => t.symbol || 'maj');
     const gridDiv = document.createElement('div');
     gridDiv.className = 'stats-grid-wrapper';
     el.appendChild(gridDiv);
+    const rootNotes = CHORD_ROOTS.map((r) => ({ name: r, displayName: r }));
     renderStatsGrid(
       engine.selector,
       colLabels,
-      (noteName, colIdx) => {
-        const abbrev = MATH_INTERVALS[colIdx].abbrev;
-        return [noteName + '+' + abbrev, noteName + '-' + abbrev];
+      (rootName, colIdx) => {
+        return rootName + ':' + CHORD_TYPES[colIdx].name;
       },
       mode,
       gridDiv,
-      undefined,
+      rootNotes,
       engine.baseline,
     );
     const legendDiv = document.createElement('div');
@@ -284,9 +318,9 @@ export function createIntervalMathMode() {
   // --- Quiz mode interface ---
 
   const mode = {
-    id: 'intervalMath',
-    name: 'Interval Math',
-    storageNamespace: 'intervalMath',
+    id: 'chordSpelling',
+    name: 'Chord Spelling',
+    storageNamespace: 'chordSpelling',
 
     getEnabledItems() {
       const items = [];
@@ -297,59 +331,52 @@ export function createIntervalMathMode() {
     },
 
     getPracticingLabel() {
-      if (enabledGroups.size === DISTANCE_GROUPS.length) return 'all intervals';
+      if (enabledGroups.size === SPELLING_GROUPS.length) {
+        return 'all chord types';
+      }
       const labels = [...enabledGroups].sort((a, b) => a - b)
-        .map((g) => DISTANCE_GROUPS[g].label);
-      return labels.join(', ') + ' intervals';
+        .map((g) => SPELLING_GROUPS[g].label);
+      return labels.join(', ') + ' chords';
+    },
+
+    getExpectedResponseCount(itemId) {
+      const parsed = parseItem(itemId);
+      return parsed.tones.length;
     },
 
     presentQuestion(itemId) {
       currentItem = parseItem(itemId);
-      currentItem.useFlats = currentItem.op === '-'; // sharps ascending, flats descending
+      enteredTones = [];
       const prompt = container.querySelector('.quiz-prompt');
-      const noteName = displayNote(
-        pickAccidentalName(currentItem.note.displayName, currentItem.useFlats),
-      );
-      prompt.textContent = noteName + ' ' + currentItem.op + ' ' +
-        currentItem.interval.abbrev;
-      container.querySelectorAll('.answer-btn-note').forEach((btn) => {
-        const note = NOTES.find((n) => n.name === btn.dataset.note);
-        if (note) {
-          btn.textContent = displayNote(
-            pickAccidentalName(note.displayName, currentItem.useFlats),
-          );
-        }
-      });
+      prompt.textContent = displayNote(currentItem.rootName) +
+        currentItem.chordType.symbol;
+      renderSlots();
     },
 
     checkAnswer(_itemId, input) {
-      const correct = noteMatchesInput(currentItem.answer, input);
-      return {
-        correct,
-        correctAnswer: displayNote(
-          pickAccidentalName(
-            currentItem.answer.displayName,
-            currentItem.useFlats,
-          ),
-        ),
-      };
+      const allCorrect = input === '__correct__';
+      const correctAnswer = currentItem.tones.map(displayNote).join(' ');
+      return { correct: allCorrect, correctAnswer };
     },
 
     onStart() {
       noteKeyHandler.reset();
+      enteredTones = [];
       if (statsControls.mode) statsControls.hide();
     },
 
     onStop() {
       noteKeyHandler.reset();
-      refreshNoteButtonLabels(container);
+      enteredTones = [];
+      const slotsDiv = container.querySelector('.chord-slots');
+      slotsDiv.innerHTML = '';
       if (activeTab === 'progress') {
         statsControls.show('retention');
       }
       refreshUI();
     },
 
-    handleKey(e, { submitAnswer: _submitAnswer }) {
+    handleKey(e, _ctx) {
       return noteKeyHandler.handleKey(e);
     },
 
@@ -358,16 +385,28 @@ export function createIntervalMathMode() {
     },
 
     getCalibrationTrialConfig(buttons, prevBtn) {
-      const btn = pickCalibrationButton(buttons, prevBtn);
-      return { prompt: 'Press ' + btn.textContent, targetButtons: [btn] };
+      // Multi-press: pick 2–4 random note buttons
+      const count = 2 + Math.floor(Math.random() * 3); // 2, 3, or 4
+      const targets = [];
+      let prev = prevBtn;
+      for (let i = 0; i < count; i++) {
+        const btn = pickCalibrationButton(buttons, prev);
+        targets.push(btn);
+        prev = btn;
+      }
+      const labels = targets.map((b) => b.textContent);
+      return { prompt: 'Press ' + labels.join(' '), targetButtons: targets };
     },
+
+    calibrationIntroHint:
+      'We\u2019ll measure your response speed to set personalized targets. Press the notes shown in the prompt, in order \u2014 10 rounds total.',
   };
 
   const engine = createQuizEngine(mode, container);
   engine.storage.preload(ALL_ITEMS);
 
   const noteKeyHandler = createAdaptiveKeyHandler(
-    (input) => engine.submitAnswer(input),
+    (input) => submitTone(input),
     () => true,
   );
 
@@ -379,11 +418,10 @@ export function createIntervalMathMode() {
 
     // Set section heading
     const toggleLabel = container.querySelector('.toggle-group-label');
-    if (toggleLabel) toggleLabel.textContent = 'Intervals';
+    if (toggleLabel) toggleLabel.textContent = 'Chord types';
 
-    // Generate distance group toggle buttons
     const togglesDiv = container.querySelector('.distance-toggles');
-    DISTANCE_GROUPS.forEach((group, i) => {
+    SPELLING_GROUPS.forEach((group, i) => {
       const btn = document.createElement('button');
       btn.className = 'distance-toggle';
       btn.dataset.group = String(i);
@@ -394,11 +432,19 @@ export function createIntervalMathMode() {
 
     loadEnabledGroups();
 
-    // Note answer buttons
     container.querySelectorAll('.answer-btn-note').forEach((btn) => {
       btn.addEventListener('click', () => {
         if (!engine.isActive || engine.isAnswered) return;
-        engine.submitAnswer(btn.dataset.note);
+        let input = btn.dataset.note;
+        // Resolve enharmonic: buttons can't distinguish A#/Bb, so if the
+        // button's pitch matches the expected tone, use the expected spelling.
+        if (currentItem && enteredTones.length < currentItem.tones.length) {
+          const expected = currentItem.tones[enteredTones.length];
+          if (spelledNoteMatchesSemitone(expected, input)) {
+            input = expected;
+          }
+        }
+        submitTone(input);
       });
     });
 

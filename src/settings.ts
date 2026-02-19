@@ -1,7 +1,7 @@
 // Global settings modal: notation toggle (A B C / Do Re Mi).
 // Accessed via gear icon in top bar. Hidden during active quiz.
 
-import { getUseSolfege, setUseSolfege } from './music-data.js';
+import { getUseSolfege, setUseSolfege } from './music-data.ts';
 
 export function createSettingsModal(options) {
   const onNotationChange = options.onNotationChange || function () {};

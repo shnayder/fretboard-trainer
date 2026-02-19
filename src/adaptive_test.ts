@@ -15,7 +15,7 @@ import {
   deriveScaledConfig,
   selectWeighted,
   updateStability,
-} from './adaptive.js';
+} from './adaptive.ts';
 
 // ---------------------------------------------------------------------------
 // computeEwma

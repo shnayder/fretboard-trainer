@@ -15,27 +15,27 @@ leak into the browser scope.
 ## Module Dependency Graph
 
 All source files use standard ES module `import`/`export`. esbuild resolves the
-dependency graph from the entry point (`src/app.js`):
+dependency graph from the entry point (`src/app.ts`):
 
 ```
-adaptive.js              ← Config, selector factory, forgetting model
-music-data.js            ← NOTES, INTERVALS, helpers
-quiz-engine-state.js     ← Pure state transitions (idle/active/calibration)
-quiz-engine.js           ← Engine factory, keyboard handler, calibration
+adaptive.ts              ← Config, selector factory, forgetting model
+music-data.ts            ← NOTES, INTERVALS, helpers
+quiz-engine-state.ts     ← Pure state transitions (idle/active/calibration)
+quiz-engine.ts           ← Engine factory, keyboard handler, calibration
   imports: quiz-engine-state, adaptive, music-data
-stats-display.js         ← Color functions, table/grid rendering
+stats-display.ts         ← Color functions, table/grid rendering
   imports: music-data
-recommendations.js       ← Consolidate-before-expanding algorithm
-quiz-fretboard-state.js  ← Pure fretboard helpers (factory pattern)
+recommendations.ts       ← Consolidate-before-expanding algorithm
+quiz-fretboard-state.ts  ← Pure fretboard helpers (factory pattern)
   imports: music-data
-quiz-fretboard.js        ← Fretboard quiz mode
+quiz-fretboard.ts        ← Fretboard quiz mode
   imports: music-data, adaptive, quiz-engine, stats-display, recommendations, quiz-fretboard-state
-quiz-speed-tap.js .. quiz-chord-spelling.js  ← 9 more quiz modes
+quiz-speed-tap.ts .. quiz-chord-spelling.ts  ← 9 more quiz modes
   imports: music-data, quiz-engine, stats-display, + mode-specific deps
-navigation.js            ← Home screen, mode switching
-settings.js              ← Settings modal
+navigation.ts            ← Home screen, mode switching
+settings.ts              ← Settings modal
   imports: music-data
-app.js                   ← Entry point: imports all modes, registers, starts
+app.ts                   ← Entry point: imports all modes, registers, starts
 ```
 
 **Layers**: Foundation modules (adaptive, music-data) → Engine (state + engine)
@@ -47,7 +47,7 @@ implementations → Navigation → App init.
 ### esbuild Bundling
 
 Source files are standard ES modules with `import`/`export`. esbuild bundles
-them from the entry point (`src/app.js`) into a single IIFE — no globals leak
+them from the entry point (`src/app.ts`) into a single IIFE — no globals leak
 into the browser scope. Both build scripts and tests use the same source files
 directly.
 
@@ -75,7 +75,7 @@ Key exports:
 
 ### Adding a New Source File
 
-1. Create `src/new-file.js` with proper `import`/`export` statements
+1. Create `src/new-file.ts` with proper `import`/`export` statements
 2. Import it from the file(s) that need it — esbuild handles the rest
 
 ### Moments Page Generation
@@ -116,7 +116,7 @@ There's no sequence to get wrong.
 
 **How it works in practice**:
 
-Pure state module (`quiz-engine-state.js`):
+Pure state module (`quiz-engine-state.ts`):
 
 ```javascript
 export function engineNextQuestion(state, nextItemId, nowMs) {
@@ -132,7 +132,7 @@ export function engineNextQuestion(state, nextItemId, nowMs) {
 }
 ```
 
-Thin render function (in `quiz-engine.js`):
+Thin render function (in `quiz-engine.ts`):
 
 ```javascript
 function render() {
@@ -145,13 +145,13 @@ function render() {
 
 **Files using this pattern**:
 
-- `quiz-engine-state.js` → `quiz-engine.js`: 8 state transitions covering idle,
+- `quiz-engine-state.ts` → `quiz-engine.ts`: 8 state transitions covering idle,
   active, and calibration phases
-- `quiz-fretboard-state.js` → `quiz-fretboard.js`: pure helpers for note lookup,
+- `quiz-fretboard-state.ts` → `quiz-fretboard.ts`: pure helpers for note lookup,
   answer checking, item enumeration
 
 **When to use it**: Any logic that affects UI state and could benefit from
-testability. Pure state modules get the `*-state.js` suffix.
+testability. Pure state modules get the `*-state.ts` suffix.
 
 ### Mode Plugin Interface
 
@@ -185,7 +185,7 @@ function createXxxMode() {
 }
 ```
 
-**Registration** (in `app.js`):
+**Registration** (in `app.ts`):
 
 ```javascript
 const xxx = createXxxMode();
@@ -220,7 +220,7 @@ Ukulele:
 
 #### Instrument Configs
 
-Fretted instrument modes are driven by config objects in `music-data.js`:
+Fretted instrument modes are driven by config objects in `music-data.ts`:
 
 ```javascript
 const GUITAR = {
@@ -236,7 +236,7 @@ const GUITAR = {
 };
 ```
 
-`createFrettedInstrumentMode(instrument)` in `quiz-fretboard.js` is the shared
+`createFrettedInstrumentMode(instrument)` in `quiz-fretboard.ts` is the shared
 factory — thin wrappers like `createGuitarFretboardMode()` and
 `createUkuleleFretboardMode()` just pass the config. To add a new fretted
 instrument, define a config object and a one-line wrapper.
@@ -258,7 +258,7 @@ Related helpers:
 
 ### Consolidate Before Expanding
 
-Shared algorithm in `recommendations.js` gating progression to new item groups.
+Shared algorithm in `recommendations.ts` gating progression to new item groups.
 Used by 6 different systems: fretboard strings, semitone math groups, interval
 math groups, key signature groups, scale degree groups, diatonic chord groups,
 chord spelling groups.
@@ -274,7 +274,7 @@ See [Algorithms](#consolidate-before-expanding-1) below for the full algorithm.
 
 ### Adaptive Selector
 
-Lives in `adaptive.js`. Creates a weighted random selector that prioritizes
+Lives in `adaptive.ts`. Creates a weighted random selector that prioritizes
 items the user is slowest on, with exploration of unseen items.
 
 `createAdaptiveSelector(config, storageAdapter)` — factory with injected storage
@@ -317,8 +317,8 @@ All timing thresholds scale proportionally:
 | Heatmap yellow          | < 4.5x            |
 | Heatmap orange          | < 6.0x            |
 
-Key functions: `deriveScaledConfig()`, `computeMedian()` in `adaptive.js`;
-`runCalibration()` in `quiz-engine.js`; `engine.baseline` property.
+Key functions: `deriveScaledConfig()`, `computeMedian()` in `adaptive.ts`;
+`runCalibration()` in `quiz-engine.ts`; `engine.baseline` property.
 
 #### Response-count scaling (planned)
 
@@ -363,9 +363,9 @@ The progress bar and "Looks like you've got this!" message use the
 - An item counts toward the progress bar when
   `automaticity > automaticityThreshold` (0.8), where
   `automaticity = recall * speedScore`. This matches the green "Automatic" band
-  in the stats heatmap (`getAutomaticityColor` in `stats-display.js`).
+  in the stats heatmap (`getAutomaticityColor` in `stats-display.ts`).
 - The mastery message appears when **all** enabled items exceed this threshold
-  (`checkAllAutomatic` in `adaptive.js`).
+  (`checkAllAutomatic` in `adaptive.ts`).
 - This is deliberately stricter than the recommendation system's "mastered"
   classification (which uses `recall >= recallThreshold`, i.e. 0.5). You can
   have items that are "mastered" enough for the recommendation algorithm to
@@ -554,17 +554,17 @@ rather than adding complexity. Per-mode flags are a code smell.
 
 Step-by-step checklist:
 
-1. **Create** `src/quiz-{mode}.js` following the `createXxxMode()` pattern with
+1. **Create** `src/quiz-{mode}.ts` following the `createXxxMode()` pattern with
    proper `import`/`export` statements
 2. **Define** item ID format and `ALL_ITEMS` list
 3. **Implement** mode object: `getEnabledItems`, `presentQuestion`,
    `checkAnswer`, `handleKey`, `onStart`, `onStop`
 4. **Groups** (if applicable): use `computeRecommendations()` from
-   `recommendations.js` for progressive unlocking
+   `recommendations.ts` for progressive unlocking
 5. **Stats**: add `createStatsControls()` with a render callback
 6. **HTML**: add mode screen call in `modeScreens()` in `src/build-template.ts`,
    and nav button in `HOME_SCREEN_HTML`
-7. **Register** mode in `app.js` (import the create function + register)
+7. **Register** mode in `app.ts` (import the create function + register)
 8. **Tests**: create `src/quiz-{mode}_test.ts` if pure logic was extracted
 9. **Accidentals**: determine which naming convention applies (see
    [accidental-conventions.md](accidental-conventions.md)) and update that

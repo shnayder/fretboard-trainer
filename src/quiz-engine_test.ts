@@ -6,9 +6,9 @@ import {
   createSolfegeKeyHandler,
   getCalibrationThresholds,
   pickCalibrationButton,
-} from './quiz-engine.js';
-import { getUseSolfege, setUseSolfege } from './music-data.js';
-import { DEFAULT_CONFIG } from './adaptive.js';
+} from './quiz-engine.ts';
+import { getUseSolfege, setUseSolfege } from './music-data.ts';
+import { DEFAULT_CONFIG } from './adaptive.ts';
 
 describe('quiz-engine defaults', () => {
   it('default automaticityTarget is 3000ms', () => {

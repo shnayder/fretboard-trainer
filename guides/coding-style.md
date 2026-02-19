@@ -8,9 +8,9 @@ rules — this guide explains them.
 
 | Pattern                             | Example                        | When                               |
 | ----------------------------------- | ------------------------------ | ---------------------------------- |
-| `src/quiz-{mode}.js`                | `quiz-fretboard.js`            | Quiz mode implementation           |
-| `src/{module}-state.js`             | `quiz-engine-state.js`         | Pure state/logic (no DOM)          |
-| `src/{module}.js`                   | `adaptive.js`, `navigation.js` | Shared modules                     |
+| `src/quiz-{mode}.ts`                | `quiz-fretboard.ts`            | Quiz mode implementation           |
+| `src/{module}-state.ts`             | `quiz-engine-state.ts`         | Pure state/logic (no DOM)          |
+| `src/{module}.ts`                   | `adaptive.ts`, `navigation.ts` | Shared modules                     |
 | `src/{module}_test.ts`              | `adaptive_test.ts`             | Test file (underscore, TypeScript) |
 | `plans/YYYY-MM-DD-{description}.md` | `2026-02-10-add-quiz-stats.md` | Plans                              |
 
@@ -21,8 +21,8 @@ esbuild bundles them into a single IIFE at build time. Tests import the same
 modules directly via `node:test` + `tsx`.
 
 - Use `export` on any function or constant that other files need
-- Use `import { ... } from './module.js'` for dependencies
-- Entry point is `src/app.js` — it imports all modes and wires them up
+- Use `import { ... } from './module.ts'` for dependencies
+- Entry point is `src/app.ts` — it imports all modes and wires them up
 
 ## Naming Conventions
 
@@ -96,7 +96,7 @@ preserves anything you might need to recover.
 
 ## Comments
 
-- **File headers**: purpose and key constraints. See `quiz-engine-state.js` for
+- **File headers**: purpose and key constraints. See `quiz-engine-state.ts` for
   the gold standard:
   ```
   // Pure state transitions for the quiz engine.

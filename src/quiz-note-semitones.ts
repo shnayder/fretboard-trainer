@@ -1,32 +1,43 @@
-// Interval Semitones quiz mode: bidirectional interval <-> semitone number.
-// Forward: "minor 3rd = ?" -> 3, Reverse: "7 = ?" -> Perfect 5th
-// 24 items total (12 intervals x 2 directions).
+// Note Semitones quiz mode: bidirectional note <-> semitone number.
+// Forward: "C# = ?" -> 1, Reverse: "3 = ?" -> D#/Eb
+// 24 items total (12 notes x 2 directions).
 
-import { intervalMatchesInput, INTERVALS } from './music-data.js';
-import { createQuizEngine } from './quiz-engine.js';
+import {
+  displayNote,
+  noteMatchesInput,
+  NOTES,
+  pickRandomAccidental,
+} from './music-data.ts';
+import {
+  createAdaptiveKeyHandler,
+  createQuizEngine,
+  pickCalibrationButton,
+  refreshNoteButtonLabels,
+} from './quiz-engine.ts';
 import {
   buildStatsLegend,
   createStatsControls,
   renderStatsTable,
-} from './stats-display.js';
+} from './stats-display.ts';
 
-export function createIntervalSemitonesMode() {
-  const container = document.getElementById('mode-intervalSemitones');
+export function createNoteSemitonesMode() {
+  const container = document.getElementById('mode-noteSemitones');
 
-  // Build item list: 12 intervals x 2 directions
+  // Build item list: 12 notes x 2 directions
   const ALL_ITEMS = [];
-  for (const interval of INTERVALS) {
-    ALL_ITEMS.push(interval.abbrev + ':fwd'); // interval -> number
-    ALL_ITEMS.push(interval.abbrev + ':rev'); // number -> interval
+  for (const note of NOTES) {
+    ALL_ITEMS.push(note.name + ':fwd'); // note -> number
+    ALL_ITEMS.push(note.name + ':rev'); // number -> note
   }
 
   function parseItem(itemId) {
-    const [abbrev, dir] = itemId.split(':');
-    const interval = INTERVALS.find((i) => i.abbrev === abbrev);
-    return { interval, dir };
+    const [noteName, dir] = itemId.split(':');
+    const note = NOTES.find((n) => n.name === noteName);
+    return { note, dir };
   }
 
   let currentItem = null;
+  let currentAccidentalChoice = null;
 
   // --- Tab state ---
   let activeTab = 'practice';
@@ -98,13 +109,14 @@ export function createIntervalSemitonesMode() {
     el.textContent = ALL_ITEMS.length + ' items \u00B7 60s';
   }
 
+  // Build row definitions for the stats table
   function getTableRows() {
-    return INTERVALS.map((interval) => ({
-      label: interval.abbrev,
-      sublabel: String(interval.num),
-      _colHeader: 'Interval',
-      fwdItemId: interval.abbrev + ':fwd',
-      revItemId: interval.abbrev + ':rev',
+    return NOTES.map((note) => ({
+      label: displayNote(note.name),
+      sublabel: String(note.num),
+      _colHeader: 'Note',
+      fwdItemId: note.name + ':fwd',
+      revItemId: note.name + ':rev',
     }));
   }
 
@@ -114,8 +126,8 @@ export function createIntervalSemitonesMode() {
     renderStatsTable(
       engine.selector,
       getTableRows(),
-      'I\u2192#',
-      '#\u2192I',
+      'N\u2192#',
+      '#\u2192N',
       mode,
       tableDiv,
       engine.baseline,
@@ -126,9 +138,9 @@ export function createIntervalSemitonesMode() {
   });
 
   const mode = {
-    id: 'intervalSemitones',
-    name: 'Interval \u2194 Semitones',
-    storageNamespace: 'intervalSemitones',
+    id: 'noteSemitones',
+    name: 'Note \u2194 Semitones',
+    storageNamespace: 'noteSemitones',
 
     getEnabledItems() {
       return ALL_ITEMS;
@@ -137,35 +149,37 @@ export function createIntervalSemitonesMode() {
     presentQuestion(itemId) {
       currentItem = parseItem(itemId);
       const prompt = container.querySelector('.quiz-prompt');
-      const intervalButtons = container.querySelector(
-        '.answer-buttons-intervals',
-      );
+      const noteButtons = container.querySelector('.answer-buttons-notes');
       const numButtons = container.querySelector('.answer-buttons-numbers');
 
+      currentAccidentalChoice = pickRandomAccidental(
+        currentItem.note.displayName,
+      );
       if (currentItem.dir === 'fwd') {
-        // Show interval name, answer is number 1-12
-        prompt.textContent = currentItem.interval.name;
-        intervalButtons.classList.add('answer-group-hidden');
+        // Show note, answer is number 0-11
+        prompt.textContent = displayNote(currentAccidentalChoice);
+        noteButtons.classList.add('answer-group-hidden');
         numButtons.classList.remove('answer-group-hidden');
       } else {
-        // Show number, answer is interval
-        prompt.textContent = String(currentItem.interval.num);
-        intervalButtons.classList.remove('answer-group-hidden');
+        // Show number, answer is note
+        prompt.textContent = String(currentItem.note.num);
+        noteButtons.classList.remove('answer-group-hidden');
         numButtons.classList.add('answer-group-hidden');
       }
     },
 
     checkAnswer(_itemId, input) {
       if (currentItem.dir === 'fwd') {
-        const correct = parseInt(input, 10) === currentItem.interval.num;
-        return { correct, correctAnswer: String(currentItem.interval.num) };
+        const correct = parseInt(input, 10) === currentItem.note.num;
+        return { correct, correctAnswer: String(currentItem.note.num) };
       } else {
-        const correct = intervalMatchesInput(currentItem.interval, input);
-        return { correct, correctAnswer: currentItem.interval.abbrev };
+        const correct = noteMatchesInput(currentItem.note, input);
+        return { correct, correctAnswer: displayNote(currentAccidentalChoice) };
       }
     },
 
     onStart() {
+      noteKeyHandler.reset();
       if (pendingDigitTimeout) clearTimeout(pendingDigitTimeout);
       pendingDigit = null;
       pendingDigitTimeout = null;
@@ -173,6 +187,7 @@ export function createIntervalSemitonesMode() {
     },
 
     onStop() {
+      noteKeyHandler.reset();
       if (pendingDigitTimeout) clearTimeout(pendingDigitTimeout);
       pendingDigit = null;
       pendingDigitTimeout = null;
@@ -184,48 +199,47 @@ export function createIntervalSemitonesMode() {
     },
 
     handleKey(e, { submitAnswer }) {
-      // Keyboard: number keys for forward, no keyboard for interval buttons
-      if (currentItem.dir === 'fwd') {
-        if (e.key >= '0' && e.key <= '9') {
-          e.preventDefault();
-          if (pendingDigit !== null) {
-            const num = pendingDigit * 10 + parseInt(e.key);
-            clearTimeout(pendingDigitTimeout);
-            pendingDigit = null;
-            pendingDigitTimeout = null;
-            if (num >= 1 && num <= 12) {
-              submitAnswer(String(num));
-            }
-            return true;
-          }
-          const d = parseInt(e.key);
-          if (d >= 2 && d <= 9) {
-            submitAnswer(String(d));
-          } else {
-            // 0 or 1 — could be 10, 11, 12
-            pendingDigit = d;
-            pendingDigitTimeout = setTimeout(() => {
-              if (pendingDigit >= 1) submitAnswer(String(pendingDigit));
-              pendingDigit = null;
-              pendingDigitTimeout = null;
-            }, 400);
+      if (currentItem.dir === 'rev') {
+        return noteKeyHandler.handleKey(e);
+      }
+      // Forward: number keys 0-9 for semitone answer
+      if (e.key >= '0' && e.key <= '9') {
+        e.preventDefault();
+        // Handle two-digit: 10, 11
+        if (pendingDigit !== null) {
+          const num = pendingDigit * 10 + parseInt(e.key);
+          clearTimeout(pendingDigitTimeout);
+          pendingDigit = null;
+          pendingDigitTimeout = null;
+          if (num <= 11) {
+            submitAnswer(String(num));
           }
           return true;
         }
+        const d = parseInt(e.key);
+        if (d >= 2) {
+          // Can only be single digit (2-9)
+          submitAnswer(String(d));
+        } else {
+          // 0 or 1 — could be start of 10 or 11
+          pendingDigit = d;
+          pendingDigitTimeout = setTimeout(() => {
+            submitAnswer(String(pendingDigit));
+            pendingDigit = null;
+            pendingDigitTimeout = null;
+          }, 400);
+        }
+        return true;
       }
       return false;
     },
 
     getCalibrationButtons() {
-      return Array.from(container.querySelectorAll('.answer-btn-interval'));
+      return Array.from(container.querySelectorAll('.answer-btn-note'));
     },
 
     getCalibrationTrialConfig(buttons, prevBtn) {
-      // Uniform random — no accidental/natural distinction for intervals
-      let btn;
-      do {
-        btn = buttons[Math.floor(Math.random() * buttons.length)];
-      } while (btn === prevBtn && buttons.length > 1);
+      const btn = pickCalibrationButton(buttons, prevBtn);
       return { prompt: 'Press ' + btn.textContent, targetButtons: [btn] };
     },
   };
@@ -236,17 +250,22 @@ export function createIntervalSemitonesMode() {
   const engine = createQuizEngine(mode, container);
   engine.storage.preload(ALL_ITEMS);
 
+  const noteKeyHandler = createAdaptiveKeyHandler(
+    (input) => engine.submitAnswer(input),
+    () => true,
+  );
+
   function init() {
     // Tab switching
     container.querySelectorAll('.mode-tab').forEach((btn) => {
       btn.addEventListener('click', () => switchTab(btn.dataset.tab));
     });
 
-    // Interval answer buttons
-    container.querySelectorAll('.answer-btn-interval').forEach((btn) => {
+    // Note answer buttons
+    container.querySelectorAll('.answer-btn-note').forEach((btn) => {
       btn.addEventListener('click', () => {
         if (!engine.isActive || engine.isAnswered) return;
-        engine.submitAnswer(btn.dataset.interval);
+        engine.submitAnswer(btn.dataset.note);
       });
     });
 
@@ -274,12 +293,14 @@ export function createIntervalSemitonesMode() {
     init,
     activate() {
       engine.attach();
+      refreshNoteButtonLabels(container);
       engine.updateIdleMessage();
       renderPracticeSummary();
     },
     deactivate() {
       if (engine.isRunning) engine.stop();
       engine.detach();
+      noteKeyHandler.reset();
       if (pendingDigitTimeout) clearTimeout(pendingDigitTimeout);
       pendingDigit = null;
     },

@@ -4,19 +4,19 @@
 import {
   createGuitarFretboardMode,
   createUkuleleFretboardMode,
-} from './quiz-fretboard.js';
-import { createSpeedTapMode } from './quiz-speed-tap.js';
-import { createNoteSemitonesMode } from './quiz-note-semitones.js';
-import { createIntervalSemitonesMode } from './quiz-interval-semitones.js';
-import { createSemitoneMathMode } from './quiz-semitone-math.js';
-import { createIntervalMathMode } from './quiz-interval-math.js';
-import { createKeySignaturesMode } from './quiz-key-signatures.js';
-import { createScaleDegreesMode } from './quiz-scale-degrees.js';
-import { createDiatonicChordsMode } from './quiz-diatonic-chords.js';
-import { createChordSpellingMode } from './quiz-chord-spelling.js';
-import { createNavigation } from './navigation.js';
-import { createSettingsModal } from './settings.js';
-import { refreshNoteButtonLabels } from './quiz-engine.js';
+} from './quiz-fretboard.ts';
+import { createSpeedTapMode } from './quiz-speed-tap.ts';
+import { createNoteSemitonesMode } from './quiz-note-semitones.ts';
+import { createIntervalSemitonesMode } from './quiz-interval-semitones.ts';
+import { createSemitoneMathMode } from './quiz-semitone-math.ts';
+import { createIntervalMathMode } from './quiz-interval-math.ts';
+import { createKeySignaturesMode } from './quiz-key-signatures.ts';
+import { createScaleDegreesMode } from './quiz-scale-degrees.ts';
+import { createDiatonicChordsMode } from './quiz-diatonic-chords.ts';
+import { createChordSpellingMode } from './quiz-chord-spelling.ts';
+import { createNavigation } from './navigation.ts';
+import { createSettingsModal } from './settings.ts';
+import { refreshNoteButtonLabels } from './quiz-engine.ts';
 
 const nav = createNavigation();
 

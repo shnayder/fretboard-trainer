@@ -1,7 +1,7 @@
 // Stats display helpers: shared color functions, table rendering for lookup
 // modes, and heatmap grid rendering for math modes.
 
-import { displayNote, NOTES } from './music-data.js';
+import { displayNote, NOTES } from './music-data.ts';
 
 // --- Heatmap color scale (read from CSS custom properties) ---
 

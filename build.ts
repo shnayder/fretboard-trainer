@@ -40,7 +40,7 @@ const read = (rel: string) => readFileSync(join(__dirname, rel), 'utf-8');
 
 const css = read('src/styles.css');
 const result = esbuild.buildSync({
-  entryPoints: [join(__dirname, 'src/app.js')],
+  entryPoints: [join(__dirname, 'src/app.ts')],
   bundle: true,
   format: 'iife',
   write: false,

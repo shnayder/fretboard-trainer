@@ -123,9 +123,9 @@ Before writing code, verify that your design:
   mechanisms (shadow booleans, imperative DOM overrides). See
   [architecture.md](architecture.md) for pattern details.
 - **Extends shared abstractions** when that's cleaner than working around them.
-  If adding a new state phase to the engine, add it to `quiz-engine-state.js`.
+  If adding a new state phase to the engine, add it to `quiz-engine-state.ts`.
 - **Follows build system conventions**: proper ES module `import`/`export`,
-  entry point is `src/app.js`. See
+  entry point is `src/app.ts`. See
   [architecture.md](architecture.md#build-system).
 - **Reuses shared helpers**: `computeRecommendations()` for progression,
   `createStatsControls()` for stats display, `createNoteKeyHandler()` for

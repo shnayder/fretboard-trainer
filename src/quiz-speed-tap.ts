@@ -7,14 +7,14 @@ import {
   NOTES,
   pickRandomAccidental,
   STRING_OFFSETS,
-} from './music-data.js';
-import { createQuizEngine } from './quiz-engine.js';
+} from './music-data.ts';
+import { createQuizEngine } from './quiz-engine.ts';
 import {
   buildStatsLegend,
   createStatsControls,
   getAutomaticityColor,
   getSpeedHeatmapColor,
-} from './stats-display.js';
+} from './stats-display.ts';
 
 export function createSpeedTapMode() {
   const container = document.getElementById('mode-speedTap');

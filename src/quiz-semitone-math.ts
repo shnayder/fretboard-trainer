@@ -10,20 +10,20 @@ import {
   NOTES,
   noteSub,
   pickAccidentalName,
-} from './music-data.js';
-import { DEFAULT_CONFIG } from './adaptive.js';
+} from './music-data.ts';
+import { DEFAULT_CONFIG } from './adaptive.ts';
 import {
   createAdaptiveKeyHandler,
   createQuizEngine,
   pickCalibrationButton,
   refreshNoteButtonLabels,
-} from './quiz-engine.js';
+} from './quiz-engine.ts';
 import {
   buildStatsLegend,
   createStatsControls,
   renderStatsGrid,
-} from './stats-display.js';
-import { computeRecommendations } from './recommendations.js';
+} from './stats-display.ts';
+import { computeRecommendations } from './recommendations.ts';
 
 export function createSemitoneMathMode() {
   const container = document.getElementById('mode-semitoneMath');

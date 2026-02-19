@@ -39,7 +39,7 @@ modules bundled by esbuild into a single IIFE `<script>` block:
 
 To add a new source file, just create it with proper `import`/`export`
 statements and import it from where it's needed. esbuild resolves the module
-graph automatically from the entry point (`src/app.js`).
+graph automatically from the entry point (`src/app.ts`).
 
 ## Testing
 

@@ -20,15 +20,15 @@ import {
   engineUpdateMasteryAfterAnswer,
   engineUpdateProgress,
   initialEngineState,
-} from './quiz-engine-state.js';
+} from './quiz-engine-state.ts';
 import {
   computeMedian,
   createAdaptiveSelector,
   createLocalStorageAdapter,
   DEFAULT_CONFIG,
   deriveScaledConfig,
-} from './adaptive.js';
-import { displayNote, getUseSolfege, NOTES } from './music-data.js';
+} from './adaptive.ts';
+import { displayNote, getUseSolfege, NOTES } from './music-data.ts';
 
 /**
  * Create a keyboard handler for note input (C D E F G A B + #/s/b for accidentals).

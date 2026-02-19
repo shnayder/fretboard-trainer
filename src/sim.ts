@@ -11,7 +11,7 @@ import {
   computeWeight,
   DEFAULT_CONFIG,
   updateStability,
-} from './adaptive.js';
+} from './adaptive.ts';
 
 // ---------------------------------------------------------------------------
 // Parse CLI overrides

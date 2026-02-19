@@ -1,72 +1,63 @@
-// Chord Spelling quiz mode: spell out all notes of a chord in root-up order.
-// "Cm7" -> user enters C, Eb, G, Bb in sequence.
-// ~132 items: 12 roots x chord types, grouped by chord type.
+// Key Signatures quiz mode: key name <-> accidental count.
+// Forward: "D major -> ?" -> "2#", Reverse: "3b -> ?" -> Eb
+// 24 items: 12 major keys x 2 directions.
+// Grouped by accidental count for progressive unlocking.
 
 import {
-  CHORD_ROOTS,
-  CHORD_TYPES,
   displayNote,
-  getChordTones,
-  spelledNoteMatchesInput,
+  keySignatureLabel,
+  MAJOR_KEYS,
   spelledNoteMatchesSemitone,
-} from './music-data.js';
-import { DEFAULT_CONFIG } from './adaptive.js';
+} from './music-data.ts';
+import { DEFAULT_CONFIG } from './adaptive.ts';
 import {
   createAdaptiveKeyHandler,
   createQuizEngine,
   pickCalibrationButton,
   refreshNoteButtonLabels,
-} from './quiz-engine.js';
+} from './quiz-engine.ts';
 import {
   buildStatsLegend,
   createStatsControls,
-  renderStatsGrid,
-} from './stats-display.js';
-import { computeRecommendations } from './recommendations.js';
+  renderStatsTable,
+} from './stats-display.ts';
+import { computeRecommendations } from './recommendations.ts';
 
-export function createChordSpellingMode() {
-  const container = document.getElementById('mode-chordSpelling');
-  const GROUPS_KEY = 'chordSpelling_enabledGroups';
+export function createKeySignaturesMode() {
+  const container = document.getElementById('mode-keySignatures');
+  const GROUPS_KEY = 'keySignatures_enabledGroups';
 
-  // Group chord types by their group index
-  const SPELLING_GROUPS = [];
-  let maxGroup = 0;
-  for (const ct of CHORD_TYPES) {
-    if (ct.group > maxGroup) maxGroup = ct.group;
-  }
-  for (let g = 0; g <= maxGroup; g++) {
-    const types = CHORD_TYPES.filter((t) => t.group === g);
-    const label = types.map((t) => t.symbol || 'maj').join(', ');
-    SPELLING_GROUPS.push({ types, label });
-  }
+  // Group definitions: keys grouped by accidental count
+  const KEY_GROUPS = [
+    { keys: ['C', 'G', 'F'], label: 'C G F' },
+    { keys: ['D', 'Bb'], label: 'D B\u266D' },
+    { keys: ['A', 'Eb'], label: 'A E\u266D' },
+    { keys: ['E', 'Ab'], label: 'E A\u266D' },
+    { keys: ['B', 'Db', 'F#'], label: 'B D\u266D F\u266F' },
+  ];
 
-  let enabledGroups = new Set([0]);
+  let enabledGroups = new Set([0, 1]); // Default: groups 0+1
   let recommendedGroups = new Set();
 
   // Build full item list
   const ALL_ITEMS = [];
-  for (const root of CHORD_ROOTS) {
-    for (const type of CHORD_TYPES) {
-      ALL_ITEMS.push(root + ':' + type.name);
-    }
+  for (const key of MAJOR_KEYS) {
+    ALL_ITEMS.push(key.root + ':fwd');
+    ALL_ITEMS.push(key.root + ':rev');
   }
 
   function parseItem(itemId) {
-    const colonIdx = itemId.indexOf(':');
-    const rootName = itemId.substring(0, colonIdx);
-    const typeName = itemId.substring(colonIdx + 1);
-    const chordType = CHORD_TYPES.find((t) => t.name === typeName);
-    const tones = getChordTones(rootName, chordType);
-    return { rootName, chordType, tones };
+    const [rootName, dir] = itemId.split(':');
+    const key = MAJOR_KEYS.find((k) => k.root === rootName);
+    return { key, dir };
   }
 
   function getItemIdsForGroup(groupIndex) {
-    const types = SPELLING_GROUPS[groupIndex].types;
+    const roots = KEY_GROUPS[groupIndex].keys;
     const items = [];
-    for (const root of CHORD_ROOTS) {
-      for (const type of types) {
-        items.push(root + ':' + type.name);
-      }
+    for (const root of roots) {
+      items.push(root + ':fwd');
+      items.push(root + ':rev');
     }
     return items;
   }
@@ -98,7 +89,7 @@ export function createChordSpellingMode() {
   const recsOptions = { sortUnstarted: (a, b) => a.string - b.string };
 
   function getRecommendationResult() {
-    const allGroups = SPELLING_GROUPS.map((_, i) => i);
+    const allGroups = KEY_GROUPS.map((_, i) => i);
     return computeRecommendations(
       engine.selector,
       allGroups,
@@ -214,7 +205,7 @@ export function createChordSpellingMode() {
           return a - b;
         })
           .map(function (g) {
-            return SPELLING_GROUPS[g].label;
+            return KEY_GROUPS[g].label;
           });
         parts.push(
           'solidify ' + cNames.join(', ') +
@@ -224,7 +215,7 @@ export function createChordSpellingMode() {
       }
       if (result.expandIndex !== null) {
         parts.push(
-          'start ' + SPELLING_GROUPS[result.expandIndex].label +
+          'start ' + KEY_GROUPS[result.expandIndex].label +
             ' \u2014 ' + result.expandNewCount + ' new item' +
             (result.expandNewCount !== 1 ? 's' : ''),
         );
@@ -244,70 +235,30 @@ export function createChordSpellingMode() {
     el.textContent = items.length + ' items \u00B7 60s';
   }
 
-  // --- Multi-note entry state ---
-
-  let currentItem = null;
-  let enteredTones = [];
-
-  function renderSlots() {
-    const slotsDiv = container.querySelector('.chord-slots');
-    if (!currentItem) {
-      slotsDiv.innerHTML = '';
-      return;
-    }
-    let html = '';
-    for (let i = 0; i < currentItem.tones.length; i++) {
-      let cls = 'chord-slot';
-      let content = '_';
-      if (i < enteredTones.length) {
-        content = enteredTones[i].display;
-        cls += enteredTones[i].correct ? ' correct' : ' wrong';
-      } else if (i === enteredTones.length) {
-        cls += ' active';
-      }
-      html += '<span class="' + cls + '">' + content + '</span>';
-    }
-    slotsDiv.innerHTML = html;
-  }
-
-  function submitTone(input) {
-    if (!engine.isActive || engine.isAnswered) return;
-    if (!currentItem || enteredTones.length >= currentItem.tones.length) return;
-
-    const idx = enteredTones.length;
-    const expected = currentItem.tones[idx];
-    const isCorrect = spelledNoteMatchesInput(expected, input);
-
-    enteredTones.push({
-      input,
-      display: isCorrect ? displayNote(expected) : displayNote(input),
-      correct: isCorrect,
-    });
-    renderSlots();
-
-    if (enteredTones.length === currentItem.tones.length) {
-      const allCorrect = enteredTones.every((t) => t.correct);
-      engine.submitAnswer(allCorrect ? '__correct__' : '__wrong__');
-    }
-  }
-
   // --- Stats ---
 
+  let currentItem = null;
+
+  function getTableRows() {
+    return MAJOR_KEYS.map((key) => ({
+      label: displayNote(key.root) + ' major',
+      sublabel: keySignatureLabel(key),
+      _colHeader: 'Key',
+      fwdItemId: key.root + ':fwd',
+      revItemId: key.root + ':rev',
+    }));
+  }
+
   const statsControls = createStatsControls(container, (mode, el) => {
-    const colLabels = CHORD_TYPES.map((t) => t.symbol || 'maj');
-    const gridDiv = document.createElement('div');
-    gridDiv.className = 'stats-grid-wrapper';
-    el.appendChild(gridDiv);
-    const rootNotes = CHORD_ROOTS.map((r) => ({ name: r, displayName: r }));
-    renderStatsGrid(
+    const tableDiv = document.createElement('div');
+    el.appendChild(tableDiv);
+    renderStatsTable(
       engine.selector,
-      colLabels,
-      (rootName, colIdx) => {
-        return rootName + ':' + CHORD_TYPES[colIdx].name;
-      },
+      getTableRows(),
+      'Key\u2192Sig',
+      'Sig\u2192Key',
       mode,
-      gridDiv,
-      rootNotes,
+      tableDiv,
       engine.baseline,
     );
     const legendDiv = document.createElement('div');
@@ -317,10 +268,13 @@ export function createChordSpellingMode() {
 
   // --- Quiz mode interface ---
 
+  let pendingSigDigit = null;
+  let pendingSigTimeout = null;
+
   const mode = {
-    id: 'chordSpelling',
-    name: 'Chord Spelling',
-    storageNamespace: 'chordSpelling',
+    id: 'keySignatures',
+    name: 'Key Signatures',
+    storageNamespace: 'keySignatures',
 
     getEnabledItems() {
       const items = [];
@@ -331,53 +285,82 @@ export function createChordSpellingMode() {
     },
 
     getPracticingLabel() {
-      if (enabledGroups.size === SPELLING_GROUPS.length) {
-        return 'all chord types';
-      }
-      const labels = [...enabledGroups].sort((a, b) => a - b)
-        .map((g) => SPELLING_GROUPS[g].label);
-      return labels.join(', ') + ' chords';
-    },
-
-    getExpectedResponseCount(itemId) {
-      const parsed = parseItem(itemId);
-      return parsed.tones.length;
+      if (enabledGroups.size === KEY_GROUPS.length) return 'all keys';
+      const keys = [...enabledGroups].sort((a, b) => a - b)
+        .flatMap((g) => KEY_GROUPS[g].keys)
+        .map((k) => displayNote(k));
+      return keys.join(', ');
     },
 
     presentQuestion(itemId) {
       currentItem = parseItem(itemId);
-      enteredTones = [];
       const prompt = container.querySelector('.quiz-prompt');
-      prompt.textContent = displayNote(currentItem.rootName) +
-        currentItem.chordType.symbol;
-      renderSlots();
+      const sigButtons = container.querySelector('.answer-buttons-keysig');
+      const noteButtons = container.querySelector('.answer-buttons-notes');
+
+      if (currentItem.dir === 'fwd') {
+        prompt.textContent = displayNote(currentItem.key.root) + ' major';
+        sigButtons.classList.remove('answer-group-hidden');
+        noteButtons.classList.add('answer-group-hidden');
+      } else {
+        const label = keySignatureLabel(currentItem.key);
+        prompt.textContent = label + ' major';
+        sigButtons.classList.add('answer-group-hidden');
+        noteButtons.classList.remove('answer-group-hidden');
+      }
     },
 
     checkAnswer(_itemId, input) {
-      const allCorrect = input === '__correct__';
-      const correctAnswer = currentItem.tones.map(displayNote).join(' ');
-      return { correct: allCorrect, correctAnswer };
+      if (currentItem.dir === 'fwd') {
+        const expected = keySignatureLabel(currentItem.key);
+        return { correct: input === expected, correctAnswer: expected };
+      } else {
+        const correct = spelledNoteMatchesSemitone(currentItem.key.root, input);
+        return { correct, correctAnswer: displayNote(currentItem.key.root) };
+      }
     },
 
     onStart() {
       noteKeyHandler.reset();
-      enteredTones = [];
       if (statsControls.mode) statsControls.hide();
     },
 
     onStop() {
       noteKeyHandler.reset();
-      enteredTones = [];
-      const slotsDiv = container.querySelector('.chord-slots');
-      slotsDiv.innerHTML = '';
       if (activeTab === 'progress') {
         statsControls.show('retention');
       }
       refreshUI();
     },
 
-    handleKey(e, _ctx) {
-      return noteKeyHandler.handleKey(e);
+    handleKey(e, { submitAnswer }) {
+      if (currentItem.dir === 'rev') {
+        return noteKeyHandler.handleKey(e);
+      }
+      // Forward: number keys for sig selection
+      if (e.key >= '0' && e.key <= '7') {
+        e.preventDefault();
+        if (pendingSigTimeout) clearTimeout(pendingSigTimeout);
+        pendingSigDigit = e.key;
+        pendingSigTimeout = setTimeout(() => {
+          if (pendingSigDigit === '0') {
+            submitAnswer('0');
+          }
+          pendingSigDigit = null;
+          pendingSigTimeout = null;
+        }, 600);
+        return true;
+      }
+      if (pendingSigDigit !== null && (e.key === '#' || e.key === 'b')) {
+        e.preventDefault();
+        clearTimeout(pendingSigTimeout);
+        const answer = pendingSigDigit + e.key;
+        pendingSigDigit = null;
+        pendingSigTimeout = null;
+        submitAnswer(answer);
+        return true;
+      }
+      return false;
     },
 
     getCalibrationButtons() {
@@ -385,28 +368,16 @@ export function createChordSpellingMode() {
     },
 
     getCalibrationTrialConfig(buttons, prevBtn) {
-      // Multi-press: pick 2–4 random note buttons
-      const count = 2 + Math.floor(Math.random() * 3); // 2, 3, or 4
-      const targets = [];
-      let prev = prevBtn;
-      for (let i = 0; i < count; i++) {
-        const btn = pickCalibrationButton(buttons, prev);
-        targets.push(btn);
-        prev = btn;
-      }
-      const labels = targets.map((b) => b.textContent);
-      return { prompt: 'Press ' + labels.join(' '), targetButtons: targets };
+      const btn = pickCalibrationButton(buttons, prevBtn);
+      return { prompt: 'Press ' + btn.textContent, targetButtons: [btn] };
     },
-
-    calibrationIntroHint:
-      'We\u2019ll measure your response speed to set personalized targets. Press the notes shown in the prompt, in order \u2014 10 rounds total.',
   };
 
   const engine = createQuizEngine(mode, container);
   engine.storage.preload(ALL_ITEMS);
 
   const noteKeyHandler = createAdaptiveKeyHandler(
-    (input) => submitTone(input),
+    (input) => engine.submitAnswer(input),
     () => true,
   );
 
@@ -418,10 +389,10 @@ export function createChordSpellingMode() {
 
     // Set section heading
     const toggleLabel = container.querySelector('.toggle-group-label');
-    if (toggleLabel) toggleLabel.textContent = 'Chord types';
+    if (toggleLabel) toggleLabel.textContent = 'Keys';
 
     const togglesDiv = container.querySelector('.distance-toggles');
-    SPELLING_GROUPS.forEach((group, i) => {
+    KEY_GROUPS.forEach((group, i) => {
       const btn = document.createElement('button');
       btn.className = 'distance-toggle';
       btn.dataset.group = String(i);
@@ -432,19 +403,17 @@ export function createChordSpellingMode() {
 
     loadEnabledGroups();
 
+    container.querySelectorAll('.answer-btn-keysig').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        if (!engine.isActive || engine.isAnswered) return;
+        engine.submitAnswer(btn.dataset.sig);
+      });
+    });
+
     container.querySelectorAll('.answer-btn-note').forEach((btn) => {
       btn.addEventListener('click', () => {
         if (!engine.isActive || engine.isAnswered) return;
-        let input = btn.dataset.note;
-        // Resolve enharmonic: buttons can't distinguish A#/Bb, so if the
-        // button's pitch matches the expected tone, use the expected spelling.
-        if (currentItem && enteredTones.length < currentItem.tones.length) {
-          const expected = currentItem.tones[enteredTones.length];
-          if (spelledNoteMatchesSemitone(expected, input)) {
-            input = expected;
-          }
-        }
-        submitTone(input);
+        engine.submitAnswer(btn.dataset.note);
       });
     });
 
@@ -480,6 +449,8 @@ export function createChordSpellingMode() {
       if (engine.isRunning) engine.stop();
       engine.detach();
       noteKeyHandler.reset();
+      if (pendingSigTimeout) clearTimeout(pendingSigTimeout);
+      pendingSigDigit = null;
     },
   };
 }

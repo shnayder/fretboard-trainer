@@ -6,7 +6,7 @@ import {
   getSpeedHeatmapColor,
   getStatsCellColor,
   getStatsCellColorMerged,
-} from './stats-display.js';
+} from './stats-display.ts';
 
 // Heatmap palette (matches fallback values in stats-display.js)
 const NONE = 'hsl(30, 4%, 85%)';

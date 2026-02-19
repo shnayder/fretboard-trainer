@@ -214,8 +214,7 @@ Technical approach:
 | File       | Changes               |
 | ---------- | --------------------- |
 | `src/...`  | Description           |
-| `main.ts`  | Template + file reads |
-| `build.ts` | Template + file reads |
+| `main.ts`  | Build script changes  |
 
 ## Testing
 
@@ -253,7 +252,7 @@ What changed and why.
 ## Changes
 
 1. `file.js` — description of change
-2. `main.ts` / `build.ts` — version bump if needed
+2. `src/build-template.ts` — version bump if needed
 
 ## Implementation Notes (added after completion)
 

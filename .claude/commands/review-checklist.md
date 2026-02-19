@@ -8,14 +8,10 @@ or N/A. Do not skip items — mark N/A explicitly if a category does not apply.
 ## Build system consistency
 <!-- Full explanation: guides/architecture.md § Build System -->
 
-- [ ] New source files registered in **both** `main.ts` and `build.ts`
-- [ ] Files with `export` keywords read via `readModule()` (strips exports);
-      files without `export` read via `readFile()` / `read()`
-- [ ] Concatenation order correct: modules that export come before modules that
-      consume them (e.g., `music-data.ts` before quiz modes)
-- [ ] Version number in `<div class="version">` bumped in both `main.ts` and
-      `build.ts`
-- [ ] If HTML template changed: updated in **both** build files
+- [ ] esbuild resolves the module graph from `src/app.ts` — new source files
+      just need proper `import`/`export` statements
+- [ ] Version number (`VERSION` in `src/build-template.ts`) bumped
+- [ ] `deno task build` produces correct output
 
 ## Architecture patterns
 <!-- Full explanation: guides/architecture.md § Key Patterns -->
@@ -70,7 +66,7 @@ or N/A. Do not skip items — mark N/A explicitly if a category does not apply.
       dates (injected timestamps) — no global state pollution
 - [ ] Edge cases covered: empty arrays, null/undefined inputs, boundary values,
       single-element collections
-- [ ] Tests actually run: `npx tsx --test src/*_test.ts` passes
+- [ ] Tests actually run: `deno task test` passes
 
 ## Quiz mode specifics
 

@@ -48,16 +48,13 @@ implementations → Navigation → App init.
 
 Source files are standard ES modules with `import`/`export`. esbuild bundles
 them from the entry point (`src/app.ts`) into a single IIFE — no globals leak
-into the browser scope. Both build scripts and tests use the same source files
-directly.
-
-- `build.ts` (Node): uses esbuild's JS API (`esbuild.buildSync()`)
-- `main.ts` (Deno): shells out to esbuild CLI via `Deno.Command`
+into the browser scope. `main.ts` (Deno) shells out to esbuild CLI via
+`Deno.Command`. Tests import the same source files directly.
 
 ### Shared Template (`src/build-template.ts`)
 
 The HTML template and version number live in `src/build-template.ts` — the
-single source of truth. Both build scripts import from it:
+single source of truth. `main.ts` imports from it:
 
 ```typescript
 import { assembleHTML, SERVICE_WORKER } from './src/build-template.ts';
@@ -80,12 +77,12 @@ Key exports:
 
 ### Moments Page Generation
 
-`build.ts` also generates `guides/design/moments.html` — a design reference page
+`main.ts` also generates `guides/design/moments.html` — a design reference page
 showing assembled screen layouts at mobile width. It reuses the same HTML
 helpers (`modeScreen()`, `fretboardSVG()`, `pianoNoteButtons()`, etc.) as the
 production app, so the moments never drift from reality.
 
-Key functions in `build.ts`:
+Key functions in `main.ts`:
 
 - **`prepareMoment(html, overrides)`** — string replacement engine. Takes
   generated mode-screen HTML and injects phase classes, quiz content, feedback,

@@ -8,17 +8,17 @@ in `src/styles.css` `:root`.
 
 Live HTML pages for visual iteration. Hand-written pages (`colors.html`,
 `components.html`) link directly to `src/styles.css` — just edit and refresh.
-`moments.html` is build-generated, so run `npx tsx build.ts` after edits.
+`moments.html` is build-generated, so run `deno task build` after edits.
 
 | Page                               | Contents                                       | Source                                   |
 | ---------------------------------- | ---------------------------------------------- | ---------------------------------------- |
 | [colors.html](colors.html)         | Color swatches, heatmap scale, semantic tokens | Hand-written                             |
 | [components.html](components.html) | Isolated component specimens                   | Hand-written                             |
-| [moments.html](moments.html)       | Assembled screen layouts at 402px (all phases) | **Build-generated** (`npx tsx build.ts`) |
+| [moments.html](moments.html)       | Assembled screen layouts at 402px (all phases) | **Build-generated** (`deno task build`)  |
 
 `moments.html` uses the same `modeScreen()`, `fretboardSVG()`, and button
 helpers as the production app, so it never drifts from reality. To add or change
-a moment, edit `buildMoments()` in `build.ts`.
+a moment, edit `buildMoments()` in `main.ts`.
 
 For visual design principles (drill-first aesthetic, warmth, feedback clarity,
 information density, mobile-primary), see

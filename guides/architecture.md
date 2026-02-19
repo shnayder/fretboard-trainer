@@ -46,6 +46,27 @@ Mode implementations → Navigation → App init.
 
 ## Build System
 
+### Shared Template (`src/build-template.ts`)
+
+The HTML template, source file manifest, and version number live in
+`src/build-template.ts` — the single source of truth. Both `main.ts` (Deno)
+and `build.ts` (Node) import from it:
+
+```typescript
+import { SOURCE_MANIFEST, assembleHTML, SERVICE_WORKER } from "./src/build-template.ts";
+```
+
+Key exports:
+
+| Export | Purpose |
+|--------|---------|
+| `VERSION` | Single version string (e.g. `"v6.8"`) |
+| `SOURCE_MANIFEST` | Ordered array of `{ path, module }` entries |
+| `assembleHTML(css, scripts)` | Assembles the complete index.html |
+| `SERVICE_WORKER` | Service worker JS string |
+| `HOME_SCREEN_HTML` | Home screen markup (also used by moments) |
+| `DISTANCE_TOGGLES` | Shared toggle HTML fragment |
+
 ### readModule() vs read()
 
 ```javascript
@@ -56,6 +77,9 @@ const readModule = (rel) => read(rel).replace(/^export /gm, "");
 - `readModule()`: reads the file and strips `export` at the start of lines.
   Used for ES module files that tests import directly.
 - `read()`: reads the file verbatim. Used for browser-only files.
+
+The `SOURCE_MANIFEST` array tracks which files need export-stripping
+(`module: true`) vs. verbatim read (`module: false`).
 
 ### The ES Module ↔ Browser Global Bridge
 
@@ -73,18 +97,10 @@ This means:
 ### Adding a New Source File
 
 1. Create `src/new-file.js`
-2. Add a read call in **both** `main.ts` and `build.ts`:
-   - `readModule("src/new-file.js")` if it uses `export`
-   - `read("src/new-file.js")` if it doesn't
-3. Add the template interpolation `${newFileJS}` in the `<script>` block
-4. Position it after its dependencies, before its dependents
-5. If using `export`: add to both files with `readModule()`
-
-### Template Sync
-
-Both `main.ts` (Deno) and `build.ts` (Node) contain identical HTML templates.
-Any change to one must be mirrored in the other. This includes: HTML structure,
-nav drawer buttons, mode screen divs, `<script>` file reads, version number.
+2. Add one entry to `SOURCE_MANIFEST` in `src/build-template.ts`:
+   - `{ path: "src/new-file.js", module: true }` if it uses `export`
+   - `{ path: "src/new-file.js", module: false }` if it doesn't
+3. Position it after its dependencies, before its dependents
 
 ### Moments Page Generation
 
@@ -555,13 +571,10 @@ Step-by-step checklist:
 4. **Groups** (if applicable): use `computeRecommendations()` from
    `recommendations.js` for progressive unlocking
 5. **Stats**: add `createStatsControls()` with a render callback
-6. **HTML**: add mode screen (`<div class="mode-screen" id="mode-{id}">`)
-   in **both** `main.ts` and `build.ts`
-7. **Nav button**: add `<button data-mode="{id}">` in nav drawer in **both**
-   template files
-8. **JS reads**: add `read()` or `readModule()` in **both** `main.ts` and
-   `build.ts`; position after dependencies in the `<script>` block
-9. **Register** mode in `app.js`
+6. **Manifest**: add entry to `SOURCE_MANIFEST` in `src/build-template.ts`
+7. **HTML**: add mode screen call in `modeScreens()` in
+   `src/build-template.ts`, and nav button in `HOME_SCREEN_HTML`
+8. **Register** mode in `app.js`
 10. **Tests**: create `src/quiz-{mode}_test.ts` if pure logic was extracted
 11. **Accidentals**: determine which naming convention applies (see
     [accidental-conventions.md](accidental-conventions.md)) and update

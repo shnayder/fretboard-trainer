@@ -12,21 +12,22 @@ npx tsx build.ts                                    # Build (Node)
 npx tsx --test src/*_test.ts                        # Run tests
 ```
 
-**Always bump the version** (`<div class="version">` in both `main.ts` and
-`build.ts`) with every change — even tiny fixes. Bump by 1 for normal changes
-(v3.13 → v3.14 → v3.15). Bump the major version for large overhauls
-(v3.x → v4.0).
+**Always bump the version** (`VERSION` in `src/build-template.ts`) with every
+change — even tiny fixes. Bump by 1 for normal changes (v3.13 → v3.14 →
+v3.15). Bump the major version for large overhauls (v3.x → v4.0).
 
-**Both `main.ts` and `build.ts` use the same HTML template via shared helpers
-in `src/html-helpers.ts`.** Mode-specific content is passed as arguments to
-`modeScreen()`. Only the nav/header chrome and mode-specific quiz-area content
-live directly in the build scripts.
+**The HTML template lives in `src/build-template.ts`** — the single source of
+truth for the page structure, source file manifest, and version number.
+`main.ts` and `build.ts` only differ in how they read files and what they do
+with the output (serve vs. write). Mode-specific content is passed as arguments
+to `modeScreen()` in `src/html-helpers.ts`.
 
 ## Structure
 
 ```
-main.ts / build.ts       # Dual build scripts (Deno + Node), must stay in sync
+main.ts / build.ts       # Dual build scripts (Deno + Node)
 src/
+  build-template.ts      # Shared template, manifest, version (TS)
   html-helpers.ts        # Build-time HTML: mode scaffold, button blocks (TS)
   fretboard.ts           # Build-time SVG: fret/string/note generation (TS)
   adaptive.js            # Adaptive question selector (ES module)
@@ -81,8 +82,9 @@ at build time — no framework, no bundler. Key patterns:
 - **CSS Custom Properties** — color palette, heatmap scale, and semantic tokens
   defined as `--color-*` and `--heatmap-*` variables in `:root`. JS reads
   heatmap colors via `getComputedStyle` with hardcoded fallbacks for tests.
-- **Build System** — `readModule()` strips `export` for browser; `read()` for
-  plain scripts. Concatenation order = dependency order.
+- **Build System** — `SOURCE_MANIFEST` in `build-template.ts` defines the
+  ordered file list; `readModule()` strips `export` for browser. Both build
+  scripts share the template via `assembleHTML()`.
 
 See [guides/architecture.md](guides/architecture.md) for module dependency
 graph, algorithm details, and step-by-step "adding a new quiz mode" checklist.

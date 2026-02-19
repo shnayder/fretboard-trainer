@@ -182,7 +182,7 @@ export function renderStatsGrid(
   getItemId: (noteName: string, colIndex: number) => string | string[],
   statsMode: string,
   containerEl: HTMLElement,
-  notes?: Note[],
+  notes?: { name: string; displayName: string }[],
   baseline?: number,
 ): void {
   const noteList = notes || NOTES;

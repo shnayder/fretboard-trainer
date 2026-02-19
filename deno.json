@@ -16,8 +16,12 @@
     "exclude": ["docs/", "node_modules/"]
   },
   "tasks": {
+    "build": "deno run --allow-read --allow-write --allow-run main.ts --build",
+    "dev": "deno run --allow-net --allow-read --allow-run main.ts",
+    "test": "deno test --no-check --allow-read",
     "lint": "deno lint",
     "fmt": "deno fmt --check",
-    "fmt:fix": "deno fmt"
+    "fmt:fix": "deno fmt",
+    "check": "deno check src/**/*.ts"
   }
 }

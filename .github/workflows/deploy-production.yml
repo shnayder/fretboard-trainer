@@ -20,7 +20,12 @@ jobs:
       - name: Checkout main
         uses: actions/checkout@v4
 
-      - name: Setup Node
+      - name: Setup Deno
+        uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+
+      - name: Setup Node (for esbuild)
         uses: actions/setup-node@v4
         with:
           node-version: '20'
@@ -29,7 +34,7 @@ jobs:
         run: npm install
 
       - name: Build
-        run: npx tsx build.ts
+        run: deno task build
 
       - name: Commit and push if changed
         run: |

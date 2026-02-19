@@ -6,10 +6,11 @@ and more. Multiple quiz modes accessed via hamburger menu.
 ## Quick Start
 
 ```bash
-deno run --allow-net --allow-read --allow-run main.ts          # Dev server
-deno run --allow-write --allow-read --allow-run main.ts --build # Build (Deno)
-npx tsx build.ts                                                # Build (Node)
-npx tsx --test src/*_test.ts                                    # Run tests
+deno task dev                                    # Dev server
+deno task build                                  # Build to docs/
+deno task test                                   # Run tests
+deno task lint                                   # Lint check
+deno task fmt                                    # Format check
 ```
 
 **Always bump the version** (`VERSION` in `src/build-template.ts`) with every
@@ -17,15 +18,14 @@ change — even tiny fixes. Bump by 1 for normal changes (v3.13 → v3.14 → v3
 Bump the major version for large overhauls (v3.x → v4.0).
 
 **The HTML template lives in `src/build-template.ts`** — the single source of
-truth for the page structure and version number. `main.ts` and `build.ts` only
-differ in how they invoke esbuild and what they do with the output (serve vs.
-write). Mode-specific content is passed as arguments to `modeScreen()` in
-`src/html-helpers.ts`.
+truth for the page structure and version number. `main.ts` handles both
+building (with `--build`) and dev serving. Mode-specific content is passed as
+arguments to `modeScreen()` in `src/html-helpers.ts`.
 
 ## Structure
 
 ```
-main.ts / build.ts       # Dual build scripts (Deno + Node)
+main.ts                  # Build + dev server + moments generation (Deno)
 src/
   build-template.ts      # Shared template, version (TS)
   html-helpers.ts        # Build-time HTML: mode scaffold, button blocks (TS)
@@ -83,7 +83,7 @@ a single IIFE `<script>` at build time — no framework. Key patterns:
   defined as `--color-*` and `--heatmap-*` variables in `:root`. JS reads
   heatmap colors via `getComputedStyle` with hardcoded fallbacks for tests.
 - **Build System** — esbuild bundles `src/app.ts` (entry point) into a single
-  IIFE. Both build scripts share the HTML template via `assembleHTML()`.
+  IIFE. The HTML template is shared via `assembleHTML()` in `build-template.ts`.
 
 See [guides/architecture.md](guides/architecture.md) for module dependency
 graph, algorithm details, and step-by-step "adding a new quiz mode" checklist.
@@ -164,9 +164,9 @@ about focus, not access control. Regular rebase from main keeps them in sync.
 | Engineering | workstream/engineering | JS behavior, state, algorithms, build system       |
 | Process     | workstream/process     | CI, Claude tooling, review commands, process docs  |
 
-**Overlap zones** — `main.ts`/`build.ts` and quiz render functions are touched
-by both design and engineering. Rebase often; keep HTML/CSS and JS behavior
-cleanly separated.
+**Overlap zones** — `main.ts` and quiz render functions are touched by both
+design and engineering. Rebase often; keep HTML/CSS and JS behavior cleanly
+separated.
 
 **Version bumps**: only engineering bumps the version number.
 

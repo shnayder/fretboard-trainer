@@ -147,7 +147,7 @@ export function NoteButtons({
   );
 
   return (
-    <div class='answer-buttons answer-buttons-notes'>
+    <div class='note-buttons'>
       <div class='note-row-naturals'>
         {naturals.map((n) => (
           <button

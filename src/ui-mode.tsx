@@ -343,7 +343,7 @@ export function ModeView({
       {state.phase === 'active' && (
         <div class='quiz-session'>
           <CountdownBar pct={countdown.pct} warning={countdown.warning} />
-          <div class='quiz-info'>
+          <div class='quiz-session-info'>
             <span class='quiz-info-context'>{practicingLabel}</span>
             <span class='quiz-info-time'>{countdown.time}</span>
             <span class='quiz-info-count'>

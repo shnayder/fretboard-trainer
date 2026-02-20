@@ -296,7 +296,8 @@ export function ModeView({
       return def.prompt.getText(question);
     }
     // Custom prompts: extract text from question
-    const q = question as { questionText?: string };
+    const q = question as { questionText?: string; promptText?: string };
+    if (q.promptText) return q.promptText;
     if (q.questionText) return q.questionText;
     // Fretboard: "What note is this?"
     const fq = question as { currentString?: number };

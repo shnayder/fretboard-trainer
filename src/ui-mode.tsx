@@ -1,7 +1,20 @@
 // ModeView: renders a single quiz mode with tabs, scope, quiz session.
 
-import { useCallback, useEffect, useMemo, useState } from 'preact/hooks';
-import type { ModeDefinition, NoteFilter, ScopeState } from './types.ts';
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'preact/hooks';
+import type {
+  AdaptiveSelector,
+  CheckAnswerResult,
+  ModeDefinition,
+  NoteFilter,
+  RecommendationResult,
+  ScopeState,
+} from './types.ts';
 import { useQuizEngine } from './use-quiz-engine.ts';
 import {
   CountdownBar,
@@ -11,6 +24,17 @@ import {
   ProgressBar,
   RoundComplete,
 } from './ui-shared.tsx';
+import { computeRecommendations } from './recommendations.ts';
+import { buildRecommendationText } from './mode-ui-state.ts';
+import { displayNote } from './music-data.ts';
+import { DEFAULT_CONFIG } from './adaptive.ts';
+import {
+  buildStatsLegend,
+  getAutomaticityColor,
+  getSpeedHeatmapColor,
+  renderStatsGrid,
+  renderStatsTable,
+} from './stats-display.ts';
 
 // ---------------------------------------------------------------------------
 // Scope state helpers
@@ -80,6 +104,72 @@ function saveScope(def: ModeDefinition, scope: ScopeState): void {
   if (spec.kind === 'note-filter' && scope.kind === 'note-filter') {
     localStorage.setItem(spec.storageKey, scope.noteFilter);
   }
+}
+
+// ---------------------------------------------------------------------------
+// Recommendation helpers
+// ---------------------------------------------------------------------------
+
+function getRecommendationResult(
+  def: ModeDefinition,
+  selector: AdaptiveSelector,
+): RecommendationResult | null {
+  const spec = def.scopeSpec;
+  if (spec.kind === 'groups') {
+    const allIndices = spec.groups.map((g) => g.index);
+    return computeRecommendations(
+      selector,
+      allIndices,
+      (index: number) => spec.groups[index].itemIds,
+      DEFAULT_CONFIG,
+      spec.sortUnstarted ? { sortUnstarted: spec.sortUnstarted } : undefined,
+    );
+  }
+  if (spec.kind === 'fretboard') {
+    const inst = spec.instrument;
+    const allStrings = Array.from(
+      { length: inst.stringCount },
+      (_, i) => i,
+    );
+    return computeRecommendations(
+      selector,
+      allStrings,
+      (s: number) => {
+        const prefix = s + '-';
+        return def.allItemIds.filter((id) => id.startsWith(prefix));
+      },
+      DEFAULT_CONFIG,
+      { sortUnstarted: (a, b) => b.string - a.string },
+    );
+  }
+  return null;
+}
+
+function getRecommendationText(
+  def: ModeDefinition,
+  result: RecommendationResult | null,
+  selector: AdaptiveSelector,
+): string {
+  if (!result || result.recommended.size === 0) return '';
+  const spec = def.scopeSpec;
+  const extras = def.getRecommendationContext?.(result, selector)
+    ?.extraParts ?? [];
+  if (spec.kind === 'groups') {
+    return buildRecommendationText(
+      result,
+      (index) => spec.groups[index].label,
+      extras,
+    );
+  }
+  if (spec.kind === 'fretboard') {
+    const inst = spec.instrument;
+    return buildRecommendationText(
+      result,
+      (s) => displayNote(inst.stringNames[s]) + ' string',
+      extras,
+    );
+  }
+  return '';
 }
 
 // ---------------------------------------------------------------------------
@@ -255,6 +345,37 @@ export function ModeView({
     }
     : null;
 
+  // Recommendation
+  const recommendation = useMemo(
+    () => getRecommendationResult(def, engine.selector),
+    [def, engine.selector, state.phase],
+  );
+  const recommendationText = useMemo(
+    () => getRecommendationText(def, recommendation, engine.selector),
+    [def, recommendation, engine.selector],
+  );
+
+  const applyRecommendation = useCallback(() => {
+    if (!recommendation || recommendation.recommended.size === 0) return;
+    if (!recommendation.enabled) return;
+
+    if (scope.kind === 'groups') {
+      setScope({ kind: 'groups', enabledGroups: recommendation.enabled });
+    } else if (scope.kind === 'fretboard') {
+      let noteFilter = scope.noteFilter;
+      const ctx = def.getRecommendationContext?.(
+        recommendation,
+        engine.selector,
+      );
+      if (ctx?.noteFilter) noteFilter = ctx.noteFilter;
+      setScope({
+        kind: 'fretboard',
+        enabledStrings: recommendation.enabled,
+        noteFilter,
+      });
+    }
+  }, [recommendation, scope, def, engine.selector]);
+
   // Home navigation via Escape when idle
   useEffect(() => {
     function handleEscape(e: KeyboardEvent) {
@@ -296,43 +417,63 @@ export function ModeView({
 
           {activeTab === 'practice' && (
             <div class='tab-content tab-practice active'>
-              <div class='mode-name'>{def.name}</div>
-
-              {/* Scope controls */}
-              <ScopeControls def={def} scope={scope} setScope={setScope} />
-
-              {/* Practice summary */}
-              <PracticeSummary
-                def={def}
-                scope={scope}
-                selector={engine.selector}
-              />
-
-              {/* Session summary */}
-              <div class='session-summary-text'>{sessionSummary}</div>
-
-              {/* Mastery message */}
-              {state.showMastery && (
-                <div class='mastery-message mastery-visible'>
-                  {state.masteryText}
+              <div class='practice-card'>
+                <div class='practice-zone practice-zone-status'>
+                  <PracticeSummary
+                    def={def}
+                    scope={scope}
+                    selector={engine.selector}
+                  />
+                  {def.scopeSpec.kind === 'none' && (
+                    <RecommendationBlock
+                      text={recommendationText}
+                      onApply={applyRecommendation}
+                    />
+                  )}
                 </div>
-              )}
 
-              {/* Start button */}
-              <button type='button' class='start-btn' onClick={engine.start}>
-                Start Quiz
-              </button>
+                {def.scopeSpec.kind !== 'none' && (
+                  <div class='practice-zone practice-zone-scope'>
+                    <RecommendationBlock
+                      text={recommendationText}
+                      onApply={applyRecommendation}
+                    />
+                    <ScopeControls
+                      def={def}
+                      scope={scope}
+                      setScope={setScope}
+                    />
+                    {state.showMastery && (
+                      <div class='mastery-message mastery-visible'>
+                        {state.masteryText}
+                      </div>
+                    )}
+                  </div>
+                )}
 
-              {/* Baseline info */}
+                <div class='practice-zone practice-zone-action'>
+                  <div class='session-summary-text'>{sessionSummary}</div>
+                  <button
+                    type='button'
+                    class='start-btn'
+                    onClick={engine.start}
+                  >
+                    Start Quiz
+                  </button>
+                </div>
+              </div>
+
               <BaselineInfo baseline={engine.baseline} />
             </div>
           )}
 
           {activeTab === 'progress' && (
-            <div class='tab-content tab-progress' style={{ display: 'block' }}>
+            <div class='tab-content tab-progress active'>
               <StatsView
                 def={def}
                 selector={engine.selector}
+                baseline={engine.baseline}
+                fretboardConfig={fretboardConfig}
               />
             </div>
           )}
@@ -569,6 +710,28 @@ function ScopeControls({
 }
 
 // ---------------------------------------------------------------------------
+// Recommendation block
+// ---------------------------------------------------------------------------
+
+function RecommendationBlock({
+  text,
+  onApply,
+}: {
+  text: string;
+  onApply: () => void;
+}) {
+  if (!text) return null;
+  return (
+    <div class='practice-recommendation'>
+      <span class='practice-rec-text'>{text}</span>
+      <button type='button' class='practice-rec-btn' onClick={onApply}>
+        Use suggestion
+      </button>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Practice summary
 // ---------------------------------------------------------------------------
 
@@ -615,11 +778,9 @@ function PracticeSummary({
       ' to go';
 
   return (
-    <div class='practice-card'>
-      <div class='practice-status'>
-        <span class='practice-status-label'>{statusLabel}</span>
-        <span class='practice-status-detail'>{statusDetail}</span>
-      </div>
+    <div class='practice-status'>
+      <span class='practice-status-label'>{statusLabel}</span>
+      <span class='practice-status-detail'>{statusDetail}</span>
     </div>
   );
 }
@@ -646,56 +807,163 @@ function BaselineInfo({ baseline }: { baseline: number | null }) {
 }
 
 // ---------------------------------------------------------------------------
-// Stats view (placeholder — full implementation deferred)
+// Stats view
 // ---------------------------------------------------------------------------
 
 function StatsView({
   def,
   selector,
+  baseline,
+  fretboardConfig,
 }: {
   def: ModeDefinition;
-  selector: {
-    getAutomaticity: (id: string) => number | null;
-    getStats: (id: string) => { ewma: number } | null;
-    getRecall: (id: string) => number | null;
-  };
+  selector: AdaptiveSelector;
+  baseline: number | null;
+  fretboardConfig: {
+    stringCount: number;
+    fretCount: number;
+    markers: number[];
+  } | null;
 }) {
   const [statsMode, setStatsMode] = useState<'retention' | 'speed'>(
     'retention',
   );
+  const statsContainerRef = useRef<HTMLDivElement>(null);
+
+  // Compute fretboard heatmap colors
+  const statsHighlights = useMemo(() => {
+    if (!fretboardConfig) return null;
+    const map = new Map<string, string>();
+    for (let s = 0; s < fretboardConfig.stringCount; s++) {
+      for (let f = 0; f < fretboardConfig.fretCount; f++) {
+        const itemId = s + '-' + f;
+        if (statsMode === 'retention') {
+          map.set(
+            `${s}-${f}`,
+            getAutomaticityColor(selector.getAutomaticity(itemId)),
+          );
+        } else {
+          const stats = selector.getStats(itemId);
+          map.set(
+            `${s}-${f}`,
+            getSpeedHeatmapColor(
+              stats ? stats.ewma : null,
+              baseline ?? undefined,
+            ),
+          );
+        }
+      }
+    }
+    return map;
+  }, [fretboardConfig, statsMode, selector, baseline]);
+
+  // Render table/grid stats for non-fretboard modes
+  useEffect(() => {
+    if (fretboardConfig || !statsContainerRef.current) return;
+    const el = statsContainerRef.current;
+    el.innerHTML = '';
+
+    const statsSpec = def.stats;
+    if (statsSpec.kind === 'table') {
+      const tableDiv = document.createElement('div');
+      el.appendChild(tableDiv);
+      renderStatsTable(
+        selector,
+        statsSpec.getRows(),
+        statsSpec.fwdHeader,
+        statsSpec.revHeader,
+        statsMode,
+        tableDiv,
+        baseline ?? undefined,
+      );
+    } else if (statsSpec.kind === 'grid') {
+      const gridDiv = document.createElement('div');
+      gridDiv.className = 'stats-grid-wrapper';
+      el.appendChild(gridDiv);
+      renderStatsGrid(
+        selector,
+        statsSpec.colLabels,
+        statsSpec.getItemId,
+        statsMode,
+        gridDiv,
+        statsSpec.notes,
+        baseline ?? undefined,
+      );
+    }
+
+    // Legend
+    const legendDiv = document.createElement('div');
+    legendDiv.innerHTML = buildStatsLegend(
+      statsMode,
+      baseline ?? undefined,
+    );
+    el.appendChild(legendDiv);
+  }, [def, selector, statsMode, baseline, fretboardConfig]);
+
+  // Fluent count
+  const fluentText = useMemo(() => {
+    const items = def.allItemIds;
+    const threshold = selector.getConfig().automaticityThreshold;
+    let fluent = 0;
+    for (const id of items) {
+      const a = selector.getAutomaticity(id);
+      if (a !== null && a > threshold) fluent++;
+    }
+    return fluent + ' / ' + items.length + ' items fluent';
+  }, [def, selector]);
 
   return (
-    <div class='stats-container'>
+    <>
+      {/* Fretboard heatmap */}
+      {fretboardConfig && statsHighlights && (
+        <FretboardSVG
+          stringCount={fretboardConfig.stringCount}
+          fretCount={fretboardConfig.fretCount}
+          markers={fretboardConfig.markers}
+          highlights={statsHighlights}
+        />
+      )}
+
+      <BaselineInfo baseline={baseline} />
+
       <div class='stats-controls'>
-        <button
-          type='button'
-          class={`stats-toggle-btn${
-            statsMode === 'retention' ? ' active' : ''
-          }`}
-          onClick={() => setStatsMode('retention')}
-        >
-          Recall
-        </button>
-        <button
-          type='button'
-          class={`stats-toggle-btn${statsMode === 'speed' ? ' active' : ''}`}
-          onClick={() => setStatsMode('speed')}
-        >
-          Speed
-        </button>
+        <div class='stats-toggle'>
+          <button
+            type='button'
+            class={`stats-toggle-btn${
+              statsMode === 'retention' ? ' active' : ''
+            }`}
+            data-mode='retention'
+            onClick={() => setStatsMode('retention')}
+          >
+            Recall
+          </button>
+          <button
+            type='button'
+            class={`stats-toggle-btn${statsMode === 'speed' ? ' active' : ''}`}
+            data-mode='speed'
+            onClick={() => setStatsMode('speed')}
+          >
+            Speed
+          </button>
+        </div>
+        <span class='stats'>{fluentText}</span>
       </div>
-      <span class='stats'>
-        {(() => {
-          const items = def.allItemIds;
-          const threshold = 0.8;
-          let fluent = 0;
-          for (const id of items) {
-            const a = selector.getAutomaticity(id);
-            if (a !== null && a > threshold) fluent++;
-          }
-          return fluent + ' / ' + items.length + ' items fluent';
-        })()}
-      </span>
-    </div>
+
+      {/* Fretboard legend */}
+      {fretboardConfig && (
+        <div
+          class='stats-container'
+          dangerouslySetInnerHTML={{
+            __html: buildStatsLegend(statsMode, baseline ?? undefined),
+          }}
+        />
+      )}
+
+      {/* Table/grid stats container */}
+      {!fretboardConfig && (
+        <div class='stats-container' ref={statsContainerRef} />
+      )}
+    </>
   );
 }

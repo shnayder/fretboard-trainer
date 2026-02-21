@@ -24,14 +24,12 @@ function resolve(rel: string): string {
 }
 
 async function bundleJS(): Promise<string> {
-  const entryPoint = resolve('./src/app.tsx');
+  const entryPoint = resolve('./src/app.ts');
   const cmd = new Deno.Command('npx', {
     args: [
       'esbuild',
       '--bundle',
       '--format=iife',
-      '--jsx=automatic',
-      '--jsx-import-source=preact',
       entryPoint,
     ],
     stdout: 'piped',

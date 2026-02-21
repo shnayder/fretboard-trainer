@@ -18,6 +18,7 @@ import type {
   QuizMode,
   RecommendationResult,
   ScopeState,
+  SequentialState,
 } from './types.ts';
 import { DEFAULT_CONFIG } from './adaptive.ts';
 import { displayNote } from './music-data.ts';
@@ -143,15 +144,19 @@ export function createModeController(
     container,
   };
 
-  // For fretboard modes, add the SVG wrapper references
-  if (def.scopeSpec.kind === 'fretboard') {
-    quizAreaEls.fretboardWrapper = container.querySelector(
-      '.quiz-area .fretboard-wrapper',
-    ) as HTMLElement | undefined;
-    quizAreaEls.progressFretboardWrapper = container.querySelector(
-      '.tab-progress .fretboard-wrapper',
-    ) as HTMLElement | undefined;
-  }
+  // Add fretboard SVG wrapper references (fretboard scope or custom fretboard)
+  const quizFb = container.querySelector(
+    '.quiz-area .fretboard-wrapper',
+  ) as HTMLElement | null;
+  if (quizFb) quizAreaEls.fretboardWrapper = quizFb;
+  const progressFb = container.querySelector(
+    '.tab-progress .fretboard-wrapper',
+  ) as HTMLElement | null;
+  if (progressFb) quizAreaEls.progressFretboardWrapper = progressFb;
+
+  // --- Sequential state (for chord spelling etc.) ---
+  let seqState: SequentialState | null = null;
+  let currentItemId: string | null = null;
 
   // --- Build QuizMode adapter for the engine ---
   const quizMode: QuizMode = {
@@ -163,6 +168,7 @@ export function createModeController(
     },
 
     presentQuestion(itemId: string): void {
+      currentItemId = itemId;
       const question = def.getQuestion(itemId);
       if (def.prompt.kind === 'text') {
         quizAreaEls.promptEl.textContent = def.prompt.getText(question);
@@ -185,6 +191,11 @@ export function createModeController(
           }
         }
       }
+      // Initialize sequential state
+      if (def.response.kind === 'sequential') {
+        seqState = def.response.initSequentialState(itemId);
+        def.response.renderProgress(seqState, quizAreaEls);
+      }
     },
 
     checkAnswer(itemId: string, input: string): CheckAnswerResult {
@@ -196,10 +207,13 @@ export function createModeController(
       if (statsControls.mode) statsControls.hide();
       // Clear progress fretboard heatmap
       clearProgressFretboard();
+      def.onStart?.(quizAreaEls);
     },
 
     onStop(): void {
       keyHandler.reset();
+      currentItemId = null;
+      seqState = null;
       if (def.prompt.kind === 'custom') {
         def.prompt.clear(quizAreaEls);
       }
@@ -208,6 +222,7 @@ export function createModeController(
       if (uiState.activeTab === 'progress') {
         statsControls.show('retention');
       }
+      def.onStop?.(quizAreaEls);
       refreshUI();
     },
 
@@ -269,9 +284,13 @@ export function createModeController(
   const engine: QuizEngine = createQuizEngine(quizMode, container);
 
   // --- Key handler ---
+  // Sequential modes route keyboard input through the sequential handler
+  const keyInputFn = def.response.kind === 'sequential'
+    ? (input: string) => handleSequentialInput(input)
+    : (input: string) => engine.submitAnswer(input);
   const keyHandler: NoteKeyHandler = createKeyHandlerFromResponse(
     def,
-    (input: string) => engine.submitAnswer(input),
+    keyInputFn,
     () => uiState.scope,
   );
 
@@ -519,6 +538,25 @@ export function createModeController(
       );
       const accRow = container.querySelector('.note-row-accidentals');
       if (accRow) accRow.classList.toggle('hidden', hideAcc);
+    } else if (scope.kind === 'note-filter') {
+      const naturalBtn = container.querySelector<HTMLElement>(
+        '.notes-toggle[data-notes="natural"]',
+      );
+      const accBtn = container.querySelector<HTMLElement>(
+        '.notes-toggle[data-notes="sharps-flats"]',
+      );
+      if (naturalBtn) {
+        naturalBtn.classList.toggle(
+          'active',
+          scope.noteFilter === 'natural' || scope.noteFilter === 'all',
+        );
+      }
+      if (accBtn) {
+        accBtn.classList.toggle(
+          'active',
+          scope.noteFilter === 'sharps-flats' || scope.noteFilter === 'all',
+        );
+      }
     }
   }
 
@@ -682,16 +720,18 @@ export function createModeController(
         const toggleLabel = container.querySelector('.toggle-group-label');
         if (toggleLabel) toggleLabel.textContent = spec.label;
       }
-    } else if (spec.kind === 'fretboard') {
-      // String toggles
-      container.querySelectorAll<HTMLElement>('.string-toggle').forEach(
-        (btn) => {
-          btn.addEventListener('click', () => {
-            toggleFretboardString(parseInt(btn.dataset.string!));
-          });
-        },
-      );
-      // Note filter toggles
+    } else if (spec.kind === 'fretboard' || spec.kind === 'note-filter') {
+      // String toggles (fretboard only)
+      if (spec.kind === 'fretboard') {
+        container.querySelectorAll<HTMLElement>('.string-toggle').forEach(
+          (btn) => {
+            btn.addEventListener('click', () => {
+              toggleFretboardString(parseInt(btn.dataset.string!));
+            });
+          },
+        );
+      }
+      // Note filter toggles (shared by fretboard and note-filter scopes)
       container.querySelectorAll<HTMLElement>('.notes-toggle').forEach(
         (btn) => {
           btn.addEventListener('click', () => {
@@ -723,6 +763,32 @@ export function createModeController(
     }
   }
 
+  // --- Sequential input handler ---
+  function handleSequentialInput(input: string): void {
+    if (!engine.isActive || engine.isAnswered || !seqState || !currentItemId) {
+      return;
+    }
+    const resp = def.response;
+    if (resp.kind !== 'sequential') return;
+    const result = resp.handleInput(currentItemId, input, seqState);
+    if (result.status === 'continue') {
+      seqState = result.state;
+      resp.renderProgress(seqState, quizAreaEls);
+    } else {
+      engine.submitAnswer(result.correct ? '__correct__' : '__wrong__');
+    }
+  }
+
+  // --- Spatial click handler ---
+  function handleSpatialClick(e: MouseEvent): void {
+    if (!engine.isActive || engine.isAnswered || !currentItemId) return;
+    const resp = def.response;
+    if (resp.kind !== 'spatial') return;
+    const target = e.target as HTMLElement;
+    const answer = resp.handleTap(target, currentItemId);
+    if (answer) engine.submitAnswer(answer);
+  }
+
   function wireAnswerButtons(): void {
     const resp = def.response;
 
@@ -751,6 +817,20 @@ export function createModeController(
           }
         });
       });
+    } else if (resp.kind === 'sequential') {
+      // Wire answer buttons to feed sequential handler
+      container.querySelectorAll<HTMLElement>(
+        '.note-btn, .answer-btn',
+      ).forEach((btn) => {
+        btn.addEventListener('click', () => {
+          if (!engine.isActive || engine.isAnswered) return;
+          const note = btn.dataset.note;
+          if (note) handleSequentialInput(note);
+        });
+      });
+    } else if (resp.kind === 'spatial') {
+      // Spatial: click events on the container (e.g. fretboard taps)
+      container.addEventListener('click', handleSpatialClick);
     }
   }
 

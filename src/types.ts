@@ -424,10 +424,11 @@ export type ResponseSpec =
   }
   | {
     kind: 'spatial';
+    /** Handle a tap/click. Returns input string for engine.submitAnswer, or null if partial. */
     handleTap(
       target: HTMLElement,
       itemId: string,
-    ): CheckAnswerResult | null;
+    ): string | null;
     createKeyHandler?: KeyHandlerFactory;
   };
 
@@ -544,6 +545,11 @@ export interface ModeDefinition<TQuestion = unknown> {
     rec: RecommendationResult,
     selector: AdaptiveSelector,
   ): { extraParts: string[]; noteFilter?: NoteFilter };
+
+  /** Called when quiz starts, after standard setup. */
+  onStart?(els: QuizAreaEls): void;
+  /** Called when quiz stops, after standard cleanup. */
+  onStop?(els: QuizAreaEls): void;
 }
 
 // --- ModeUIState: the mode-level state object for State+Render ---

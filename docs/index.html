@@ -1633,7 +1633,7 @@ button {
     </div>
     <div class="home-footer">
       <button class="home-settings-btn" type="button">Settings</button>
-      <span class="version">v7.6</span>
+      <span class="version">v7.7</span>
     </div>
   </div>
 
@@ -3365,6 +3365,257 @@ button {
 
   <script>
 (() => {
+  // node_modules/preact/dist/preact.module.js
+  var n;
+  var l;
+  var u;
+  var t;
+  var i;
+  var r;
+  var o;
+  var e;
+  var f;
+  var c;
+  var s;
+  var a;
+  var h;
+  var p = {};
+  var v = [];
+  var y = /acit|ex(?:s|g|n|p|$)|rph|grid|ows|mnc|ntw|ine[ch]|zoo|^ord|itera/i;
+  var d = Array.isArray;
+  function w(n2, l3) {
+    for (var u4 in l3) n2[u4] = l3[u4];
+    return n2;
+  }
+  function g(n2) {
+    n2 && n2.parentNode && n2.parentNode.removeChild(n2);
+  }
+  function _(l3, u4, t3) {
+    var i3, r3, o3, e3 = {};
+    for (o3 in u4) "key" == o3 ? i3 = u4[o3] : "ref" == o3 ? r3 = u4[o3] : e3[o3] = u4[o3];
+    if (arguments.length > 2 && (e3.children = arguments.length > 3 ? n.call(arguments, 2) : t3), "function" == typeof l3 && null != l3.defaultProps) for (o3 in l3.defaultProps) void 0 === e3[o3] && (e3[o3] = l3.defaultProps[o3]);
+    return m(l3, e3, i3, r3, null);
+  }
+  function m(n2, t3, i3, r3, o3) {
+    var e3 = { type: n2, props: t3, key: i3, ref: r3, __k: null, __: null, __b: 0, __e: null, __c: null, constructor: void 0, __v: null == o3 ? ++u : o3, __i: -1, __u: 0 };
+    return null == o3 && null != l.vnode && l.vnode(e3), e3;
+  }
+  function k(n2) {
+    return n2.children;
+  }
+  function x(n2, l3) {
+    this.props = n2, this.context = l3;
+  }
+  function S(n2, l3) {
+    if (null == l3) return n2.__ ? S(n2.__, n2.__i + 1) : null;
+    for (var u4; l3 < n2.__k.length; l3++) if (null != (u4 = n2.__k[l3]) && null != u4.__e) return u4.__e;
+    return "function" == typeof n2.type ? S(n2) : null;
+  }
+  function C(n2) {
+    if (n2.__P && n2.__d) {
+      var u4 = n2.__v, t3 = u4.__e, i3 = [], r3 = [], o3 = w({}, u4);
+      o3.__v = u4.__v + 1, l.vnode && l.vnode(o3), z(n2.__P, o3, u4, n2.__n, n2.__P.namespaceURI, 32 & u4.__u ? [t3] : null, i3, null == t3 ? S(u4) : t3, !!(32 & u4.__u), r3), o3.__v = u4.__v, o3.__.__k[o3.__i] = o3, V(i3, o3, r3), u4.__e = u4.__ = null, o3.__e != t3 && M(o3);
+    }
+  }
+  function M(n2) {
+    if (null != (n2 = n2.__) && null != n2.__c) return n2.__e = n2.__c.base = null, n2.__k.some(function(l3) {
+      if (null != l3 && null != l3.__e) return n2.__e = n2.__c.base = l3.__e;
+    }), M(n2);
+  }
+  function $(n2) {
+    (!n2.__d && (n2.__d = true) && i.push(n2) && !I.__r++ || r != l.debounceRendering) && ((r = l.debounceRendering) || o)(I);
+  }
+  function I() {
+    for (var n2, l3 = 1; i.length; ) i.length > l3 && i.sort(e), n2 = i.shift(), l3 = i.length, C(n2);
+    I.__r = 0;
+  }
+  function P(n2, l3, u4, t3, i3, r3, o3, e3, f4, c3, s3) {
+    var a3, h3, y3, d3, w3, g2, _3, m3 = t3 && t3.__k || v, b = l3.length;
+    for (f4 = A(u4, l3, m3, f4, b), a3 = 0; a3 < b; a3++) null != (y3 = u4.__k[a3]) && (h3 = -1 != y3.__i && m3[y3.__i] || p, y3.__i = a3, g2 = z(n2, y3, h3, i3, r3, o3, e3, f4, c3, s3), d3 = y3.__e, y3.ref && h3.ref != y3.ref && (h3.ref && D(h3.ref, null, y3), s3.push(y3.ref, y3.__c || d3, y3)), null == w3 && null != d3 && (w3 = d3), (_3 = !!(4 & y3.__u)) || h3.__k === y3.__k ? f4 = H(y3, f4, n2, _3) : "function" == typeof y3.type && void 0 !== g2 ? f4 = g2 : d3 && (f4 = d3.nextSibling), y3.__u &= -7);
+    return u4.__e = w3, f4;
+  }
+  function A(n2, l3, u4, t3, i3) {
+    var r3, o3, e3, f4, c3, s3 = u4.length, a3 = s3, h3 = 0;
+    for (n2.__k = new Array(i3), r3 = 0; r3 < i3; r3++) null != (o3 = l3[r3]) && "boolean" != typeof o3 && "function" != typeof o3 ? ("string" == typeof o3 || "number" == typeof o3 || "bigint" == typeof o3 || o3.constructor == String ? o3 = n2.__k[r3] = m(null, o3, null, null, null) : d(o3) ? o3 = n2.__k[r3] = m(k, { children: o3 }, null, null, null) : void 0 === o3.constructor && o3.__b > 0 ? o3 = n2.__k[r3] = m(o3.type, o3.props, o3.key, o3.ref ? o3.ref : null, o3.__v) : n2.__k[r3] = o3, f4 = r3 + h3, o3.__ = n2, o3.__b = n2.__b + 1, e3 = null, -1 != (c3 = o3.__i = T(o3, u4, f4, a3)) && (a3--, (e3 = u4[c3]) && (e3.__u |= 2)), null == e3 || null == e3.__v ? (-1 == c3 && (i3 > s3 ? h3-- : i3 < s3 && h3++), "function" != typeof o3.type && (o3.__u |= 4)) : c3 != f4 && (c3 == f4 - 1 ? h3-- : c3 == f4 + 1 ? h3++ : (c3 > f4 ? h3-- : h3++, o3.__u |= 4))) : n2.__k[r3] = null;
+    if (a3) for (r3 = 0; r3 < s3; r3++) null != (e3 = u4[r3]) && 0 == (2 & e3.__u) && (e3.__e == t3 && (t3 = S(e3)), E(e3, e3));
+    return t3;
+  }
+  function H(n2, l3, u4, t3) {
+    var i3, r3;
+    if ("function" == typeof n2.type) {
+      for (i3 = n2.__k, r3 = 0; i3 && r3 < i3.length; r3++) i3[r3] && (i3[r3].__ = n2, l3 = H(i3[r3], l3, u4, t3));
+      return l3;
+    }
+    n2.__e != l3 && (t3 && (l3 && n2.type && !l3.parentNode && (l3 = S(n2)), u4.insertBefore(n2.__e, l3 || null)), l3 = n2.__e);
+    do {
+      l3 = l3 && l3.nextSibling;
+    } while (null != l3 && 8 == l3.nodeType);
+    return l3;
+  }
+  function T(n2, l3, u4, t3) {
+    var i3, r3, o3, e3 = n2.key, f4 = n2.type, c3 = l3[u4], s3 = null != c3 && 0 == (2 & c3.__u);
+    if (null === c3 && null == e3 || s3 && e3 == c3.key && f4 == c3.type) return u4;
+    if (t3 > (s3 ? 1 : 0)) {
+      for (i3 = u4 - 1, r3 = u4 + 1; i3 >= 0 || r3 < l3.length; ) if (null != (c3 = l3[o3 = i3 >= 0 ? i3-- : r3++]) && 0 == (2 & c3.__u) && e3 == c3.key && f4 == c3.type) return o3;
+    }
+    return -1;
+  }
+  function j(n2, l3, u4) {
+    "-" == l3[0] ? n2.setProperty(l3, null == u4 ? "" : u4) : n2[l3] = null == u4 ? "" : "number" != typeof u4 || y.test(l3) ? u4 : u4 + "px";
+  }
+  function F(n2, l3, u4, t3, i3) {
+    var r3, o3;
+    n: if ("style" == l3) if ("string" == typeof u4) n2.style.cssText = u4;
+    else {
+      if ("string" == typeof t3 && (n2.style.cssText = t3 = ""), t3) for (l3 in t3) u4 && l3 in u4 || j(n2.style, l3, "");
+      if (u4) for (l3 in u4) t3 && u4[l3] == t3[l3] || j(n2.style, l3, u4[l3]);
+    }
+    else if ("o" == l3[0] && "n" == l3[1]) r3 = l3 != (l3 = l3.replace(f, "$1")), o3 = l3.toLowerCase(), l3 = o3 in n2 || "onFocusOut" == l3 || "onFocusIn" == l3 ? o3.slice(2) : l3.slice(2), n2.l || (n2.l = {}), n2.l[l3 + r3] = u4, u4 ? t3 ? u4.u = t3.u : (u4.u = c, n2.addEventListener(l3, r3 ? a : s, r3)) : n2.removeEventListener(l3, r3 ? a : s, r3);
+    else {
+      if ("http://www.w3.org/2000/svg" == i3) l3 = l3.replace(/xlink(H|:h)/, "h").replace(/sName$/, "s");
+      else if ("width" != l3 && "height" != l3 && "href" != l3 && "list" != l3 && "form" != l3 && "tabIndex" != l3 && "download" != l3 && "rowSpan" != l3 && "colSpan" != l3 && "role" != l3 && "popover" != l3 && l3 in n2) try {
+        n2[l3] = null == u4 ? "" : u4;
+        break n;
+      } catch (n3) {
+      }
+      "function" == typeof u4 || (null == u4 || false === u4 && "-" != l3[4] ? n2.removeAttribute(l3) : n2.setAttribute(l3, "popover" == l3 && 1 == u4 ? "" : u4));
+    }
+  }
+  function O(n2) {
+    return function(u4) {
+      if (this.l) {
+        var t3 = this.l[u4.type + n2];
+        if (null == u4.t) u4.t = c++;
+        else if (u4.t < t3.u) return;
+        return t3(l.event ? l.event(u4) : u4);
+      }
+    };
+  }
+  function z(n2, u4, t3, i3, r3, o3, e3, f4, c3, s3) {
+    var a3, h3, p3, y3, _3, m3, b, S2, C3, M2, $2, I2, A3, H2, L, T3 = u4.type;
+    if (void 0 !== u4.constructor) return null;
+    128 & t3.__u && (c3 = !!(32 & t3.__u), o3 = [f4 = u4.__e = t3.__e]), (a3 = l.__b) && a3(u4);
+    n: if ("function" == typeof T3) try {
+      if (S2 = u4.props, C3 = "prototype" in T3 && T3.prototype.render, M2 = (a3 = T3.contextType) && i3[a3.__c], $2 = a3 ? M2 ? M2.props.value : a3.__ : i3, t3.__c ? b = (h3 = u4.__c = t3.__c).__ = h3.__E : (C3 ? u4.__c = h3 = new T3(S2, $2) : (u4.__c = h3 = new x(S2, $2), h3.constructor = T3, h3.render = G), M2 && M2.sub(h3), h3.state || (h3.state = {}), h3.__n = i3, p3 = h3.__d = true, h3.__h = [], h3._sb = []), C3 && null == h3.__s && (h3.__s = h3.state), C3 && null != T3.getDerivedStateFromProps && (h3.__s == h3.state && (h3.__s = w({}, h3.__s)), w(h3.__s, T3.getDerivedStateFromProps(S2, h3.__s))), y3 = h3.props, _3 = h3.state, h3.__v = u4, p3) C3 && null == T3.getDerivedStateFromProps && null != h3.componentWillMount && h3.componentWillMount(), C3 && null != h3.componentDidMount && h3.__h.push(h3.componentDidMount);
+      else {
+        if (C3 && null == T3.getDerivedStateFromProps && S2 !== y3 && null != h3.componentWillReceiveProps && h3.componentWillReceiveProps(S2, $2), u4.__v == t3.__v || !h3.__e && null != h3.shouldComponentUpdate && false === h3.shouldComponentUpdate(S2, h3.__s, $2)) {
+          u4.__v != t3.__v && (h3.props = S2, h3.state = h3.__s, h3.__d = false), u4.__e = t3.__e, u4.__k = t3.__k, u4.__k.some(function(n3) {
+            n3 && (n3.__ = u4);
+          }), v.push.apply(h3.__h, h3._sb), h3._sb = [], h3.__h.length && e3.push(h3);
+          break n;
+        }
+        null != h3.componentWillUpdate && h3.componentWillUpdate(S2, h3.__s, $2), C3 && null != h3.componentDidUpdate && h3.__h.push(function() {
+          h3.componentDidUpdate(y3, _3, m3);
+        });
+      }
+      if (h3.context = $2, h3.props = S2, h3.__P = n2, h3.__e = false, I2 = l.__r, A3 = 0, C3) h3.state = h3.__s, h3.__d = false, I2 && I2(u4), a3 = h3.render(h3.props, h3.state, h3.context), v.push.apply(h3.__h, h3._sb), h3._sb = [];
+      else do {
+        h3.__d = false, I2 && I2(u4), a3 = h3.render(h3.props, h3.state, h3.context), h3.state = h3.__s;
+      } while (h3.__d && ++A3 < 25);
+      h3.state = h3.__s, null != h3.getChildContext && (i3 = w(w({}, i3), h3.getChildContext())), C3 && !p3 && null != h3.getSnapshotBeforeUpdate && (m3 = h3.getSnapshotBeforeUpdate(y3, _3)), H2 = null != a3 && a3.type === k && null == a3.key ? q(a3.props.children) : a3, f4 = P(n2, d(H2) ? H2 : [H2], u4, t3, i3, r3, o3, e3, f4, c3, s3), h3.base = u4.__e, u4.__u &= -161, h3.__h.length && e3.push(h3), b && (h3.__E = h3.__ = null);
+    } catch (n3) {
+      if (u4.__v = null, c3 || null != o3) if (n3.then) {
+        for (u4.__u |= c3 ? 160 : 128; f4 && 8 == f4.nodeType && f4.nextSibling; ) f4 = f4.nextSibling;
+        o3[o3.indexOf(f4)] = null, u4.__e = f4;
+      } else {
+        for (L = o3.length; L--; ) g(o3[L]);
+        N(u4);
+      }
+      else u4.__e = t3.__e, u4.__k = t3.__k, n3.then || N(u4);
+      l.__e(n3, u4, t3);
+    }
+    else null == o3 && u4.__v == t3.__v ? (u4.__k = t3.__k, u4.__e = t3.__e) : f4 = u4.__e = B(t3.__e, u4, t3, i3, r3, o3, e3, c3, s3);
+    return (a3 = l.diffed) && a3(u4), 128 & u4.__u ? void 0 : f4;
+  }
+  function N(n2) {
+    n2 && (n2.__c && (n2.__c.__e = true), n2.__k && n2.__k.some(N));
+  }
+  function V(n2, u4, t3) {
+    for (var i3 = 0; i3 < t3.length; i3++) D(t3[i3], t3[++i3], t3[++i3]);
+    l.__c && l.__c(u4, n2), n2.some(function(u5) {
+      try {
+        n2 = u5.__h, u5.__h = [], n2.some(function(n3) {
+          n3.call(u5);
+        });
+      } catch (n3) {
+        l.__e(n3, u5.__v);
+      }
+    });
+  }
+  function q(n2) {
+    return "object" != typeof n2 || null == n2 || n2.__b > 0 ? n2 : d(n2) ? n2.map(q) : w({}, n2);
+  }
+  function B(u4, t3, i3, r3, o3, e3, f4, c3, s3) {
+    var a3, h3, v3, y3, w3, _3, m3, b = i3.props || p, k3 = t3.props, x2 = t3.type;
+    if ("svg" == x2 ? o3 = "http://www.w3.org/2000/svg" : "math" == x2 ? o3 = "http://www.w3.org/1998/Math/MathML" : o3 || (o3 = "http://www.w3.org/1999/xhtml"), null != e3) {
+      for (a3 = 0; a3 < e3.length; a3++) if ((w3 = e3[a3]) && "setAttribute" in w3 == !!x2 && (x2 ? w3.localName == x2 : 3 == w3.nodeType)) {
+        u4 = w3, e3[a3] = null;
+        break;
+      }
+    }
+    if (null == u4) {
+      if (null == x2) return document.createTextNode(k3);
+      u4 = document.createElementNS(o3, x2, k3.is && k3), c3 && (l.__m && l.__m(t3, e3), c3 = false), e3 = null;
+    }
+    if (null == x2) b === k3 || c3 && u4.data == k3 || (u4.data = k3);
+    else {
+      if (e3 = e3 && n.call(u4.childNodes), !c3 && null != e3) for (b = {}, a3 = 0; a3 < u4.attributes.length; a3++) b[(w3 = u4.attributes[a3]).name] = w3.value;
+      for (a3 in b) w3 = b[a3], "dangerouslySetInnerHTML" == a3 ? v3 = w3 : "children" == a3 || a3 in k3 || "value" == a3 && "defaultValue" in k3 || "checked" == a3 && "defaultChecked" in k3 || F(u4, a3, null, w3, o3);
+      for (a3 in k3) w3 = k3[a3], "children" == a3 ? y3 = w3 : "dangerouslySetInnerHTML" == a3 ? h3 = w3 : "value" == a3 ? _3 = w3 : "checked" == a3 ? m3 = w3 : c3 && "function" != typeof w3 || b[a3] === w3 || F(u4, a3, w3, b[a3], o3);
+      if (h3) c3 || v3 && (h3.__html == v3.__html || h3.__html == u4.innerHTML) || (u4.innerHTML = h3.__html), t3.__k = [];
+      else if (v3 && (u4.innerHTML = ""), P("template" == t3.type ? u4.content : u4, d(y3) ? y3 : [y3], t3, i3, r3, "foreignObject" == x2 ? "http://www.w3.org/1999/xhtml" : o3, e3, f4, e3 ? e3[0] : i3.__k && S(i3, 0), c3, s3), null != e3) for (a3 = e3.length; a3--; ) g(e3[a3]);
+      c3 || (a3 = "value", "progress" == x2 && null == _3 ? u4.removeAttribute("value") : null != _3 && (_3 !== u4[a3] || "progress" == x2 && !_3 || "option" == x2 && _3 != b[a3]) && F(u4, a3, _3, b[a3], o3), a3 = "checked", null != m3 && m3 != u4[a3] && F(u4, a3, m3, b[a3], o3));
+    }
+    return u4;
+  }
+  function D(n2, u4, t3) {
+    try {
+      if ("function" == typeof n2) {
+        var i3 = "function" == typeof n2.__u;
+        i3 && n2.__u(), i3 && null == u4 || (n2.__u = n2(u4));
+      } else n2.current = u4;
+    } catch (n3) {
+      l.__e(n3, t3);
+    }
+  }
+  function E(n2, u4, t3) {
+    var i3, r3;
+    if (l.unmount && l.unmount(n2), (i3 = n2.ref) && (i3.current && i3.current != n2.__e || D(i3, null, u4)), null != (i3 = n2.__c)) {
+      if (i3.componentWillUnmount) try {
+        i3.componentWillUnmount();
+      } catch (n3) {
+        l.__e(n3, u4);
+      }
+      i3.base = i3.__P = null;
+    }
+    if (i3 = n2.__k) for (r3 = 0; r3 < i3.length; r3++) i3[r3] && E(i3[r3], u4, t3 || "function" != typeof n2.type);
+    t3 || g(n2.__e), n2.__c = n2.__ = n2.__e = void 0;
+  }
+  function G(n2, l3, u4) {
+    return this.constructor(n2, u4);
+  }
+  function J(u4, t3, i3) {
+    var r3, o3, e3, f4;
+    t3 == document && (t3 = document.documentElement), l.__ && l.__(u4, t3), o3 = (r3 = "function" == typeof i3) ? null : i3 && i3.__k || t3.__k, e3 = [], f4 = [], z(t3, u4 = (!r3 && i3 || t3).__k = _(k, null, [u4]), o3 || p, p, t3.namespaceURI, !r3 && i3 ? [i3] : o3 ? null : t3.firstChild ? n.call(t3.childNodes) : null, e3, !r3 && i3 ? i3 : o3 ? o3.__e : t3.firstChild, r3, f4), V(e3, u4, f4);
+  }
+  n = v.slice, l = { __e: function(n2, l3, u4, t3) {
+    for (var i3, r3, o3; l3 = l3.__; ) if ((i3 = l3.__c) && !i3.__) try {
+      if ((r3 = i3.constructor) && null != r3.getDerivedStateFromError && (i3.setState(r3.getDerivedStateFromError(n2)), o3 = i3.__d), null != i3.componentDidCatch && (i3.componentDidCatch(n2, t3 || {}), o3 = i3.__d), o3) return i3.__E = i3;
+    } catch (l4) {
+      n2 = l4;
+    }
+    throw n2;
+  } }, u = 0, t = function(n2) {
+    return null != n2 && void 0 === n2.constructor;
+  }, x.prototype.setState = function(n2, l3) {
+    var u4;
+    u4 = null != this.__s && this.__s != this.state ? this.__s : this.__s = w({}, this.state), "function" == typeof n2 && (n2 = n2(w({}, u4), this.props)), n2 && w(u4, n2), null != n2 && this.__v && (l3 && this._sb.push(l3), $(this));
+  }, x.prototype.forceUpdate = function(n2) {
+    this.__v && (this.__e = true, n2 && this.__h.push(n2), $(this));
+  }, x.prototype.render = k, i = [], o = "function" == typeof Promise ? Promise.prototype.then.bind(Promise.resolve()) : setTimeout, e = function(n2, l3) {
+    return n2.__v.__b - l3.__v.__b;
+  }, I.__r = 0, f = /(PointerCapture)$|Capture$/i, c = 0, s = O(false), a = O(true), h = 0;
+
   // src/music-data.ts
   var NOTES = [
     { name: "C", displayName: "C", num: 0, accepts: ["c"] },
@@ -3437,9 +3688,9 @@ button {
     if (!name) return { letter: "", accidental: 0 };
     const letter = name[0].toUpperCase();
     let acc = 0;
-    for (let i = 1; i < name.length; i++) {
-      if (name[i] === "#") acc++;
-      else if (name[i] === "b") acc--;
+    for (let i3 = 1; i3 < name.length; i3++) {
+      if (name[i3] === "#") acc++;
+      else if (name[i3] === "b") acc--;
     }
     return { letter, accidental: acc };
   }
@@ -3569,7 +3820,7 @@ button {
       qualityLabel: "dim"
     }
   ];
-  var ROMAN_NUMERALS = DIATONIC_CHORDS.map((c) => c.numeral);
+  var ROMAN_NUMERALS = DIATONIC_CHORDS.map((c3) => c3.numeral);
   var DEGREE_LETTER_OFFSETS = {
     "R": 0,
     "2": 1,
@@ -3680,8 +3931,8 @@ button {
     const root = parseSpelledNote(rootName);
     const rootLetterIdx = LETTER_NAMES.indexOf(root.letter);
     const rootSemitone = ((NATURAL_SEMITONES[root.letter] + root.accidental) % 12 + 12) % 12;
-    return chordType.intervals.map((interval, i) => {
-      const degreeLabel = chordType.degrees[i];
+    return chordType.intervals.map((interval, i3) => {
+      const degreeLabel = chordType.degrees[i3];
       const letterOffset = DEGREE_LETTER_OFFSETS[degreeLabel];
       const targetLetter = LETTER_NAMES[(rootLetterIdx + letterOffset) % 7];
       const targetSemitone = (rootSemitone + interval) % 12;
@@ -3744,16 +3995,16 @@ button {
   function getUseSolfege() {
     return _useSolfege;
   }
-  function setUseSolfege(v) {
-    _useSolfege = v;
+  function setUseSolfege(v3) {
+    _useSolfege = v3;
     try {
-      localStorage.setItem("fretboard_notation", v ? "solfege" : "letter");
-    } catch (_) {
+      localStorage.setItem("fretboard_notation", v3 ? "solfege" : "letter");
+    } catch (_3) {
     }
   }
   try {
     _useSolfege = localStorage.getItem("fretboard_notation") === "solfege";
-  } catch (_) {
+  } catch (_3) {
   }
   function displayNote(name) {
     if (!name) return name;
@@ -3810,8 +4061,8 @@ button {
     if (ewmaMs == null) return null;
     const effectiveTarget = cfg.automaticityTarget * responseCount;
     const effectiveMin = cfg.minTime * responseCount;
-    const k = Math.LN2 / (effectiveTarget - effectiveMin);
-    return Math.exp(-k * Math.max(0, ewmaMs - effectiveMin));
+    const k3 = Math.LN2 / (effectiveTarget - effectiveMin);
+    return Math.exp(-k3 * Math.max(0, ewmaMs - effectiveMin));
   }
   function computeAutomaticity(recall, speedScore) {
     if (recall == null || speedScore == null) return null;
@@ -3831,8 +4082,8 @@ button {
       cfg.minTime,
       Math.min(responseTimeMs, cfg.maxResponseTime)
     );
-    const t = range > 0 ? (cfg.maxResponseTime - clamped) / range : 0.5;
-    const speedFactor = 0.5 + t * (cfg.speedBonusMax - 0.5);
+    const t3 = range > 0 ? (cfg.maxResponseTime - clamped) / range : 0.5;
+    const speedFactor = 0.5 + t3 * (cfg.speedBonusMax - 0.5);
     let newStability = oldStability * cfg.stabilityGrowthBase * speedFactor;
     if (elapsedHours !== null && elapsedHours > 0 && responseTimeMs < cfg.selfCorrectionThreshold) {
       newStability = Math.max(newStability, elapsedHours * 1.5);
@@ -3860,14 +4111,14 @@ button {
     return speedWeight;
   }
   function selectWeighted(items, weights, rand) {
-    const totalWeight = weights.reduce((sum, w) => sum + w, 0);
+    const totalWeight = weights.reduce((sum, w3) => sum + w3, 0);
     if (totalWeight === 0) {
       return items[Math.floor(rand * items.length)];
     }
     let remaining = rand * totalWeight;
-    for (let i = 0; i < items.length; i++) {
-      remaining -= weights[i];
-      if (remaining <= 0) return items[i];
+    for (let i3 = 0; i3 < items.length; i3++) {
+      remaining -= weights[i3];
+      if (remaining <= 0) return items[i3];
     }
     return items[items.length - 1];
   }
@@ -3885,7 +4136,7 @@ button {
   }
   function computeMedian(values) {
     if (values.length === 0) return null;
-    const sorted = [...values].sort((a, b) => a - b);
+    const sorted = [...values].sort((a3, b) => a3 - b);
     const mid = Math.floor(sorted.length / 2);
     if (sorted.length % 2 === 1) return sorted[mid];
     return (sorted[mid - 1] + sorted[mid]) / 2;
@@ -4002,8 +4253,8 @@ button {
       return computeAutomaticityForDisplay(recall, speed, true);
     }
     function getStringRecommendations(stringIndices, getItemIds) {
-      const results = stringIndices.map((s) => {
-        const items = getItemIds(s);
+      const results = stringIndices.map((s3) => {
+        const items = getItemIds(s3);
         let dueCount = 0;
         let unseenCount = 0;
         let masteredCount = 0;
@@ -4018,7 +4269,7 @@ button {
           }
         }
         return {
-          string: s,
+          string: s3,
           dueCount,
           unseenCount,
           masteredCount,
@@ -4026,7 +4277,7 @@ button {
         };
       });
       results.sort(
-        (a, b) => b.dueCount + b.unseenCount - (a.dueCount + a.unseenCount)
+        (a3, b) => b.dueCount + b.unseenCount - (a3.dueCount + a3.unseenCount)
       );
       return results;
     }
@@ -4088,21 +4339,21 @@ button {
     const lastKey = `adaptive_${namespace}_lastSelected`;
     return {
       getStats(itemId) {
-        const k = mkKey(itemId);
-        if (!(k in cache)) {
-          const data = localStorage.getItem(k);
+        const k3 = mkKey(itemId);
+        if (!(k3 in cache)) {
+          const data = localStorage.getItem(k3);
           try {
-            cache[k] = data ? JSON.parse(data) : null;
+            cache[k3] = data ? JSON.parse(data) : null;
           } catch {
-            cache[k] = null;
+            cache[k3] = null;
           }
         }
-        return cache[k];
+        return cache[k3];
       },
       saveStats(itemId, stats) {
-        const k = mkKey(itemId);
-        cache[k] = stats;
-        localStorage.setItem(k, JSON.stringify(stats));
+        const k3 = mkKey(itemId);
+        cache[k3] = stats;
+        localStorage.setItem(k3, JSON.stringify(stats));
       },
       getLastSelected() {
         return localStorage.getItem(lastKey);
@@ -4111,17 +4362,17 @@ button {
         localStorage.setItem(lastKey, itemId);
       },
       getDeadline(itemId) {
-        const k = dlKey(itemId);
-        if (!(k in cache)) {
-          const data = localStorage.getItem(k);
-          cache[k] = data ? Number(data) : null;
+        const k3 = dlKey(itemId);
+        if (!(k3 in cache)) {
+          const data = localStorage.getItem(k3);
+          cache[k3] = data ? Number(data) : null;
         }
-        return cache[k];
+        return cache[k3];
       },
       saveDeadline(itemId, deadline) {
-        const k = dlKey(itemId);
-        cache[k] = deadline;
-        localStorage.setItem(k, String(deadline));
+        const k3 = dlKey(itemId);
+        cache[k3] = deadline;
+        localStorage.setItem(k3, String(deadline));
       },
       /** Pre-populate cache to avoid localStorage reads during gameplay. */
       preload(itemIds) {
@@ -4328,19 +4579,19 @@ button {
       pendingNote = null;
       pendingTimeout = null;
     }
-    function handleKey(e) {
-      const key = e.key.toUpperCase();
+    function handleKey(e3) {
+      const key = e3.key.toUpperCase();
       if (pendingNote && allowAccidentals()) {
-        if (e.key === "#" || e.key === "s" || e.key === "S" || e.shiftKey && e.key === "3") {
-          e.preventDefault();
+        if (e3.key === "#" || e3.key === "s" || e3.key === "S" || e3.shiftKey && e3.key === "3") {
+          e3.preventDefault();
           if (pendingTimeout) clearTimeout(pendingTimeout);
           submitAnswer(pendingNote + "#");
           pendingNote = null;
           pendingTimeout = null;
           return true;
         }
-        if (e.key === "b" || e.key === "B") {
-          e.preventDefault();
+        if (e3.key === "b" || e3.key === "B") {
+          e3.preventDefault();
           if (pendingTimeout) clearTimeout(pendingTimeout);
           submitAnswer(pendingNote + "b");
           pendingNote = null;
@@ -4349,7 +4600,7 @@ button {
         }
       }
       if ("CDEFGAB".includes(key)) {
-        e.preventDefault();
+        e3.preventDefault();
         if (pendingTimeout) clearTimeout(pendingTimeout);
         if (!allowAccidentals()) {
           submitAnswer(key);
@@ -4395,11 +4646,11 @@ button {
         pendingTimeout = null;
       }
     }
-    function handleKey(e) {
-      const key = e.key.toLowerCase();
+    function handleKey(e3) {
+      const key = e3.key.toLowerCase();
       if (pendingNote && allowAccidentals()) {
-        if (e.key === "#" || e.shiftKey && e.key === "3") {
-          e.preventDefault();
+        if (e3.key === "#" || e3.shiftKey && e3.key === "3") {
+          e3.preventDefault();
           if (pendingTimeout) clearTimeout(pendingTimeout);
           submitAnswer(pendingNote + "#");
           pendingNote = null;
@@ -4407,7 +4658,7 @@ button {
           return true;
         }
         if (key === "b") {
-          e.preventDefault();
+          e3.preventDefault();
           if (pendingTimeout) clearTimeout(pendingTimeout);
           submitAnswer(pendingNote + "b");
           pendingNote = null;
@@ -4419,7 +4670,7 @@ button {
         submitPending();
       }
       if (buffer.length > 0) {
-        e.preventDefault();
+        e3.preventDefault();
         buffer += key;
         const note = SOLFEGE_TO_NOTE[buffer];
         if (note) {
@@ -4440,7 +4691,7 @@ button {
         return true;
       }
       if (FIRST_CHARS.has(key)) {
-        e.preventDefault();
+        e3.preventDefault();
         submitPending();
         buffer = key;
         return true;
@@ -4456,8 +4707,8 @@ button {
       allowAccidentals
     );
     return {
-      handleKey(e) {
-        return getUseSolfege() ? solfegeHandler.handleKey(e) : letterHandler.handleKey(e);
+      handleKey(e3) {
+        return getUseSolfege() ? solfegeHandler.handleKey(e3) : letterHandler.handleKey(e3);
       },
       reset() {
         letterHandler.reset();
@@ -4468,8 +4719,8 @@ button {
   function refreshNoteButtonLabels(container) {
     container.querySelectorAll(".answer-btn-note").forEach(
       function(btn) {
-        const note = NOTES.find(function(n) {
-          return n.name === btn.dataset.note;
+        const note = NOTES.find(function(n2) {
+          return n2.name === btn.dataset.note;
         });
         if (note) btn.textContent = displayNote(note.name);
       }
@@ -4612,9 +4863,9 @@ button {
       trialIndex++;
       pendingTimeout = setTimeout(startTrial, PAUSE_MS);
     }
-    function handleCalibrationClick(e) {
+    function handleCalibrationClick(e3) {
       if (!targetBtn) return;
-      const clicked = e.target.closest(".note-btn, .answer-btn");
+      const clicked = e3.target.closest(".note-btn, .answer-btn");
       if (clicked === targetBtn) {
         clearPendingNote();
         recordPress();
@@ -4630,13 +4881,13 @@ button {
       const targetNote = targetBtn.dataset.note;
       return !!targetNote && targetNote.toUpperCase() === noteName.toUpperCase();
     }
-    function handleCalibrationKey(e) {
+    function handleCalibrationKey(e3) {
       if (!targetBtn) return;
       if (isSearchMode()) {
-        const key = e.key.toUpperCase();
+        const key = e3.key.toUpperCase();
         if (pendingNote) {
-          if (e.key === "#" || e.key === "s" || e.key === "S" || e.shiftKey && e.key === "3") {
-            e.preventDefault();
+          if (e3.key === "#" || e3.key === "s" || e3.key === "S" || e3.shiftKey && e3.key === "3") {
+            e3.preventDefault();
             if (pendingNoteTimeout) clearTimeout(pendingNoteTimeout);
             const combined = pendingNote + "#";
             pendingNote = null;
@@ -4644,9 +4895,9 @@ button {
             if (checkNoteMatch(combined)) recordPress();
             return;
           }
-          if (e.key === "b" || e.key === "B") {
+          if (e3.key === "b" || e3.key === "B") {
             if (pendingNote !== "B") {
-              e.preventDefault();
+              e3.preventDefault();
               if (pendingNoteTimeout) clearTimeout(pendingNoteTimeout);
               const combined = pendingNote + "b";
               pendingNote = null;
@@ -4657,7 +4908,7 @@ button {
           }
         }
         if ("CDEFGAB".includes(key)) {
-          e.preventDefault();
+          e3.preventDefault();
           clearPendingNote();
           const targetNote = targetBtn.dataset.note;
           if (targetNote && !targetNote.includes("#")) {
@@ -4674,8 +4925,8 @@ button {
         }
       } else {
         const expectedKey = getKeyForButton(targetBtn);
-        if (expectedKey && e.key.toUpperCase() === expectedKey) {
-          e.preventDefault();
+        if (expectedKey && e3.key.toUpperCase() === expectedKey) {
+          e3.preventDefault();
           recordPress();
         }
       }
@@ -4797,16 +5048,16 @@ button {
       thead.appendChild(headerRow);
       table.appendChild(thead);
       const tbody = document.createElement("tbody");
-      thresholds.forEach((t) => {
+      thresholds.forEach((t3) => {
         const tr = document.createElement("tr");
         const tdLabel = document.createElement("td");
-        tdLabel.textContent = t.label;
+        tdLabel.textContent = t3.label;
         tr.appendChild(tdLabel);
         const tdTime = document.createElement("td");
-        tdTime.textContent = t.maxMs !== null ? "< " + formatMs(t.maxMs) : "> " + formatMs(thresholds[thresholds.length - 2].maxMs);
+        tdTime.textContent = t3.maxMs !== null ? "< " + formatMs(t3.maxMs) : "> " + formatMs(thresholds[thresholds.length - 2].maxMs);
         tr.appendChild(tdTime);
         const tdMeaning = document.createElement("td");
-        tdMeaning.textContent = t.meaning;
+        tdMeaning.textContent = t3.meaning;
         tr.appendChild(tdMeaning);
         tbody.appendChild(tr);
       });
@@ -4931,8 +5182,8 @@ button {
         const medianEl = els.roundCompleteEl.querySelector(".round-stat-median");
         if (medianEl) {
           if (state.roundResponseTimes && state.roundResponseTimes.length > 0) {
-            const sorted = state.roundResponseTimes.slice().sort(function(a, b) {
-              return a - b;
+            const sorted = state.roundResponseTimes.slice().sort(function(a3, b) {
+              return a3 - b;
             });
             const mid = Math.floor(sorted.length / 2);
             const median = sorted.length % 2 === 0 ? (sorted[mid - 1] + sorted[mid]) / 2 : sorted[mid];
@@ -4981,7 +5232,7 @@ button {
       renderRoundComplete();
       renderCalibrationContent();
     }
-    function formatRoundTime(ms) {
+    function formatRoundTime2(ms) {
       const totalSec = Math.max(0, Math.ceil(ms / 1e3));
       const min = Math.floor(totalSec / 60);
       const sec = totalSec % 60;
@@ -4995,7 +5246,7 @@ button {
         els.countdownBar.classList.remove("round-timer-warning");
       }
       if (els.quizInfoTime) {
-        els.quizInfoTime.textContent = formatRoundTime(ROUND_DURATION_MS);
+        els.quizInfoTime.textContent = formatRoundTime2(ROUND_DURATION_MS);
       }
       roundTimerInterval = setInterval(() => {
         const elapsed = Date.now() - roundTimerStart;
@@ -5003,7 +5254,7 @@ button {
         const pct = Math.max(0, remaining / ROUND_DURATION_MS * 100);
         if (els.countdownFill) els.countdownFill.style.width = pct + "%";
         if (els.quizInfoTime) {
-          els.quizInfoTime.textContent = formatRoundTime(remaining);
+          els.quizInfoTime.textContent = formatRoundTime2(remaining);
         }
         if (els.countdownBar) {
           els.countdownBar.classList.toggle(
@@ -5246,15 +5497,15 @@ button {
       if (mode.onStop) mode.onStop();
       updateIdleMessage();
     }
-    function handleKeydown(e) {
-      const routed = engineRouteKey(state, e.key);
+    function handleKeydown(e3) {
+      const routed = engineRouteKey(state, e3.key);
       switch (routed.action) {
         case "stop":
-          e.stopImmediatePropagation();
+          e3.stopImmediatePropagation();
           stop();
           break;
         case "next":
-          e.preventDefault();
+          e3.preventDefault();
           if (autoAdvanceTimer) {
             clearTimeout(autoAdvanceTimer);
             autoAdvanceTimer = null;
@@ -5262,20 +5513,20 @@ button {
           nextQuestion();
           break;
         case "continue":
-          e.preventDefault();
+          e3.preventDefault();
           continueQuiz();
           break;
         case "delegate":
-          if (mode.handleKey) mode.handleKey(e, { submitAnswer });
+          if (mode.handleKey) mode.handleKey(e3, { submitAnswer });
           break;
         case "ignore":
           break;
       }
     }
-    function handleClick(e) {
+    function handleClick(e3) {
       if (state.phase === "round-complete") return;
       if (state.phase !== "active" || !state.answered) return;
-      if (e.target.closest(
+      if (e3.target.closest(
         ".answer-btn, .note-btn, .string-toggle"
       )) return;
       if (autoAdvanceTimer) {
@@ -5352,7 +5603,7 @@ button {
         name
       ).trim();
       if (val) return val;
-    } catch (_) {
+    } catch (_3) {
     }
     return "";
   }
@@ -5379,23 +5630,23 @@ button {
     "Automatic (&gt;80%)"
   ];
   function getAutomaticityColor(auto) {
-    const c = heatmapColors();
-    if (auto === null) return c.none;
-    if (auto > 0.8) return c.level[4];
-    if (auto > 0.6) return c.level[3];
-    if (auto > 0.4) return c.level[2];
-    if (auto > 0.2) return c.level[1];
-    return c.level[0];
+    const c3 = heatmapColors();
+    if (auto === null) return c3.none;
+    if (auto > 0.8) return c3.level[4];
+    if (auto > 0.6) return c3.level[3];
+    if (auto > 0.4) return c3.level[2];
+    if (auto > 0.2) return c3.level[1];
+    return c3.level[0];
   }
   function getSpeedHeatmapColor(ms, baseline) {
-    const c = heatmapColors();
-    if (ms === null) return c.none;
+    const c3 = heatmapColors();
+    if (ms === null) return c3.none;
     const b = baseline || 1e3;
-    if (ms < b * 1.5) return c.level[4];
-    if (ms < b * 3) return c.level[3];
-    if (ms < b * 4.5) return c.level[2];
-    if (ms < b * 6) return c.level[1];
-    return c.level[0];
+    if (ms < b * 1.5) return c3.level[4];
+    if (ms < b * 3) return c3.level[3];
+    if (ms < b * 4.5) return c3.level[2];
+    if (ms < b * 6) return c3.level[1];
+    return c3.level[0];
   }
   function getStatsCellColor(selector, itemId, statsMode, baseline) {
     if (statsMode === "retention") {
@@ -5410,18 +5661,18 @@ button {
     }
     if (statsMode === "retention") {
       let sum = 0, count = 0;
-      for (let i = 0; i < itemIds.length; i++) {
-        const a = selector.getAutomaticity(itemIds[i]);
-        if (a !== null) {
-          sum += a;
+      for (let i3 = 0; i3 < itemIds.length; i3++) {
+        const a3 = selector.getAutomaticity(itemIds[i3]);
+        if (a3 !== null) {
+          sum += a3;
           count++;
         }
       }
       return getAutomaticityColor(count > 0 ? sum / count : null);
     }
     let sum2 = 0, count2 = 0;
-    for (let j = 0; j < itemIds.length; j++) {
-      const stats = selector.getStats(itemIds[j]);
+    for (let j3 = 0; j3 < itemIds.length; j3++) {
+      const stats = selector.getStats(itemIds[j3]);
       if (stats && stats.ewma != null) {
         sum2 += stats.ewma;
         count2++;
@@ -5438,8 +5689,8 @@ button {
     html += "<th>" + rows[0]._colHeader + "</th><th>#</th>";
     html += "<th>" + fwdHeader + "</th><th>" + revHeader + "</th>";
     html += "</tr></thead><tbody>";
-    for (let i = 0; i < rows.length; i++) {
-      const row = rows[i];
+    for (let i3 = 0; i3 < rows.length; i3++) {
+      const row = rows[i3];
       const fwdColor = getStatsCellColor(
         selector,
         row.fwdItemId,
@@ -5465,15 +5716,15 @@ button {
   function renderStatsGrid(selector, colLabels, getItemId, statsMode, containerEl, notes, baseline) {
     const noteList = notes || NOTES;
     let html = '<table class="stats-grid"><thead><tr><th></th>';
-    for (let c = 0; c < colLabels.length; c++) {
-      html += "<th>" + colLabels[c] + "</th>";
+    for (let c3 = 0; c3 < colLabels.length; c3++) {
+      html += "<th>" + colLabels[c3] + "</th>";
     }
     html += "</tr></thead><tbody>";
-    for (let n = 0; n < noteList.length; n++) {
-      const note = noteList[n];
+    for (let n2 = 0; n2 < noteList.length; n2++) {
+      const note = noteList[n2];
       html += '<tr><td class="stats-grid-row-label">' + displayNote(note.name || note.displayName) + "</td>";
-      for (let i = 0; i < colLabels.length; i++) {
-        const itemId = getItemId(note.name, i);
+      for (let i3 = 0; i3 < colLabels.length; i3++) {
+        const itemId = getItemId(note.name, i3);
         const color = Array.isArray(itemId) ? getStatsCellColorMerged(selector, itemId, statsMode, baseline) : getStatsCellColor(selector, itemId, statsMode, baseline);
         html += '<td class="stats-cell" style="background:' + color + '"></td>';
       }
@@ -5519,31 +5770,31 @@ button {
     };
   }
   function formatThreshold(ms) {
-    const s = ms / 1e3;
-    return s % 1 === 0 ? s + "s" : s.toFixed(1) + "s";
+    const s3 = ms / 1e3;
+    return s3 % 1 === 0 ? s3 + "s" : s3.toFixed(1) + "s";
   }
   function legendItem(color, label) {
     return '<div class="legend-item"><div class="legend-swatch" style="background:' + color + '"></div>' + label + "</div>";
   }
   function buildStatsLegend(statsMode, baseline) {
-    const c = heatmapColors();
+    const c3 = heatmapColors();
     let html = '<div class="heatmap-legend active">';
-    html += legendItem(c.none, "No data");
+    html += legendItem(c3.none, "No data");
     if (statsMode === "retention") {
-      for (let i = c.level.length - 1; i >= 0; i--) {
-        html += legendItem(c.level[i], RETENTION_LABELS[i]);
+      for (let i3 = c3.level.length - 1; i3 >= 0; i3--) {
+        html += legendItem(c3.level[i3], RETENTION_LABELS[i3]);
       }
     } else {
       const b = baseline || 1e3;
       const t1 = formatThreshold(b * 1.5);
-      const t2 = formatThreshold(b * 3);
+      const t22 = formatThreshold(b * 3);
       const t3 = formatThreshold(b * 4.5);
       const t4 = formatThreshold(b * 6);
-      html += legendItem(c.level[4], "&lt; " + t1);
-      html += legendItem(c.level[3], t1 + "\u2013" + t2);
-      html += legendItem(c.level[2], t2 + "\u2013" + t3);
-      html += legendItem(c.level[1], t3 + "\u2013" + t4);
-      html += legendItem(c.level[0], "&ge; " + t4);
+      html += legendItem(c3.level[4], "&lt; " + t1);
+      html += legendItem(c3.level[3], t1 + "\u2013" + t22);
+      html += legendItem(c3.level[2], t22 + "\u2013" + t3);
+      html += legendItem(c3.level[1], t3 + "\u2013" + t4);
+      html += legendItem(c3.level[0], "&ge; " + t4);
     }
     html += "</div>";
     return html;
@@ -5553,8 +5804,8 @@ button {
   function computeRecommendations(selector, allIndices, getItemIds, config, options) {
     const sortUnstarted = options && options.sortUnstarted;
     const recs = selector.getStringRecommendations(allIndices, getItemIds);
-    const started = recs.filter((r) => r.unseenCount < r.totalCount);
-    const unstarted = recs.filter((r) => r.unseenCount === r.totalCount);
+    const started = recs.filter((r3) => r3.unseenCount < r3.totalCount);
+    const unstarted = recs.filter((r3) => r3.unseenCount === r3.totalCount);
     if (started.length === 0) {
       if (unstarted.length > 0) {
         const sorted = sortUnstarted ? [...unstarted].sort(sortUnstarted) : unstarted;
@@ -5578,34 +5829,34 @@ button {
       };
     }
     const totalSeen = started.reduce(
-      (sum, r) => sum + (r.masteredCount + r.dueCount),
+      (sum, r3) => sum + (r3.masteredCount + r3.dueCount),
       0
     );
-    const totalMastered = started.reduce((sum, r) => sum + r.masteredCount, 0);
+    const totalMastered = started.reduce((sum, r3) => sum + r3.masteredCount, 0);
     const consolidatedRatio = totalSeen > 0 ? totalMastered / totalSeen : 0;
     const startedByWork = [...started].sort(
-      (a, b) => b.dueCount + b.unseenCount - (a.dueCount + a.unseenCount)
+      (a3, b) => b.dueCount + b.unseenCount - (a3.dueCount + a3.unseenCount)
     );
-    const workCounts = startedByWork.map((r) => r.dueCount + r.unseenCount);
+    const workCounts = startedByWork.map((r3) => r3.dueCount + r3.unseenCount);
     const medianWork = workCounts[Math.floor(workCounts.length / 2)];
     const recommended = /* @__PURE__ */ new Set();
     const enabled = /* @__PURE__ */ new Set();
     const consolidateIndices = [];
     let consolidateDueCount = 0;
-    for (const r of startedByWork) {
-      if (r.dueCount + r.unseenCount > medianWork) {
-        recommended.add(r.string);
-        enabled.add(r.string);
-        consolidateIndices.push(r.string);
-        consolidateDueCount += r.dueCount + r.unseenCount;
+    for (const r3 of startedByWork) {
+      if (r3.dueCount + r3.unseenCount > medianWork) {
+        recommended.add(r3.string);
+        enabled.add(r3.string);
+        consolidateIndices.push(r3.string);
+        consolidateDueCount += r3.dueCount + r3.unseenCount;
       }
     }
     if (enabled.size === 0) {
-      const r = startedByWork[0];
-      recommended.add(r.string);
-      enabled.add(r.string);
-      consolidateIndices.push(r.string);
-      consolidateDueCount += r.dueCount + r.unseenCount;
+      const r3 = startedByWork[0];
+      recommended.add(r3.string);
+      enabled.add(r3.string);
+      consolidateIndices.push(r3.string);
+      consolidateDueCount += r3.dueCount + r3.unseenCount;
     }
     let expandIndex = null;
     let expandNewCount = 0;
@@ -5630,8 +5881,8 @@ button {
   function countFluent(itemIds, getAutomaticity, threshold) {
     let fluent = 0;
     let seen = 0;
-    for (let i = 0; i < itemIds.length; i++) {
-      const auto = getAutomaticity(itemIds[i]);
+    for (let i3 = 0; i3 < itemIds.length; i3++) {
+      const auto = getAutomaticity(itemIds[i3]);
       if (auto !== null) {
         seen++;
         if (auto > threshold) fluent++;
@@ -5649,7 +5900,7 @@ button {
     if (result.recommended.size === 0) return "";
     const parts = [];
     if (result.consolidateIndices.length > 0) {
-      const labels = result.consolidateIndices.slice().sort((a, b) => a - b).map(getGroupLabel);
+      const labels = result.consolidateIndices.slice().sort((a3, b) => a3 - b).map(getGroupLabel);
       parts.push(
         "solidify " + labels.join(", ") + " \u2014 " + result.consolidateDueCount + " slow item" + (result.consolidateDueCount !== 1 ? "s" : "")
       );
@@ -5660,8 +5911,8 @@ button {
       );
     }
     if (extraParts) {
-      for (let i = 0; i < extraParts.length; i++) {
-        parts.push(extraParts[i]);
+      for (let i3 = 0; i3 < extraParts.length; i3++) {
+        parts.push(extraParts[i3]);
       }
     }
     return parts.length > 0 ? "Suggestion: " + parts.join(", ") : "";
@@ -5707,7 +5958,7 @@ button {
       if (saved) {
         try {
           enabled = new Set(JSON.parse(saved));
-        } catch (_) {
+        } catch (_3) {
         }
       }
       return { kind: "groups", enabledGroups: enabled };
@@ -5720,7 +5971,7 @@ button {
       if (saved) {
         try {
           enabledStrings = new Set(JSON.parse(saved));
-        } catch (_) {
+        } catch (_3) {
         }
       }
       let noteFilter = "natural";
@@ -5759,12 +6010,12 @@ button {
           inst.storageNamespace + "_noteFilter",
           scope.noteFilter
         );
-      } catch (_) {
+      } catch (_3) {
       }
     } else if (spec.kind === "note-filter" && scope.kind === "note-filter") {
       try {
         localStorage.setItem(spec.storageKey, scope.noteFilter);
-      } catch (_) {
+      } catch (_3) {
       }
     }
   }
@@ -5849,8 +6100,8 @@ button {
         def.onStop?.(quizAreaEls);
         refreshUI();
       },
-      handleKey(e, _ctx) {
-        return keyHandler.handleKey(e);
+      handleKey(e3, _ctx) {
+        return keyHandler.handleKey(e3);
       },
       onAnswer(itemId, result, _responseTime) {
         if (def.prompt.kind === "custom" && def.prompt.onAnswer) {
@@ -5897,13 +6148,13 @@ button {
     const statsControls = createStatsControls(container, renderStats);
     function clearProgressFretboard() {
       if (quizAreaEls.progressFretboardWrapper) {
-        quizAreaEls.progressFretboardWrapper.querySelectorAll(".fb-pos").forEach((c) => c.style.fill = "");
+        quizAreaEls.progressFretboardWrapper.querySelectorAll(".fb-pos").forEach((c3) => c3.style.fill = "");
       }
     }
     function getRecommendationResult() {
       const spec = def.scopeSpec;
       if (spec.kind === "groups") {
-        const allIndices = spec.groups.map((g) => g.index);
+        const allIndices = spec.groups.map((g2) => g2.index);
         return computeRecommendations(
           engine.selector,
           allIndices,
@@ -5916,18 +6167,18 @@ button {
         const inst = spec.instrument;
         const allStrings = Array.from(
           { length: inst.stringCount },
-          (_, i) => i
+          (_3, i3) => i3
         );
         return computeRecommendations(
           engine.selector,
           allStrings,
-          (s) => {
-            const prefix = s + "-";
+          (s3) => {
+            const prefix = s3 + "-";
             return def.allItemIds.filter((id) => id.startsWith(prefix));
           },
           DEFAULT_CONFIG,
           {
-            sortUnstarted: (a, b) => b.string - a.string
+            sortUnstarted: (a3, b) => b.string - a3.string
           }
         );
       }
@@ -5948,7 +6199,7 @@ button {
         const inst = spec.instrument;
         return buildRecommendationText(
           result,
-          (s) => displayNote(inst.stringNames[s]) + " string",
+          (s3) => displayNote(inst.stringNames[s3]) + " string",
           extras
         );
       }
@@ -6040,21 +6291,21 @@ button {
       });
     }
     function renderIdleUI() {
-      const p = uiState.practice;
+      const p3 = uiState.practice;
       const statusLabel = container.querySelector(".practice-status-label");
       const statusDetail = container.querySelector(".practice-status-detail");
       const recText = container.querySelector(".practice-rec-text");
       const recBtn = container.querySelector(".practice-rec-btn");
       const sessionSummary = container.querySelector(".session-summary-text");
       const masteryMsg = container.querySelector(".mastery-message");
-      if (statusLabel) statusLabel.textContent = p.statusLabel;
-      if (statusDetail) statusDetail.textContent = p.statusDetail;
-      if (recText) recText.textContent = p.recommendationText;
-      if (recBtn) recBtn.classList.toggle("hidden", !p.showRecommendationButton);
-      if (sessionSummary) sessionSummary.textContent = p.sessionSummary;
+      if (statusLabel) statusLabel.textContent = p3.statusLabel;
+      if (statusDetail) statusDetail.textContent = p3.statusDetail;
+      if (recText) recText.textContent = p3.recommendationText;
+      if (recBtn) recBtn.classList.toggle("hidden", !p3.showRecommendationButton);
+      if (sessionSummary) sessionSummary.textContent = p3.sessionSummary;
       if (masteryMsg) {
-        masteryMsg.textContent = p.masteryText;
-        masteryMsg.classList.toggle("visible", p.showMastery);
+        masteryMsg.textContent = p3.masteryText;
+        masteryMsg.classList.toggle("visible", p3.showMastery);
       }
     }
     function updateScopeToggles() {
@@ -6063,22 +6314,22 @@ button {
       if (scope.kind === "groups") {
         container.querySelectorAll(".distance-toggle").forEach(
           (btn) => {
-            const g = parseInt(btn.dataset.group);
-            btn.classList.toggle("active", scope.enabledGroups.has(g));
+            const g2 = parseInt(btn.dataset.group);
+            btn.classList.toggle("active", scope.enabledGroups.has(g2));
             btn.classList.toggle(
               "recommended",
-              rec ? rec.recommended.has(g) : false
+              rec ? rec.recommended.has(g2) : false
             );
           }
         );
       } else if (scope.kind === "fretboard") {
         container.querySelectorAll(".string-toggle").forEach(
           (btn) => {
-            const s = parseInt(btn.dataset.string);
-            btn.classList.toggle("active", scope.enabledStrings.has(s));
+            const s3 = parseInt(btn.dataset.string);
+            btn.classList.toggle("active", scope.enabledStrings.has(s3));
             btn.classList.toggle(
               "recommended",
-              rec ? rec.recommended.has(s) : false
+              rec ? rec.recommended.has(s3) : false
             );
           }
         );
@@ -6161,14 +6412,14 @@ button {
       saveScopeState(def, uiState.scope);
       refreshUI();
     }
-    function toggleFretboardString(s) {
+    function toggleFretboardString(s3) {
       if (uiState.scope.kind !== "fretboard") return;
       const current = uiState.scope.enabledStrings;
       const next = new Set(current);
-      if (next.has(s)) {
-        if (next.size > 1) next.delete(s);
+      if (next.has(s3)) {
+        if (next.size > 1) next.delete(s3);
       } else {
-        next.add(s);
+        next.add(s3);
       }
       uiState = {
         ...uiState,
@@ -6311,11 +6562,11 @@ button {
         engine.submitAnswer(result.correct ? "__correct__" : "__wrong__");
       }
     }
-    function handleSpatialClick(e) {
+    function handleSpatialClick(e3) {
       if (!engine.isActive || engine.isAnswered || !currentItemId) return;
       const resp = def.response;
       if (resp.kind !== "spatial") return;
-      const target = e.target;
+      const target = e3.target;
       const answer = resp.handleTap(target, currentItemId);
       if (answer) engine.submitAnswer(answer);
     }
@@ -6408,12 +6659,12 @@ button {
     if (!card) return;
     const svg = wrapper.querySelector("svg");
     if (!svg) return;
-    svg.addEventListener("mouseover", (e) => {
-      const el = e.target.closest(".fb-pos");
+    svg.addEventListener("mouseover", (e3) => {
+      const el = e3.target.closest(".fb-pos");
       if (!el) return;
-      const s = parseInt(el.getAttribute("data-string"));
-      const f = parseInt(el.getAttribute("data-fret"));
-      const itemId = s + "-" + f;
+      const s3 = parseInt(el.getAttribute("data-string"));
+      const f4 = parseInt(el.getAttribute("data-fret"));
+      const itemId = s3 + "-" + f4;
       const question = def.getQuestion(itemId);
       const note = question.currentNote || "";
       const auto = selector.getAutomaticity(itemId);
@@ -6422,7 +6673,7 @@ button {
       const stringFretEl = card.querySelector(".hc-string-fret");
       if (stringFretEl && def.scopeSpec.kind === "fretboard") {
         const inst = def.scopeSpec.instrument;
-        stringFretEl.textContent = displayNote(inst.stringNames[s]) + " string, fret " + f;
+        stringFretEl.textContent = displayNote(inst.stringNames[s3]) + " string, fret " + f4;
       }
       const detailEl = card.querySelector(".hc-detail");
       const barFill = card.querySelector(".hc-bar-fill");
@@ -6463,30 +6714,30 @@ button {
       }
       card.classList.add("visible");
     });
-    svg.addEventListener("mouseout", (e) => {
-      const el = e.target.closest(".fb-pos");
+    svg.addEventListener("mouseout", (e3) => {
+      const el = e3.target.closest(".fb-pos");
       if (el) card.classList.remove("visible");
     });
   }
 
   // src/quiz-fretboard-state.ts
   function createFretboardHelpers(musicData) {
-    const noteNames2 = musicData.notes.map((n) => n.name);
+    const noteNames2 = musicData.notes.map((n2) => n2.name);
     const fretCount = musicData.fretCount || 13;
     function getNoteAtPosition2(string, fret) {
       const offset = musicData.stringOffsets[string];
       return noteNames2[(offset + fret) % 12];
     }
     function parseFretboardItem(itemId) {
-      const [s, f] = itemId.split("-").map(Number);
+      const [s3, f4] = itemId.split("-").map(Number);
       return {
-        currentString: s,
-        currentFret: f,
-        currentNote: getNoteAtPosition2(s, f)
+        currentString: s3,
+        currentFret: f4,
+        currentNote: getNoteAtPosition2(s3, f4)
       };
     }
     function checkFretboardAnswer(currentNote, input) {
-      const note = musicData.notes.find((n) => n.name === currentNote);
+      const note = musicData.notes.find((n2) => n2.name === currentNote);
       const correct = !!(note && musicData.noteMatchesInput(note, input));
       return { correct, correctAnswer: displayNote(currentNote) };
     }
@@ -6497,11 +6748,11 @@ button {
     }
     function getFretboardEnabledItems(enabledStrings, noteFilter) {
       const items = [];
-      for (const s of enabledStrings) {
-        for (let f = 0; f < fretCount; f++) {
-          const note = getNoteAtPosition2(s, f);
+      for (const s3 of enabledStrings) {
+        for (let f4 = 0; f4 < fretCount; f4++) {
+          const note = getNoteAtPosition2(s3, f4);
           if (notePassesFilter(note, noteFilter)) {
-            items.push(s + "-" + f);
+            items.push(s3 + "-" + f4);
           }
         }
       }
@@ -6509,10 +6760,10 @@ button {
     }
     function getItemIdsForString(string, noteFilter) {
       const items = [];
-      for (let f = 0; f < fretCount; f++) {
-        const note = getNoteAtPosition2(string, f);
+      for (let f4 = 0; f4 < fretCount; f4++) {
+        const note = getNoteAtPosition2(string, f4);
         if (notePassesFilter(note, noteFilter)) {
-          items.push(string + "-" + f);
+          items.push(string + "-" + f4);
         }
       }
       return items;
@@ -6529,9 +6780,9 @@ button {
   function computeNotePrioritization(naturalStats, threshold) {
     let totalSeen = 0;
     let totalMastered = 0;
-    for (const r of naturalStats) {
-      totalSeen += r.masteredCount + r.dueCount;
-      totalMastered += r.masteredCount;
+    for (const r3 of naturalStats) {
+      totalSeen += r3.masteredCount + r3.dueCount;
+      totalMastered += r3.masteredCount;
     }
     const ratio = totalSeen > 0 ? totalMastered / totalSeen : 0;
     if (totalSeen === 0 || ratio < threshold) {
@@ -6549,8 +6800,8 @@ button {
     if (circle) circle.style.fill = color;
   }
   function clearAll(root) {
-    root.querySelectorAll(".fb-pos").forEach((c) => {
-      c.style.fill = "";
+    root.querySelectorAll(".fb-pos").forEach((c3) => {
+      c3.style.fill = "";
     });
   }
   function fretboardDefinition(instrument) {
@@ -6563,19 +6814,19 @@ button {
     });
     const allStrings = Array.from(
       { length: instrument.stringCount },
-      (_, i) => i
+      (_3, i3) => i3
     );
-    const ALL_ITEMS = [];
-    for (const s of allStrings) {
-      for (let f = 0; f < instrument.fretCount; f++) {
-        ALL_ITEMS.push(s + "-" + f);
+    const ALL_ITEMS2 = [];
+    for (const s3 of allStrings) {
+      for (let f4 = 0; f4 < instrument.fretCount; f4++) {
+        ALL_ITEMS2.push(s3 + "-" + f4);
       }
     }
     return {
       id: instrument.id,
       name: instrument.name,
       storageNamespace: instrument.storageNamespace,
-      allItemIds: ALL_ITEMS,
+      allItemIds: ALL_ITEMS2,
       getEnabledItems(scope) {
         if (scope.kind !== "fretboard") {
           return fb.getFretboardEnabledItems(
@@ -6596,18 +6847,18 @@ button {
         return fb.parseFretboardItem(itemId);
       },
       checkAnswer(_itemId, input) {
-        const q = fb.parseFretboardItem(_itemId);
-        return fb.checkFretboardAnswer(q.currentNote, input);
+        const q3 = fb.parseFretboardItem(_itemId);
+        return fb.checkFretboardAnswer(q3.currentNote, input);
       },
       prompt: {
         kind: "custom",
-        render(q, els) {
+        render(q3, els) {
           if (els.fretboardWrapper) {
             clearAll(els.fretboardWrapper);
             setCircleFill(
               els.fretboardWrapper,
-              q.currentString,
-              q.currentFret,
+              q3.currentString,
+              q3.currentFret,
               FB_QUIZ_HL
             );
           }
@@ -6618,13 +6869,13 @@ button {
             clearAll(els.fretboardWrapper);
           }
         },
-        onAnswer(q, result, els) {
+        onAnswer(q3, result, els) {
           if (els.fretboardWrapper) {
             const color = result.correct ? "var(--color-success)" : "var(--color-error)";
             setCircleFill(
               els.fretboardWrapper,
-              q.currentString,
-              q.currentFret,
+              q3.currentString,
+              q3.currentFret,
               color
             );
           }
@@ -6655,19 +6906,19 @@ button {
             ".tab-progress .fretboard-wrapper"
           );
           if (!progressFb) return;
-          for (const s of allStrings) {
-            for (let f = 0; f < instrument.fretCount; f++) {
-              const itemId = s + "-" + f;
+          for (const s3 of allStrings) {
+            for (let f4 = 0; f4 < instrument.fretCount; f4++) {
+              const itemId = s3 + "-" + f4;
               if (statsMode === "retention") {
                 const auto = selector.getAutomaticity(itemId);
-                setCircleFill(progressFb, s, f, getAutomaticityColor(auto));
+                setCircleFill(progressFb, s3, f4, getAutomaticityColor(auto));
               } else {
                 const stats = selector.getStats(itemId);
                 const ewma = stats ? stats.ewma : null;
                 setCircleFill(
                   progressFb,
-                  s,
-                  f,
+                  s3,
+                  f4,
                   getSpeedHeatmapColor(ewma, baseline ?? void 0)
                 );
               }
@@ -6679,7 +6930,7 @@ button {
         if (scope.kind !== "fretboard") return "all strings";
         const parts = [];
         if (scope.enabledStrings.size < instrument.stringCount) {
-          const names = Array.from(scope.enabledStrings).sort((a, b) => b - a).map((s) => displayNote(instrument.stringNames[s]));
+          const names = Array.from(scope.enabledStrings).sort((a3, b) => b - a3).map((s3) => displayNote(instrument.stringNames[s3]));
           parts.push(
             names.join(", ") + " string" + (names.length === 1 ? "" : "s")
           );
@@ -6700,7 +6951,7 @@ button {
       getRecommendationContext(rec, selector) {
         const naturalStats = selector.getStringRecommendations(
           [...rec.recommended],
-          (s) => fb.getItemIdsForString(s, "natural")
+          (s3) => fb.getItemIdsForString(s3, "natural")
         );
         const pri = computeNotePrioritization(
           naturalStats,
@@ -6719,17 +6970,17 @@ button {
   }
 
   // src/modes/speed-tap.ts
-  var noteNames = NOTES.map((n) => n.name);
+  var noteNames = NOTES.map((n2) => n2.name);
   function getNoteAtPosition(string, fret) {
     const offset = STRING_OFFSETS[string];
     return noteNames[(offset + fret) % 12];
   }
   function getPositionsForNote(noteName) {
     const positions = [];
-    for (let s = 0; s < 6; s++) {
-      for (let f = 0; f <= 12; f++) {
-        if (getNoteAtPosition(s, f) === noteName) {
-          positions.push({ string: s, fret: f });
+    for (let s3 = 0; s3 < 6; s3++) {
+      for (let f4 = 0; f4 <= 12; f4++) {
+        if (getNoteAtPosition(s3, f4) === noteName) {
+          positions.push({ string: s3, fret: f4 });
         }
       }
     }
@@ -6742,14 +6993,14 @@ button {
     if (circle) circle.style.fill = color;
   }
   function clearAllCircles(container) {
-    container.querySelectorAll(".fb-pos").forEach((c) => {
-      c.style.fill = "";
+    container.querySelectorAll(".fb-pos").forEach((c3) => {
+      c3.style.fill = "";
     });
   }
   var FB_TAP_NEUTRAL = "hsl(30, 4%, 90%)";
   var FB_TAP_CORRECT = "hsl(90, 45%, 35%)";
   function speedTapDefinition() {
-    const ALL_ITEMS = NOTES.map((n) => n.name);
+    const ALL_ITEMS2 = NOTES.map((n2) => n2.name);
     let currentNote = null;
     let targetPositions = [];
     let foundPositions = /* @__PURE__ */ new Set();
@@ -6760,20 +7011,20 @@ button {
       const cs = getComputedStyle(document.documentElement);
       const val = cs.getPropertyValue("--color-error").trim();
       if (val) colorError = val;
-    } catch (_) {
+    } catch (_3) {
     }
     return {
       id: "speedTap",
       name: "Speed Tap",
       storageNamespace: "speedTap",
-      allItemIds: ALL_ITEMS,
+      allItemIds: ALL_ITEMS2,
       getEnabledItems(scope) {
         const filter = scope.kind === "note-filter" ? scope.noteFilter : "natural";
         if (filter === "natural") return NATURAL_NOTES.slice();
         if (filter === "sharps-flats") {
-          return NOTES.filter((n) => !NATURAL_NOTES.includes(n.name)).map((n) => n.name);
+          return NOTES.filter((n2) => !NATURAL_NOTES.includes(n2.name)).map((n2) => n2.name);
         }
-        return NOTES.map((n) => n.name);
+        return NOTES.map((n2) => n2.name);
       },
       getExpectedResponseCount(itemId) {
         return getPositionsForNote(itemId).length;
@@ -6783,7 +7034,7 @@ button {
         storageKey: "speedTap_noteFilter"
       },
       getQuestion(itemId) {
-        const note = NOTES.find((n) => n.name === itemId);
+        const note = NOTES.find((n2) => n2.name === itemId);
         const name = note ? displayNote(pickRandomAccidental(note.displayName)) : displayNote(itemId);
         return {
           noteName: itemId,
@@ -6797,25 +7048,25 @@ button {
       },
       prompt: {
         kind: "custom",
-        render(q, els) {
-          wrongFlashTimeouts.forEach((t) => clearTimeout(t));
+        render(q3, els) {
+          wrongFlashTimeouts.forEach((t3) => clearTimeout(t3));
           wrongFlashTimeouts.clear();
           clearAllCircles(els.container);
-          currentNote = q.noteName;
-          targetPositions = q.targetPositions;
+          currentNote = q3.noteName;
+          targetPositions = q3.targetPositions;
           foundPositions = /* @__PURE__ */ new Set();
           roundActive = true;
-          els.container.querySelectorAll(".fb-pos").forEach((c) => {
-            c.style.fill = FB_TAP_NEUTRAL;
+          els.container.querySelectorAll(".fb-pos").forEach((c3) => {
+            c3.style.fill = FB_TAP_NEUTRAL;
           });
-          els.promptEl.textContent = "Tap all " + q.displayName;
+          els.promptEl.textContent = "Tap all " + q3.displayName;
           const progressEl = els.container.querySelector(".speed-tap-progress");
           if (progressEl) {
             progressEl.textContent = "0 / " + targetPositions.length;
           }
         },
         clear(els) {
-          wrongFlashTimeouts.forEach((t) => clearTimeout(t));
+          wrongFlashTimeouts.forEach((t3) => clearTimeout(t3));
           wrongFlashTimeouts.clear();
           clearAllCircles(els.container);
           currentNote = null;
@@ -6842,15 +7093,15 @@ button {
             "circle.fb-pos[data-string][data-fret]"
           );
           if (!el) return null;
-          const s = parseInt(el.dataset.string);
-          const f = parseInt(el.dataset.fret);
-          const key = s + "-" + f;
+          const s3 = parseInt(el.dataset.string);
+          const f4 = parseInt(el.dataset.fret);
+          const key = s3 + "-" + f4;
           if (foundPositions.has(key)) return null;
-          const tappedNote = getNoteAtPosition(s, f);
+          const tappedNote = getNoteAtPosition(s3, f4);
           const container = el.closest(".mode-screen");
           if (tappedNote === currentNote) {
             foundPositions.add(key);
-            setCircleFill2(container, s, f, FB_TAP_CORRECT);
+            setCircleFill2(container, s3, f4, FB_TAP_CORRECT);
             const progressEl = container.querySelector(".speed-tap-progress");
             if (progressEl) {
               progressEl.textContent = foundPositions.size + " / " + targetPositions.length;
@@ -6861,11 +7112,11 @@ button {
             }
             return null;
           } else {
-            setCircleFill2(container, s, f, colorError);
+            setCircleFill2(container, s3, f4, colorError);
             const timeout = setTimeout(() => {
               wrongFlashTimeouts.delete(timeout);
               if (!foundPositions.has(key)) {
-                setCircleFill2(container, s, f, FB_TAP_NEUTRAL);
+                setCircleFill2(container, s3, f4, FB_TAP_NEUTRAL);
               }
             }, 800);
             wrongFlashTimeouts.add(timeout);
@@ -6877,17 +7128,17 @@ button {
         kind: "custom",
         render(mode, el, selector, baseline, _container) {
           let html = '<table class="stats-table speed-tap-stats"><thead><tr>';
-          for (let i = 0; i < NOTES.length; i++) {
-            html += "<th>" + displayNote(NOTES[i].name) + "</th>";
+          for (let i3 = 0; i3 < NOTES.length; i3++) {
+            html += "<th>" + displayNote(NOTES[i3].name) + "</th>";
           }
           html += "</tr></thead><tbody><tr>";
-          for (let j = 0; j < NOTES.length; j++) {
+          for (let j3 = 0; j3 < NOTES.length; j3++) {
             if (mode === "retention") {
-              const auto = selector.getAutomaticity(NOTES[j].name);
+              const auto = selector.getAutomaticity(NOTES[j3].name);
               html += '<td class="stats-cell" style="background:' + getAutomaticityColor(auto) + '"></td>';
             } else {
-              const stats = selector.getStats(NOTES[j].name);
-              const posCount = getPositionsForNote(NOTES[j].name).length;
+              const stats = selector.getStats(NOTES[j3].name);
+              const posCount = getPositionsForNote(NOTES[j3].name).length;
               const perPosMs = stats ? stats.ewma / posCount : null;
               html += '<td class="stats-cell" style="background:' + getSpeedHeatmapColor(perPosMs, baseline ?? void 0) + '"></td>';
             }
@@ -6913,7 +7164,7 @@ button {
       },
       onStop(els) {
         roundActive = false;
-        wrongFlashTimeouts.forEach((t) => clearTimeout(t));
+        wrongFlashTimeouts.forEach((t3) => clearTimeout(t3));
         wrongFlashTimeouts.clear();
         clearAllCircles(els.container);
         currentNote = null;
@@ -6930,188 +7181,43 @@ button {
     };
   }
 
-  // src/modes/note-semitones.ts
-  function noteSemitonesDefinition() {
-    const ALL_ITEMS = [];
-    for (const note of NOTES) {
-      ALL_ITEMS.push(note.name + ":fwd");
-      ALL_ITEMS.push(note.name + ":rev");
-    }
-    let currentQuestion = null;
-    return {
-      id: "noteSemitones",
-      name: "Note \u2194 Semitones",
-      storageNamespace: "noteSemitones",
-      allItemIds: ALL_ITEMS,
-      getEnabledItems(_scope) {
-        return ALL_ITEMS;
-      },
-      scopeSpec: { kind: "none" },
-      getQuestion(itemId) {
-        const [noteName, dir] = itemId.split(":");
-        const note = NOTES.find((n) => n.name === noteName);
-        const accidentalChoice = pickRandomAccidental(note.displayName);
-        currentQuestion = {
-          note,
-          dir,
-          accidentalChoice
-        };
-        return currentQuestion;
-      },
-      checkAnswer(_itemId, input) {
-        const q = currentQuestion;
-        if (q.dir === "fwd") {
-          const correct = parseInt(input, 10) === q.note.num;
-          return { correct, correctAnswer: String(q.note.num) };
-        } else {
-          const correct = noteMatchesInput(q.note, input);
-          return {
-            correct,
-            correctAnswer: displayNote(q.accidentalChoice)
-          };
-        }
-      },
-      prompt: {
-        kind: "text",
-        getText(q) {
-          return q.dir === "fwd" ? displayNote(q.accidentalChoice) : String(q.note.num);
-        }
-      },
-      response: {
-        kind: "bidirectional",
-        groups: [
-          {
-            id: "notes",
-            html: "",
-            // already in build-template
-            getButtonAnswer(btn) {
-              return btn.dataset.note ?? null;
-            }
-          },
-          {
-            id: "numbers",
-            html: "",
-            // already in build-template
-            getButtonAnswer(btn) {
-              return btn.dataset.num ?? null;
-            }
-          }
-        ],
-        getActiveGroup(question) {
-          const q = question;
-          return q.dir === "fwd" ? "numbers" : "notes";
-        },
-        createKeyHandler(submitAnswer, _getScope) {
-          const noteHandler = createAdaptiveKeyHandler(
-            submitAnswer,
-            () => true
-          );
-          let pendingDigit = null;
-          let pendingDigitTimeout = null;
-          return {
-            handleKey(e) {
-              if (currentQuestion?.dir === "rev") {
-                return noteHandler.handleKey(e);
-              }
-              if (e.key >= "0" && e.key <= "9") {
-                e.preventDefault();
-                if (pendingDigit !== null) {
-                  const num = pendingDigit * 10 + parseInt(e.key);
-                  clearTimeout(pendingDigitTimeout);
-                  pendingDigit = null;
-                  pendingDigitTimeout = null;
-                  if (num <= 11) submitAnswer(String(num));
-                  return true;
-                }
-                const d = parseInt(e.key);
-                if (d >= 2) {
-                  submitAnswer(String(d));
-                } else {
-                  pendingDigit = d;
-                  pendingDigitTimeout = setTimeout(() => {
-                    submitAnswer(String(pendingDigit));
-                    pendingDigit = null;
-                    pendingDigitTimeout = null;
-                  }, 400);
-                }
-                return true;
-              }
-              return false;
-            },
-            reset() {
-              noteHandler.reset();
-              if (pendingDigitTimeout) clearTimeout(pendingDigitTimeout);
-              pendingDigit = null;
-              pendingDigitTimeout = null;
-            }
-          };
-        }
-      },
-      stats: {
-        kind: "table",
-        fwdHeader: "N\u2192#",
-        revHeader: "#\u2192N",
-        getRows() {
-          return NOTES.map((note) => ({
-            label: displayNote(note.name),
-            sublabel: String(note.num),
-            _colHeader: "Note",
-            fwdItemId: note.name + ":fwd",
-            revItemId: note.name + ":rev"
-          }));
-        }
-      },
-      getPracticingLabel(_scope) {
-        return "all items";
-      },
-      getSessionSummary(_scope) {
-        return ALL_ITEMS.length + " items \xB7 60s";
-      },
-      calibrationSpec: {
-        getButtons(container) {
-          return Array.from(container.querySelectorAll(".answer-btn-note"));
-        }
-      }
-    };
-  }
-
   // src/modes/interval-semitones.ts
   function intervalSemitonesDefinition() {
-    const ALL_ITEMS = [];
+    const ALL_ITEMS2 = [];
     for (const interval of INTERVALS) {
-      ALL_ITEMS.push(interval.abbrev + ":fwd");
-      ALL_ITEMS.push(interval.abbrev + ":rev");
+      ALL_ITEMS2.push(interval.abbrev + ":fwd");
+      ALL_ITEMS2.push(interval.abbrev + ":rev");
     }
     let currentQuestion = null;
     return {
       id: "intervalSemitones",
       name: "Interval \u2194 Semitones",
       storageNamespace: "intervalSemitones",
-      allItemIds: ALL_ITEMS,
+      allItemIds: ALL_ITEMS2,
       getEnabledItems(_scope) {
-        return ALL_ITEMS;
+        return ALL_ITEMS2;
       },
       scopeSpec: { kind: "none" },
       getQuestion(itemId) {
         const [abbrev, dir] = itemId.split(":");
-        const interval = INTERVALS.find((i) => i.abbrev === abbrev);
+        const interval = INTERVALS.find((i3) => i3.abbrev === abbrev);
         currentQuestion = { interval, dir };
         return currentQuestion;
       },
       checkAnswer(_itemId, input) {
-        const q = currentQuestion;
-        if (q.dir === "fwd") {
-          const correct = parseInt(input, 10) === q.interval.num;
-          return { correct, correctAnswer: String(q.interval.num) };
+        const q3 = currentQuestion;
+        if (q3.dir === "fwd") {
+          const correct = parseInt(input, 10) === q3.interval.num;
+          return { correct, correctAnswer: String(q3.interval.num) };
         } else {
-          const correct = intervalMatchesInput(q.interval, input);
-          return { correct, correctAnswer: q.interval.abbrev };
+          const correct = intervalMatchesInput(q3.interval, input);
+          return { correct, correctAnswer: q3.interval.abbrev };
         }
       },
       prompt: {
         kind: "text",
-        getText(q) {
-          return q.dir === "fwd" ? q.interval.name : String(q.interval.num);
+        getText(q3) {
+          return q3.dir === "fwd" ? q3.interval.name : String(q3.interval.num);
         }
       },
       response: {
@@ -7133,32 +7239,32 @@ button {
           }
         ],
         getActiveGroup(question) {
-          const q = question;
-          return q.dir === "fwd" ? "numbers" : "intervals";
+          const q3 = question;
+          return q3.dir === "fwd" ? "numbers" : "intervals";
         },
         createKeyHandler(submitAnswer, _getScope) {
           let pendingDigit = null;
           let pendingDigitTimeout = null;
           return {
-            handleKey(e) {
+            handleKey(e3) {
               if (currentQuestion?.dir === "rev") {
                 return false;
               }
-              if (e.key >= "0" && e.key <= "9") {
-                e.preventDefault();
+              if (e3.key >= "0" && e3.key <= "9") {
+                e3.preventDefault();
                 if (pendingDigit !== null) {
-                  const num = pendingDigit * 10 + parseInt(e.key);
+                  const num = pendingDigit * 10 + parseInt(e3.key);
                   clearTimeout(pendingDigitTimeout);
                   pendingDigit = null;
                   pendingDigitTimeout = null;
                   if (num >= 1 && num <= 12) submitAnswer(String(num));
                   return true;
                 }
-                const d = parseInt(e.key);
-                if (d >= 2 && d <= 9) {
-                  submitAnswer(String(d));
+                const d3 = parseInt(e3.key);
+                if (d3 >= 2 && d3 <= 9) {
+                  submitAnswer(String(d3));
                 } else {
-                  pendingDigit = d;
+                  pendingDigit = d3;
                   pendingDigitTimeout = setTimeout(() => {
                     if (pendingDigit >= 1) submitAnswer(String(pendingDigit));
                     pendingDigit = null;
@@ -7195,7 +7301,7 @@ button {
         return "all items";
       },
       getSessionSummary(_scope) {
-        return ALL_ITEMS.length + " items \xB7 60s";
+        return ALL_ITEMS2.length + " items \xB7 60s";
       },
       calibrationSpec: {
         getButtons(container) {
@@ -7225,37 +7331,37 @@ button {
     const distances = DISTANCE_GROUPS[groupIndex].distances;
     const items = [];
     for (const note of NOTES) {
-      for (const d of distances) {
-        items.push(note.name + "+" + d);
-        items.push(note.name + "-" + d);
+      for (const d3 of distances) {
+        items.push(note.name + "+" + d3);
+        items.push(note.name + "-" + d3);
       }
     }
     return items;
   }
   function semitoneMathDefinition() {
-    const ALL_ITEMS = [];
+    const ALL_ITEMS2 = [];
     for (const note of NOTES) {
-      for (let s = 1; s <= 11; s++) {
-        ALL_ITEMS.push(note.name + "+" + s);
-        ALL_ITEMS.push(note.name + "-" + s);
+      for (let s3 = 1; s3 <= 11; s3++) {
+        ALL_ITEMS2.push(note.name + "+" + s3);
+        ALL_ITEMS2.push(note.name + "-" + s3);
       }
     }
-    const groups = DISTANCE_GROUPS.map((g, i) => ({
-      index: i,
-      label: g.label,
-      itemIds: getItemIdsForGroup(i)
+    const groups = DISTANCE_GROUPS.map((g2, i3) => ({
+      index: i3,
+      label: g2.label,
+      itemIds: getItemIdsForGroup(i3)
     }));
     let currentQuestion = null;
     return {
       id: "semitoneMath",
       name: "Semitone Math",
       storageNamespace: "semitoneMath",
-      allItemIds: ALL_ITEMS,
+      allItemIds: ALL_ITEMS2,
       getEnabledItems(scope) {
-        if (scope.kind !== "groups") return ALL_ITEMS;
+        if (scope.kind !== "groups") return ALL_ITEMS2;
         const items = [];
-        for (const g of scope.enabledGroups) {
-          items.push(...getItemIdsForGroup(g));
+        for (const g2 of scope.enabledGroups) {
+          items.push(...getItemIdsForGroup(g2));
         }
         return items;
       },
@@ -7265,14 +7371,14 @@ button {
         defaultEnabled: [0],
         storageKey: "semitoneMath_enabledGroups",
         label: "Distances",
-        sortUnstarted: (a, b) => a.string - b.string
+        sortUnstarted: (a3, b) => a3.string - b.string
       },
       getQuestion(itemId) {
         const match = itemId.match(/^([A-G]#?)([+-])(\d+)$/);
         const noteName = match[1];
         const op = match[2];
         const semitones = parseInt(match[3]);
-        const note = NOTES.find((n) => n.name === noteName);
+        const note = NOTES.find((n2) => n2.name === noteName);
         const answer = op === "+" ? noteAdd(note.num, semitones) : noteSub(note.num, semitones);
         const useFlats = op === "-";
         const promptNoteName = displayNote(
@@ -7289,24 +7395,24 @@ button {
         return currentQuestion;
       },
       checkAnswer(_itemId, input) {
-        const q = currentQuestion;
-        const correct = noteMatchesInput(q.answer, input);
+        const q3 = currentQuestion;
+        const correct = noteMatchesInput(q3.answer, input);
         return {
           correct,
           correctAnswer: displayNote(
-            pickAccidentalName(q.answer.displayName, q.useFlats)
+            pickAccidentalName(q3.answer.displayName, q3.useFlats)
           )
         };
       },
       prompt: {
         kind: "custom",
-        render(q, els) {
-          els.promptEl.textContent = q.promptText;
+        render(q3, els) {
+          els.promptEl.textContent = q3.promptText;
           els.container.querySelectorAll(".answer-btn-note").forEach((btn) => {
-            const note = NOTES.find((n) => n.name === btn.dataset.note);
+            const note = NOTES.find((n2) => n2.name === btn.dataset.note);
             if (note) {
               btn.textContent = displayNote(
-                pickAccidentalName(note.displayName, q.useFlats)
+                pickAccidentalName(note.displayName, q3.useFlats)
               );
             }
           });
@@ -7328,10 +7434,10 @@ button {
       },
       stats: {
         kind: "grid",
-        colLabels: Array.from({ length: 11 }, (_, i) => String(i + 1)),
+        colLabels: Array.from({ length: 11 }, (_3, i3) => String(i3 + 1)),
         getItemId(noteName, colIdx) {
-          const n = colIdx + 1;
-          return [noteName + "+" + n, noteName + "-" + n];
+          const n2 = colIdx + 1;
+          return [noteName + "+" + n2, noteName + "-" + n2];
         }
       },
       getPracticingLabel(scope) {
@@ -7339,7 +7445,7 @@ button {
         if (scope.enabledGroups.size === DISTANCE_GROUPS.length) {
           return "all distances";
         }
-        const labels = [...scope.enabledGroups].sort((a, b) => a - b).map((g) => DISTANCE_GROUPS[g].label);
+        const labels = [...scope.enabledGroups].sort((a3, b) => a3 - b).map((g2) => DISTANCE_GROUPS[g2].label);
         return labels.join(", ") + " semitones";
       },
       getSessionSummary(scope) {
@@ -7355,7 +7461,7 @@ button {
   }
 
   // src/modes/interval-math.ts
-  var MATH_INTERVALS = INTERVALS.filter((i) => i.num >= 1 && i.num <= 11);
+  var MATH_INTERVALS = INTERVALS.filter((i3) => i3.num >= 1 && i3.num <= 11);
   var DISTANCE_GROUPS2 = [
     { distances: [1, 2], label: "m2 M2" },
     { distances: [3, 4], label: "m3 M3" },
@@ -7366,7 +7472,7 @@ button {
   ];
   function getItemIdsForGroup2(groupIndex) {
     const distances = DISTANCE_GROUPS2[groupIndex].distances;
-    const intervals = MATH_INTERVALS.filter((i) => distances.includes(i.num));
+    const intervals = MATH_INTERVALS.filter((i3) => distances.includes(i3.num));
     const items = [];
     for (const note of NOTES) {
       for (const interval of intervals) {
@@ -7377,29 +7483,29 @@ button {
     return items;
   }
   function intervalMathDefinition() {
-    const ALL_ITEMS = [];
+    const ALL_ITEMS2 = [];
     for (const note of NOTES) {
       for (const interval of MATH_INTERVALS) {
-        ALL_ITEMS.push(note.name + "+" + interval.abbrev);
-        ALL_ITEMS.push(note.name + "-" + interval.abbrev);
+        ALL_ITEMS2.push(note.name + "+" + interval.abbrev);
+        ALL_ITEMS2.push(note.name + "-" + interval.abbrev);
       }
     }
-    const groups = DISTANCE_GROUPS2.map((g, i) => ({
-      index: i,
-      label: g.label,
-      itemIds: getItemIdsForGroup2(i)
+    const groups = DISTANCE_GROUPS2.map((g2, i3) => ({
+      index: i3,
+      label: g2.label,
+      itemIds: getItemIdsForGroup2(i3)
     }));
     let currentQuestion = null;
     return {
       id: "intervalMath",
       name: "Interval Math",
       storageNamespace: "intervalMath",
-      allItemIds: ALL_ITEMS,
+      allItemIds: ALL_ITEMS2,
       getEnabledItems(scope) {
-        if (scope.kind !== "groups") return ALL_ITEMS;
+        if (scope.kind !== "groups") return ALL_ITEMS2;
         const items = [];
-        for (const g of scope.enabledGroups) {
-          items.push(...getItemIdsForGroup2(g));
+        for (const g2 of scope.enabledGroups) {
+          items.push(...getItemIdsForGroup2(g2));
         }
         return items;
       },
@@ -7409,15 +7515,15 @@ button {
         defaultEnabled: [0],
         storageKey: "intervalMath_enabledGroups",
         label: "Intervals",
-        sortUnstarted: (a, b) => a.string - b.string
+        sortUnstarted: (a3, b) => a3.string - b.string
       },
       getQuestion(itemId) {
         const match = itemId.match(/^([A-G]#?)([+-])(.+)$/);
         const noteName = match[1];
         const op = match[2];
         const abbrev = match[3];
-        const note = NOTES.find((n) => n.name === noteName);
-        const interval = MATH_INTERVALS.find((i) => i.abbrev === abbrev);
+        const note = NOTES.find((n2) => n2.name === noteName);
+        const interval = MATH_INTERVALS.find((i3) => i3.abbrev === abbrev);
         const answer = op === "+" ? noteAdd(note.num, interval.num) : noteSub(note.num, interval.num);
         const useFlats = op === "-";
         const promptNoteName = displayNote(
@@ -7434,24 +7540,24 @@ button {
         return currentQuestion;
       },
       checkAnswer(_itemId, input) {
-        const q = currentQuestion;
-        const correct = noteMatchesInput(q.answer, input);
+        const q3 = currentQuestion;
+        const correct = noteMatchesInput(q3.answer, input);
         return {
           correct,
           correctAnswer: displayNote(
-            pickAccidentalName(q.answer.displayName, q.useFlats)
+            pickAccidentalName(q3.answer.displayName, q3.useFlats)
           )
         };
       },
       prompt: {
         kind: "custom",
-        render(q, els) {
-          els.promptEl.textContent = q.promptText;
+        render(q3, els) {
+          els.promptEl.textContent = q3.promptText;
           els.container.querySelectorAll(".answer-btn-note").forEach((btn) => {
-            const note = NOTES.find((n) => n.name === btn.dataset.note);
+            const note = NOTES.find((n2) => n2.name === btn.dataset.note);
             if (note) {
               btn.textContent = displayNote(
-                pickAccidentalName(note.displayName, q.useFlats)
+                pickAccidentalName(note.displayName, q3.useFlats)
               );
             }
           });
@@ -7472,7 +7578,7 @@ button {
       },
       stats: {
         kind: "grid",
-        colLabels: MATH_INTERVALS.map((i) => i.abbrev),
+        colLabels: MATH_INTERVALS.map((i3) => i3.abbrev),
         getItemId(noteName, colIdx) {
           const abbrev = MATH_INTERVALS[colIdx].abbrev;
           return [noteName + "+" + abbrev, noteName + "-" + abbrev];
@@ -7483,7 +7589,7 @@ button {
         if (scope.enabledGroups.size === DISTANCE_GROUPS2.length) {
           return "all intervals";
         }
-        const labels = [...scope.enabledGroups].sort((a, b) => a - b).map((g) => DISTANCE_GROUPS2[g].label);
+        const labels = [...scope.enabledGroups].sort((a3, b) => a3 - b).map((g2) => DISTANCE_GROUPS2[g2].label);
         return labels.join(", ") + " intervals";
       },
       getSessionSummary(scope) {
@@ -7516,27 +7622,27 @@ button {
     return items;
   }
   function keySignaturesDefinition() {
-    const ALL_ITEMS = [];
+    const ALL_ITEMS2 = [];
     for (const key of MAJOR_KEYS) {
-      ALL_ITEMS.push(key.root + ":fwd");
-      ALL_ITEMS.push(key.root + ":rev");
+      ALL_ITEMS2.push(key.root + ":fwd");
+      ALL_ITEMS2.push(key.root + ":rev");
     }
-    const groups = KEY_GROUPS.map((g, i) => ({
-      index: i,
-      label: g.label,
-      itemIds: getItemIdsForGroup3(i)
+    const groups = KEY_GROUPS.map((g2, i3) => ({
+      index: i3,
+      label: g2.label,
+      itemIds: getItemIdsForGroup3(i3)
     }));
     let currentQuestion = null;
     return {
       id: "keySignatures",
       name: "Key Signatures",
       storageNamespace: "keySignatures",
-      allItemIds: ALL_ITEMS,
+      allItemIds: ALL_ITEMS2,
       getEnabledItems(scope) {
-        if (scope.kind !== "groups") return ALL_ITEMS;
+        if (scope.kind !== "groups") return ALL_ITEMS2;
         const items = [];
-        for (const g of scope.enabledGroups) {
-          items.push(...getItemIdsForGroup3(g));
+        for (const g2 of scope.enabledGroups) {
+          items.push(...getItemIdsForGroup3(g2));
         }
         return items;
       },
@@ -7546,31 +7652,31 @@ button {
         defaultEnabled: [0, 1],
         storageKey: "keySignatures_enabledGroups",
         label: "Keys",
-        sortUnstarted: (a, b) => a.string - b.string
+        sortUnstarted: (a3, b) => a3.string - b.string
       },
       getQuestion(itemId) {
         const [rootName, dir] = itemId.split(":");
-        const key = MAJOR_KEYS.find((k) => k.root === rootName);
+        const key = MAJOR_KEYS.find((k3) => k3.root === rootName);
         currentQuestion = { key, dir };
         return currentQuestion;
       },
       checkAnswer(_itemId, input) {
-        const q = currentQuestion;
-        if (q.dir === "fwd") {
-          const expected = keySignatureLabel(q.key);
+        const q3 = currentQuestion;
+        if (q3.dir === "fwd") {
+          const expected = keySignatureLabel(q3.key);
           return { correct: input === expected, correctAnswer: expected };
         } else {
-          const correct = spelledNoteMatchesSemitone(q.key.root, input);
-          return { correct, correctAnswer: displayNote(q.key.root) };
+          const correct = spelledNoteMatchesSemitone(q3.key.root, input);
+          return { correct, correctAnswer: displayNote(q3.key.root) };
         }
       },
       prompt: {
         kind: "text",
-        getText(q) {
-          if (q.dir === "fwd") {
-            return displayNote(q.key.root) + " major";
+        getText(q3) {
+          if (q3.dir === "fwd") {
+            return displayNote(q3.key.root) + " major";
           } else {
-            return keySignatureLabel(q.key) + " major";
+            return keySignatureLabel(q3.key) + " major";
           }
         }
       },
@@ -7593,8 +7699,8 @@ button {
           }
         ],
         getActiveGroup(question) {
-          const q = question;
-          return q.dir === "fwd" ? "keysig" : "notes";
+          const q3 = question;
+          return q3.dir === "fwd" ? "keysig" : "notes";
         },
         createKeyHandler(submitAnswer, _getScope) {
           let pendingSigDigit = null;
@@ -7604,14 +7710,14 @@ button {
             () => true
           );
           return {
-            handleKey(e) {
+            handleKey(e3) {
               if (currentQuestion?.dir === "rev") {
-                return noteHandler.handleKey(e);
+                return noteHandler.handleKey(e3);
               }
-              if (e.key >= "0" && e.key <= "7") {
-                e.preventDefault();
+              if (e3.key >= "0" && e3.key <= "7") {
+                e3.preventDefault();
                 if (pendingSigTimeout) clearTimeout(pendingSigTimeout);
-                pendingSigDigit = e.key;
+                pendingSigDigit = e3.key;
                 pendingSigTimeout = setTimeout(() => {
                   if (pendingSigDigit === "0") {
                     submitAnswer("0");
@@ -7621,10 +7727,10 @@ button {
                 }, 600);
                 return true;
               }
-              if (pendingSigDigit !== null && (e.key === "#" || e.key === "b")) {
-                e.preventDefault();
+              if (pendingSigDigit !== null && (e3.key === "#" || e3.key === "b")) {
+                e3.preventDefault();
                 clearTimeout(pendingSigTimeout);
-                const answer = pendingSigDigit + e.key;
+                const answer = pendingSigDigit + e3.key;
                 pendingSigDigit = null;
                 pendingSigTimeout = null;
                 submitAnswer(answer);
@@ -7658,7 +7764,7 @@ button {
       getPracticingLabel(scope) {
         if (scope.kind !== "groups") return "all keys";
         if (scope.enabledGroups.size === KEY_GROUPS.length) return "all keys";
-        const keys = [...scope.enabledGroups].sort((a, b) => a - b).flatMap((g) => KEY_GROUPS[g].keys).map((k) => displayNote(k));
+        const keys = [...scope.enabledGroups].sort((a3, b) => a3 - b).flatMap((g2) => KEY_GROUPS[g2].keys).map((k3) => displayNote(k3));
         return keys.join(", ");
       },
       getSessionSummary(scope) {
@@ -7685,37 +7791,37 @@ button {
     const degrees = DEGREE_GROUPS[groupIndex].degrees;
     const items = [];
     for (const key of MAJOR_KEYS) {
-      for (const d of degrees) {
-        items.push(key.root + ":" + d + ":fwd");
-        items.push(key.root + ":" + d + ":rev");
+      for (const d3 of degrees) {
+        items.push(key.root + ":" + d3 + ":fwd");
+        items.push(key.root + ":" + d3 + ":rev");
       }
     }
     return items;
   }
   function scaleDegreesDefinition() {
-    const ALL_ITEMS = [];
+    const ALL_ITEMS2 = [];
     for (const key of MAJOR_KEYS) {
-      for (let d = 1; d <= 7; d++) {
-        ALL_ITEMS.push(key.root + ":" + d + ":fwd");
-        ALL_ITEMS.push(key.root + ":" + d + ":rev");
+      for (let d3 = 1; d3 <= 7; d3++) {
+        ALL_ITEMS2.push(key.root + ":" + d3 + ":fwd");
+        ALL_ITEMS2.push(key.root + ":" + d3 + ":rev");
       }
     }
-    const groups = DEGREE_GROUPS.map((g, i) => ({
-      index: i,
-      label: g.label,
-      itemIds: getItemIdsForGroup4(i)
+    const groups = DEGREE_GROUPS.map((g2, i3) => ({
+      index: i3,
+      label: g2.label,
+      itemIds: getItemIdsForGroup4(i3)
     }));
     let currentQuestion = null;
     return {
       id: "scaleDegrees",
       name: "Scale Degrees",
       storageNamespace: "scaleDegrees",
-      allItemIds: ALL_ITEMS,
+      allItemIds: ALL_ITEMS2,
       getEnabledItems(scope) {
-        if (scope.kind !== "groups") return ALL_ITEMS;
+        if (scope.kind !== "groups") return ALL_ITEMS2;
         const items = [];
-        for (const g of scope.enabledGroups) {
-          items.push(...getItemIdsForGroup4(g));
+        for (const g2 of scope.enabledGroups) {
+          items.push(...getItemIdsForGroup4(g2));
         }
         return items;
       },
@@ -7725,38 +7831,38 @@ button {
         defaultEnabled: [0],
         storageKey: "scaleDegrees_enabledGroups",
         label: "Degrees",
-        sortUnstarted: (a, b) => a.string - b.string
+        sortUnstarted: (a3, b) => a3.string - b.string
       },
       getQuestion(itemId) {
         const parts = itemId.split(":");
         const keyRoot = parts[0];
         const degree = parseInt(parts[1]);
         const dir = parts[2];
-        const key = MAJOR_KEYS.find((k) => k.root === keyRoot);
+        const key = MAJOR_KEYS.find((k3) => k3.root === keyRoot);
         const noteName = getScaleDegreeNote(keyRoot, degree);
         currentQuestion = { key, degree, dir, noteName };
         return currentQuestion;
       },
       checkAnswer(_itemId, input) {
-        const q = currentQuestion;
-        if (q.dir === "fwd") {
-          const correct = spelledNoteMatchesSemitone(q.noteName, input);
-          return { correct, correctAnswer: displayNote(q.noteName) };
+        const q3 = currentQuestion;
+        if (q3.dir === "fwd") {
+          const correct = spelledNoteMatchesSemitone(q3.noteName, input);
+          return { correct, correctAnswer: displayNote(q3.noteName) };
         } else {
-          const expectedDegree = String(q.degree);
+          const expectedDegree = String(q3.degree);
           return {
             correct: input === expectedDegree,
-            correctAnswer: DEGREE_LABELS[q.degree - 1]
+            correctAnswer: DEGREE_LABELS[q3.degree - 1]
           };
         }
       },
       prompt: {
         kind: "text",
-        getText(q) {
-          if (q.dir === "fwd") {
-            return DEGREE_LABELS[q.degree - 1] + " of " + displayNote(q.key.root) + " major";
+        getText(q3) {
+          if (q3.dir === "fwd") {
+            return DEGREE_LABELS[q3.degree - 1] + " of " + displayNote(q3.key.root) + " major";
           } else {
-            return displayNote(q.key.root) + " major: " + displayNote(q.noteName);
+            return displayNote(q3.key.root) + " major: " + displayNote(q3.noteName);
           }
         }
       },
@@ -7779,8 +7885,8 @@ button {
           }
         ],
         getActiveGroup(question) {
-          const q = question;
-          return q.dir === "fwd" ? "notes" : "degrees";
+          const q3 = question;
+          return q3.dir === "fwd" ? "notes" : "degrees";
         },
         createKeyHandler(submitAnswer, _getScope) {
           const noteHandler = createAdaptiveKeyHandler(
@@ -7788,13 +7894,13 @@ button {
             () => true
           );
           return {
-            handleKey(e) {
+            handleKey(e3) {
               if (currentQuestion?.dir === "fwd") {
-                return noteHandler.handleKey(e);
+                return noteHandler.handleKey(e3);
               }
-              if (e.key >= "1" && e.key <= "7") {
-                e.preventDefault();
-                submitAnswer(e.key);
+              if (e3.key >= "1" && e3.key <= "7") {
+                e3.preventDefault();
+                submitAnswer(e3.key);
                 return true;
               }
               return false;
@@ -7808,13 +7914,13 @@ button {
       stats: {
         kind: "grid",
         colLabels: DEGREE_LABELS,
-        notes: MAJOR_KEYS.map((k) => ({
-          name: k.root,
-          displayName: k.root
+        notes: MAJOR_KEYS.map((k3) => ({
+          name: k3.root,
+          displayName: k3.root
         })),
         getItemId(keyRoot, colIdx) {
-          const d = colIdx + 1;
-          return [keyRoot + ":" + d + ":fwd", keyRoot + ":" + d + ":rev"];
+          const d3 = colIdx + 1;
+          return [keyRoot + ":" + d3 + ":fwd", keyRoot + ":" + d3 + ":rev"];
         }
       },
       getPracticingLabel(scope) {
@@ -7822,8 +7928,8 @@ button {
         if (scope.enabledGroups.size === DEGREE_GROUPS.length) {
           return "all degrees";
         }
-        const degrees = [...scope.enabledGroups].sort((a, b) => a - b).flatMap((g) => DEGREE_GROUPS[g].degrees).sort((a, b) => a - b);
-        return degrees.map((d) => DEGREE_LABELS[d - 1]).join(", ") + " degrees";
+        const degrees = [...scope.enabledGroups].sort((a3, b) => a3 - b).flatMap((g2) => DEGREE_GROUPS[g2].degrees).sort((a3, b) => a3 - b);
+        return degrees.map((d3) => DEGREE_LABELS[d3 - 1]).join(", ") + " degrees";
       },
       getSessionSummary(scope) {
         const count = this.getEnabledItems(scope).length;
@@ -7847,37 +7953,37 @@ button {
     const degrees = CHORD_GROUPS[groupIndex].degrees;
     const items = [];
     for (const key of MAJOR_KEYS) {
-      for (const d of degrees) {
-        items.push(key.root + ":" + d + ":fwd");
-        items.push(key.root + ":" + d + ":rev");
+      for (const d3 of degrees) {
+        items.push(key.root + ":" + d3 + ":fwd");
+        items.push(key.root + ":" + d3 + ":rev");
       }
     }
     return items;
   }
   function diatonicChordsDefinition() {
-    const ALL_ITEMS = [];
+    const ALL_ITEMS2 = [];
     for (const key of MAJOR_KEYS) {
-      for (let d = 1; d <= 7; d++) {
-        ALL_ITEMS.push(key.root + ":" + d + ":fwd");
-        ALL_ITEMS.push(key.root + ":" + d + ":rev");
+      for (let d3 = 1; d3 <= 7; d3++) {
+        ALL_ITEMS2.push(key.root + ":" + d3 + ":fwd");
+        ALL_ITEMS2.push(key.root + ":" + d3 + ":rev");
       }
     }
-    const groups = CHORD_GROUPS.map((g, i) => ({
-      index: i,
-      label: g.label,
-      itemIds: getItemIdsForGroup5(i)
+    const groups = CHORD_GROUPS.map((g2, i3) => ({
+      index: i3,
+      label: g2.label,
+      itemIds: getItemIdsForGroup5(i3)
     }));
     let currentQuestion = null;
     return {
       id: "diatonicChords",
       name: "Diatonic Chords",
       storageNamespace: "diatonicChords",
-      allItemIds: ALL_ITEMS,
+      allItemIds: ALL_ITEMS2,
       getEnabledItems(scope) {
-        if (scope.kind !== "groups") return ALL_ITEMS;
+        if (scope.kind !== "groups") return ALL_ITEMS2;
         const items = [];
-        for (const g of scope.enabledGroups) {
-          items.push(...getItemIdsForGroup5(g));
+        for (const g2 of scope.enabledGroups) {
+          items.push(...getItemIdsForGroup5(g2));
         }
         return items;
       },
@@ -7887,27 +7993,27 @@ button {
         defaultEnabled: [0],
         storageKey: "diatonicChords_enabledGroups",
         label: "Chords",
-        sortUnstarted: (a, b) => a.string - b.string
+        sortUnstarted: (a3, b) => a3.string - b.string
       },
       getQuestion(itemId) {
         const parts = itemId.split(":");
         const keyRoot = parts[0];
         const degree = parseInt(parts[1]);
         const dir = parts[2];
-        const key = MAJOR_KEYS.find((k) => k.root === keyRoot);
+        const key = MAJOR_KEYS.find((k3) => k3.root === keyRoot);
         const chord = DIATONIC_CHORDS[degree - 1];
         const rootNote = getScaleDegreeNote(keyRoot, degree);
         currentQuestion = { key, degree, chord, dir, rootNote };
         return currentQuestion;
       },
       checkAnswer(_itemId, input) {
-        const q = currentQuestion;
-        if (q.dir === "fwd") {
-          const correct = spelledNoteMatchesSemitone(q.rootNote, input);
-          const fullAnswer = displayNote(q.rootNote) + " " + q.chord.quality;
+        const q3 = currentQuestion;
+        if (q3.dir === "fwd") {
+          const correct = spelledNoteMatchesSemitone(q3.rootNote, input);
+          const fullAnswer = displayNote(q3.rootNote) + " " + q3.chord.quality;
           return { correct, correctAnswer: fullAnswer };
         } else {
-          const expectedNumeral = q.chord.numeral;
+          const expectedNumeral = q3.chord.numeral;
           return {
             correct: input === expectedNumeral,
             correctAnswer: expectedNumeral
@@ -7916,12 +8022,12 @@ button {
       },
       prompt: {
         kind: "text",
-        getText(q) {
-          if (q.dir === "fwd") {
-            return q.chord.numeral + " in " + displayNote(q.key.root) + " major";
+        getText(q3) {
+          if (q3.dir === "fwd") {
+            return q3.chord.numeral + " in " + displayNote(q3.key.root) + " major";
           } else {
-            const chordName = displayNote(q.rootNote) + q.chord.qualityLabel;
-            return chordName + " in " + displayNote(q.key.root) + " major";
+            const chordName = displayNote(q3.rootNote) + q3.chord.qualityLabel;
+            return chordName + " in " + displayNote(q3.key.root) + " major";
           }
         }
       },
@@ -7944,8 +8050,8 @@ button {
           }
         ],
         getActiveGroup(question) {
-          const q = question;
-          return q.dir === "fwd" ? "notes" : "numerals";
+          const q3 = question;
+          return q3.dir === "fwd" ? "notes" : "numerals";
         },
         createKeyHandler(submitAnswer, _getScope) {
           const noteHandler = createAdaptiveKeyHandler(
@@ -7953,13 +8059,13 @@ button {
             () => true
           );
           return {
-            handleKey(e) {
+            handleKey(e3) {
               if (currentQuestion?.dir === "fwd") {
-                return noteHandler.handleKey(e);
+                return noteHandler.handleKey(e3);
               }
-              if (e.key >= "1" && e.key <= "7") {
-                e.preventDefault();
-                submitAnswer(ROMAN_NUMERALS[parseInt(e.key) - 1]);
+              if (e3.key >= "1" && e3.key <= "7") {
+                e3.preventDefault();
+                submitAnswer(ROMAN_NUMERALS[parseInt(e3.key) - 1]);
                 return true;
               }
               return false;
@@ -7973,13 +8079,13 @@ button {
       stats: {
         kind: "grid",
         colLabels: ROMAN_NUMERALS,
-        notes: MAJOR_KEYS.map((k) => ({
-          name: k.root,
-          displayName: k.root
+        notes: MAJOR_KEYS.map((k3) => ({
+          name: k3.root,
+          displayName: k3.root
         })),
         getItemId(keyRoot, colIdx) {
-          const d = colIdx + 1;
-          return [keyRoot + ":" + d + ":fwd", keyRoot + ":" + d + ":rev"];
+          const d3 = colIdx + 1;
+          return [keyRoot + ":" + d3 + ":fwd", keyRoot + ":" + d3 + ":rev"];
         }
       },
       getPracticingLabel(scope) {
@@ -7987,7 +8093,7 @@ button {
         if (scope.enabledGroups.size === CHORD_GROUPS.length) {
           return "all chords";
         }
-        const numerals = [...scope.enabledGroups].sort((a, b) => a - b).flatMap((g) => CHORD_GROUPS[g].degrees).sort((a, b) => a - b).map((d) => ROMAN_NUMERALS[d - 1]);
+        const numerals = [...scope.enabledGroups].sort((a3, b) => a3 - b).flatMap((g2) => CHORD_GROUPS[g2].degrees).sort((a3, b) => a3 - b).map((d3) => ROMAN_NUMERALS[d3 - 1]);
         return numerals.join(", ") + " chords";
       },
       getSessionSummary(scope) {
@@ -8009,9 +8115,9 @@ button {
       if (ct.group > maxGroup) maxGroup = ct.group;
     }
     const result = [];
-    for (let g = 0; g <= maxGroup; g++) {
-      const types = CHORD_TYPES.filter((t) => t.group === g);
-      const label = types.map((t) => t.symbol || "maj").join(", ");
+    for (let g2 = 0; g2 <= maxGroup; g2++) {
+      const types = CHORD_TYPES.filter((t3) => t3.group === g2);
+      const label = types.map((t3) => t3.symbol || "maj").join(", ");
       result.push({ types, label });
     }
     return result;
@@ -8028,27 +8134,27 @@ button {
     return items;
   }
   function chordSpellingDefinition() {
-    const ALL_ITEMS = [];
+    const ALL_ITEMS2 = [];
     for (const root of CHORD_ROOTS) {
       for (const type of CHORD_TYPES) {
-        ALL_ITEMS.push(root + ":" + type.name);
+        ALL_ITEMS2.push(root + ":" + type.name);
       }
     }
-    const groups = SPELLING_GROUPS.map((g, i) => ({
-      index: i,
-      label: g.label,
-      itemIds: getItemIdsForGroup6(i)
+    const groups = SPELLING_GROUPS.map((g2, i3) => ({
+      index: i3,
+      label: g2.label,
+      itemIds: getItemIdsForGroup6(i3)
     }));
     return {
       id: "chordSpelling",
       name: "Chord Spelling",
       storageNamespace: "chordSpelling",
-      allItemIds: ALL_ITEMS,
+      allItemIds: ALL_ITEMS2,
       getEnabledItems(scope) {
-        if (scope.kind !== "groups") return ALL_ITEMS;
+        if (scope.kind !== "groups") return ALL_ITEMS2;
         const items = [];
-        for (const g of scope.enabledGroups) {
-          items.push(...getItemIdsForGroup6(g));
+        for (const g2 of scope.enabledGroups) {
+          items.push(...getItemIdsForGroup6(g2));
         }
         return items;
       },
@@ -8061,7 +8167,7 @@ button {
         defaultEnabled: [0],
         storageKey: "chordSpelling_enabledGroups",
         label: "Chord types",
-        sortUnstarted: (a, b) => a.string - b.string
+        sortUnstarted: (a3, b) => a3.string - b.string
       },
       getQuestion(itemId) {
         return parseItem(itemId);
@@ -8074,8 +8180,8 @@ button {
       },
       prompt: {
         kind: "text",
-        getText(q) {
-          return displayNote(q.rootName) + q.chordType.symbol;
+        getText(q3) {
+          return displayNote(q3.rootName) + q3.chordType.symbol;
         }
       },
       response: {
@@ -8095,7 +8201,7 @@ button {
           const item = parseItem(itemId);
           const idx = state.entries.length;
           if (idx >= item.tones.length) {
-            const allCorrect = state.entries.every((e) => e.correct);
+            const allCorrect = state.entries.every((e3) => e3.correct);
             return {
               status: "complete",
               correct: allCorrect,
@@ -8120,7 +8226,7 @@ button {
             entries
           };
           if (entries.length === item.tones.length) {
-            const allCorrect = entries.every((e) => e.correct);
+            const allCorrect = entries.every((e3) => e3.correct);
             return {
               status: "complete",
               correct: allCorrect,
@@ -8133,13 +8239,13 @@ button {
           const slotsDiv = els.container.querySelector(".chord-slots");
           if (!slotsDiv) return;
           let html = "";
-          for (let i = 0; i < state.expectedCount; i++) {
+          for (let i3 = 0; i3 < state.expectedCount; i3++) {
             let cls = "chord-slot";
             let content = "_";
-            if (i < state.entries.length) {
-              content = state.entries[i].display;
-              cls += state.entries[i].correct ? " correct" : " wrong";
-            } else if (i === state.entries.length) {
+            if (i3 < state.entries.length) {
+              content = state.entries[i3].display;
+              cls += state.entries[i3].correct ? " correct" : " wrong";
+            } else if (i3 === state.entries.length) {
               cls += " active";
             }
             html += '<span class="' + cls + '">' + content + "</span>";
@@ -8149,8 +8255,8 @@ button {
       },
       stats: {
         kind: "grid",
-        colLabels: CHORD_TYPES.map((t) => t.symbol || "maj"),
-        notes: CHORD_ROOTS.map((r) => ({ name: r, displayName: r })),
+        colLabels: CHORD_TYPES.map((t3) => t3.symbol || "maj"),
+        notes: CHORD_ROOTS.map((r3) => ({ name: r3, displayName: r3 })),
         getItemId(rootName, colIdx) {
           return rootName + ":" + CHORD_TYPES[colIdx].name;
         }
@@ -8160,7 +8266,7 @@ button {
         if (scope.enabledGroups.size === SPELLING_GROUPS.length) {
           return "all chord types";
         }
-        const labels = [...scope.enabledGroups].sort((a, b) => a - b).map((g) => SPELLING_GROUPS[g].label);
+        const labels = [...scope.enabledGroups].sort((a3, b) => a3 - b).map((g2) => SPELLING_GROUPS[g2].label);
         return labels.join(", ") + " chords";
       },
       getSessionSummary(scope) {
@@ -8177,7 +8283,7 @@ button {
           const count = 2 + Math.floor(Math.random() * 3);
           const targets = [];
           let prev = prevBtn;
-          for (let i = 0; i < count; i++) {
+          for (let i3 = 0; i3 < count; i3++) {
             const btn = pickCalibrationButton(buttons, prev);
             targets.push(btn);
             prev = btn;
@@ -8192,7 +8298,7 @@ button {
     const colonIdx = itemId.indexOf(":");
     const rootName = itemId.substring(0, colonIdx);
     const typeName = itemId.substring(colonIdx + 1);
-    const chordType = CHORD_TYPES.find((t) => t.name === typeName);
+    const chordType = CHORD_TYPES.find((t3) => t3.name === typeName);
     const tones = getChordTones(rootName, chordType);
     return { rootName, chordType, tones };
   }
@@ -8246,8 +8352,8 @@ button {
           });
         }
       );
-      document.addEventListener("keydown", function(e) {
-        if (e.key !== "Escape" || !currentModeId) return;
+      document.addEventListener("keydown", function(e3) {
+        if (e3.key !== "Escape" || !currentModeId) return;
         if (document.querySelector(".settings-overlay.open")) return;
         const modeScreen = document.getElementById("mode-" + currentModeId);
         if (modeScreen && !modeScreen.classList.contains("phase-idle")) return;
@@ -8293,11 +8399,11 @@ button {
       overlay.classList.remove("open");
     }
     closeBtn.addEventListener("click", close);
-    overlay.addEventListener("click", function(e) {
-      if (e.target === overlay) close();
+    overlay.addEventListener("click", function(e3) {
+      if (e3.target === overlay) close();
     });
-    document.addEventListener("keydown", function(e) {
-      if (e.key === "Escape" && overlay.classList.contains("open")) {
+    document.addEventListener("keydown", function(e3) {
+      if (e3.key === "Escape" && overlay.classList.contains("open")) {
         close();
       }
     });
@@ -8314,6 +8420,1069 @@ button {
     return { open, close };
   }
 
+  // node_modules/preact/hooks/dist/hooks.module.js
+  var t2;
+  var r2;
+  var u2;
+  var i2;
+  var o2 = 0;
+  var f2 = [];
+  var c2 = l;
+  var e2 = c2.__b;
+  var a2 = c2.__r;
+  var v2 = c2.diffed;
+  var l2 = c2.__c;
+  var m2 = c2.unmount;
+  var s2 = c2.__;
+  function p2(n2, t3) {
+    c2.__h && c2.__h(r2, n2, o2 || t3), o2 = 0;
+    var u4 = r2.__H || (r2.__H = { __: [], __h: [] });
+    return n2 >= u4.__.length && u4.__.push({}), u4.__[n2];
+  }
+  function d2(n2) {
+    return o2 = 1, h2(D2, n2);
+  }
+  function h2(n2, u4, i3) {
+    var o3 = p2(t2++, 2);
+    if (o3.t = n2, !o3.__c && (o3.__ = [i3 ? i3(u4) : D2(void 0, u4), function(n3) {
+      var t3 = o3.__N ? o3.__N[0] : o3.__[0], r3 = o3.t(t3, n3);
+      t3 !== r3 && (o3.__N = [r3, o3.__[1]], o3.__c.setState({}));
+    }], o3.__c = r2, !r2.__f)) {
+      var f4 = function(n3, t3, r3) {
+        if (!o3.__c.__H) return true;
+        var u5 = o3.__c.__H.__.filter(function(n4) {
+          return n4.__c;
+        });
+        if (u5.every(function(n4) {
+          return !n4.__N;
+        })) return !c3 || c3.call(this, n3, t3, r3);
+        var i4 = o3.__c.props !== n3;
+        return u5.some(function(n4) {
+          if (n4.__N) {
+            var t4 = n4.__[0];
+            n4.__ = n4.__N, n4.__N = void 0, t4 !== n4.__[0] && (i4 = true);
+          }
+        }), c3 && c3.call(this, n3, t3, r3) || i4;
+      };
+      r2.__f = true;
+      var c3 = r2.shouldComponentUpdate, e3 = r2.componentWillUpdate;
+      r2.componentWillUpdate = function(n3, t3, r3) {
+        if (this.__e) {
+          var u5 = c3;
+          c3 = void 0, f4(n3, t3, r3), c3 = u5;
+        }
+        e3 && e3.call(this, n3, t3, r3);
+      }, r2.shouldComponentUpdate = f4;
+    }
+    return o3.__N || o3.__;
+  }
+  function y2(n2, u4) {
+    var i3 = p2(t2++, 3);
+    !c2.__s && C2(i3.__H, u4) && (i3.__ = n2, i3.u = u4, r2.__H.__h.push(i3));
+  }
+  function _2(n2, u4) {
+    var i3 = p2(t2++, 4);
+    !c2.__s && C2(i3.__H, u4) && (i3.__ = n2, i3.u = u4, r2.__h.push(i3));
+  }
+  function A2(n2) {
+    return o2 = 5, T2(function() {
+      return { current: n2 };
+    }, []);
+  }
+  function T2(n2, r3) {
+    var u4 = p2(t2++, 7);
+    return C2(u4.__H, r3) && (u4.__ = n2(), u4.__H = r3, u4.__h = n2), u4.__;
+  }
+  function q2(n2, t3) {
+    return o2 = 8, T2(function() {
+      return n2;
+    }, t3);
+  }
+  function j2() {
+    for (var n2; n2 = f2.shift(); ) {
+      var t3 = n2.__H;
+      if (n2.__P && t3) try {
+        t3.__h.some(z2), t3.__h.some(B2), t3.__h = [];
+      } catch (r3) {
+        t3.__h = [], c2.__e(r3, n2.__v);
+      }
+    }
+  }
+  c2.__b = function(n2) {
+    r2 = null, e2 && e2(n2);
+  }, c2.__ = function(n2, t3) {
+    n2 && t3.__k && t3.__k.__m && (n2.__m = t3.__k.__m), s2 && s2(n2, t3);
+  }, c2.__r = function(n2) {
+    a2 && a2(n2), t2 = 0;
+    var i3 = (r2 = n2.__c).__H;
+    i3 && (u2 === r2 ? (i3.__h = [], r2.__h = [], i3.__.some(function(n3) {
+      n3.__N && (n3.__ = n3.__N), n3.u = n3.__N = void 0;
+    })) : (i3.__h.some(z2), i3.__h.some(B2), i3.__h = [], t2 = 0)), u2 = r2;
+  }, c2.diffed = function(n2) {
+    v2 && v2(n2);
+    var t3 = n2.__c;
+    t3 && t3.__H && (t3.__H.__h.length && (1 !== f2.push(t3) && i2 === c2.requestAnimationFrame || ((i2 = c2.requestAnimationFrame) || w2)(j2)), t3.__H.__.some(function(n3) {
+      n3.u && (n3.__H = n3.u), n3.u = void 0;
+    })), u2 = r2 = null;
+  }, c2.__c = function(n2, t3) {
+    t3.some(function(n3) {
+      try {
+        n3.__h.some(z2), n3.__h = n3.__h.filter(function(n4) {
+          return !n4.__ || B2(n4);
+        });
+      } catch (r3) {
+        t3.some(function(n4) {
+          n4.__h && (n4.__h = []);
+        }), t3 = [], c2.__e(r3, n3.__v);
+      }
+    }), l2 && l2(n2, t3);
+  }, c2.unmount = function(n2) {
+    m2 && m2(n2);
+    var t3, r3 = n2.__c;
+    r3 && r3.__H && (r3.__H.__.some(function(n3) {
+      try {
+        z2(n3);
+      } catch (n4) {
+        t3 = n4;
+      }
+    }), r3.__H = void 0, t3 && c2.__e(t3, r3.__v));
+  };
+  var k2 = "function" == typeof requestAnimationFrame;
+  function w2(n2) {
+    var t3, r3 = function() {
+      clearTimeout(u4), k2 && cancelAnimationFrame(t3), setTimeout(n2);
+    }, u4 = setTimeout(r3, 35);
+    k2 && (t3 = requestAnimationFrame(r3));
+  }
+  function z2(n2) {
+    var t3 = r2, u4 = n2.__c;
+    "function" == typeof u4 && (n2.__c = void 0, u4()), r2 = t3;
+  }
+  function B2(n2) {
+    var t3 = r2;
+    n2.__c = n2.__(), r2 = t3;
+  }
+  function C2(n2, t3) {
+    return !n2 || n2.length !== t3.length || t3.some(function(t4, r3) {
+      return t4 !== n2[r3];
+    });
+  }
+  function D2(n2, t3) {
+    return "function" == typeof t3 ? t3(n2) : t3;
+  }
+
+  // src/hooks/use-learner-model.ts
+  function useLearnerModel(namespace, allItemIds, provider = "button", responseCountFn) {
+    const storageRef = A2(null);
+    const selectorRef = A2(null);
+    const baselineRef = A2(null);
+    const model = T2(() => {
+      const storage = createLocalStorageAdapter(namespace);
+      const rcFn = responseCountFn ?? null;
+      const selector = createAdaptiveSelector(
+        storage,
+        DEFAULT_CONFIG,
+        Math.random,
+        rcFn
+      );
+      storageRef.current = storage;
+      selectorRef.current = selector;
+      return { storage, selector };
+    }, [namespace]);
+    y2(() => {
+      model.storage.preload?.(allItemIds);
+    }, [model.storage, allItemIds]);
+    y2(() => {
+      const baselineKey = "motorBaseline_" + provider;
+      const legacyKey = "motorBaseline_" + namespace;
+      let stored = localStorage.getItem(baselineKey);
+      if (!stored && legacyKey !== baselineKey) {
+        stored = localStorage.getItem(legacyKey);
+        if (stored) localStorage.setItem(baselineKey, stored);
+      }
+      if (stored) {
+        const parsed = parseInt(stored, 10);
+        if (parsed > 0) {
+          baselineRef.current = parsed;
+          model.selector.updateConfig(deriveScaledConfig(parsed, DEFAULT_CONFIG));
+        }
+      }
+    }, [model.selector, provider, namespace]);
+    return {
+      selector: model.selector,
+      storage: model.storage,
+      get motorBaseline() {
+        return baselineRef.current;
+      },
+      applyBaseline(baseline) {
+        baselineRef.current = baseline;
+        localStorage.setItem("motorBaseline_" + provider, String(baseline));
+        model.selector.updateConfig(
+          deriveScaledConfig(baseline, DEFAULT_CONFIG)
+        );
+      },
+      syncBaseline() {
+        const stored = localStorage.getItem("motorBaseline_" + provider);
+        if (stored) {
+          const parsed = parseInt(stored, 10);
+          if (parsed > 0 && parsed !== baselineRef.current) {
+            baselineRef.current = parsed;
+            model.selector.updateConfig(
+              deriveScaledConfig(parsed, DEFAULT_CONFIG)
+            );
+          }
+        }
+      }
+    };
+  }
+
+  // src/hooks/use-quiz-engine.ts
+  var ROUND_DURATION_MS2 = 6e4;
+  var AUTO_ADVANCE_MS = 1e3;
+  var TIMER_TICK_MS = 200;
+  function formatRoundTime(ms) {
+    const totalSec = Math.max(0, Math.ceil(ms / 1e3));
+    const min = Math.floor(totalSec / 60);
+    const sec = totalSec % 60;
+    return min + ":" + (sec < 10 ? "0" : "") + sec;
+  }
+  function useQuizEngine(config, selector) {
+    const [state, setState] = d2(initialEngineState);
+    const [timerPct, setTimerPct] = d2(100);
+    const [timerText, setTimerText] = d2("");
+    const [timerWarning, setTimerWarning] = d2(false);
+    const [timerLastQuestion, setTimerLastQuestion] = d2(false);
+    const stateRef = A2(state);
+    stateRef.current = state;
+    const configRef = A2(config);
+    configRef.current = config;
+    const selectorRef = A2(selector);
+    selectorRef.current = selector;
+    const roundTimerRef = A2(null);
+    const roundTimerStartRef = A2(null);
+    const autoAdvanceRef = A2(null);
+    const computeProgress = q2(() => {
+      const items = configRef.current.getEnabledItems();
+      let mastered = 0;
+      const threshold = selectorRef.current.getConfig().automaticityThreshold;
+      for (const id of items) {
+        const auto = selectorRef.current.getAutomaticity(id);
+        if (auto !== null && auto > threshold) mastered++;
+      }
+      return { masteredCount: mastered, totalEnabledCount: items.length };
+    }, []);
+    const stopRoundTimer = q2(() => {
+      if (roundTimerRef.current) {
+        clearInterval(roundTimerRef.current);
+        roundTimerRef.current = null;
+      }
+      roundTimerStartRef.current = null;
+      setTimerPct(100);
+      setTimerText("");
+      setTimerWarning(false);
+      setTimerLastQuestion(false);
+    }, []);
+    const transitionToRoundCompleteRef = A2(null);
+    const nextQuestionRef = A2(null);
+    const transitionToRoundComplete = q2(() => {
+      const roundDurationMs = roundTimerStartRef.current ? Date.now() - roundTimerStartRef.current : 0;
+      stopRoundTimer();
+      setState((prev) => {
+        const s3 = engineRoundComplete(prev);
+        return { ...s3, roundDurationMs };
+      });
+    }, [stopRoundTimer]);
+    transitionToRoundCompleteRef.current = transitionToRoundComplete;
+    const handleRoundTimerExpiry = q2(() => {
+      if (stateRef.current.phase !== "active") return;
+      setState((prev) => {
+        const next = engineRoundTimerExpired(prev);
+        if (next.answered) {
+          setTimeout(() => transitionToRoundCompleteRef.current(), 0);
+        } else {
+          setTimerLastQuestion(true);
+        }
+        return next;
+      });
+    }, []);
+    const startRoundTimer = q2(() => {
+      if (roundTimerRef.current) clearInterval(roundTimerRef.current);
+      roundTimerStartRef.current = Date.now();
+      setTimerPct(100);
+      setTimerText(formatRoundTime(ROUND_DURATION_MS2));
+      setTimerWarning(false);
+      setTimerLastQuestion(false);
+      roundTimerRef.current = setInterval(() => {
+        const elapsed = Date.now() - roundTimerStartRef.current;
+        const remaining = ROUND_DURATION_MS2 - elapsed;
+        const pct = Math.max(0, remaining / ROUND_DURATION_MS2 * 100);
+        setTimerPct(pct);
+        setTimerText(formatRoundTime(remaining));
+        setTimerWarning(remaining <= 1e4 && remaining > 0);
+        if (remaining <= 0) {
+          if (roundTimerRef.current) clearInterval(roundTimerRef.current);
+          roundTimerRef.current = null;
+          setTimerPct(0);
+          setTimerText("0:00");
+          setTimerWarning(false);
+          handleRoundTimerExpiry();
+        }
+      }, TIMER_TICK_MS);
+    }, [handleRoundTimerExpiry]);
+    const nextQuestion = q2(() => {
+      if (autoAdvanceRef.current) {
+        clearTimeout(autoAdvanceRef.current);
+        autoAdvanceRef.current = null;
+      }
+      if (stateRef.current.roundTimerExpired) {
+        transitionToRoundCompleteRef.current();
+        return;
+      }
+      const items = configRef.current.getEnabledItems();
+      if (items.length === 0) return;
+      const nextItemId = selectorRef.current.selectNext(items);
+      setState((prev) => engineNextQuestion(prev, nextItemId, Date.now()));
+      if (configRef.current.onPresent) {
+        configRef.current.onPresent(nextItemId);
+      }
+    }, []);
+    nextQuestionRef.current = nextQuestion;
+    const submitAnswer = q2((input) => {
+      const s3 = stateRef.current;
+      if (s3.phase !== "active" || s3.answered) return;
+      const responseTime = Date.now() - s3.questionStartTime;
+      const result = configRef.current.checkAnswer(s3.currentItemId, input);
+      selectorRef.current.recordResponse(
+        s3.currentItemId,
+        responseTime,
+        result.correct
+      );
+      setState((prev) => {
+        let next = engineSubmitAnswer(prev, result.correct, result.correctAnswer);
+        next = {
+          ...next,
+          roundResponseTimes: [...next.roundResponseTimes, responseTime]
+        };
+        const allMastered = selectorRef.current.checkAllAutomatic(
+          configRef.current.getEnabledItems()
+        );
+        next = engineUpdateMasteryAfterAnswer(next, allMastered);
+        const progress = computeProgress();
+        next = engineUpdateProgress(
+          next,
+          progress.masteredCount,
+          progress.totalEnabledCount
+        );
+        return next;
+      });
+      if (configRef.current.onAnswer) {
+        configRef.current.onAnswer(
+          s3.currentItemId,
+          result,
+          responseTime
+        );
+      }
+      if (stateRef.current.roundTimerExpired) {
+        setTimeout(() => {
+          if (stateRef.current.phase === "active") {
+            transitionToRoundCompleteRef.current();
+          }
+        }, 600);
+      } else {
+        autoAdvanceRef.current = setTimeout(() => {
+          if (stateRef.current.phase === "active" && stateRef.current.answered) {
+            nextQuestionRef.current();
+          }
+        }, AUTO_ADVANCE_MS);
+      }
+    }, [computeProgress]);
+    const start = q2(() => {
+      if (configRef.current.onStart) configRef.current.onStart();
+      setState((prev) => {
+        let next = engineStart(prev);
+        const progress = computeProgress();
+        next = engineUpdateProgress(
+          next,
+          progress.masteredCount,
+          progress.totalEnabledCount
+        );
+        return next;
+      });
+      startRoundTimer();
+      setTimeout(() => nextQuestionRef.current(), 0);
+    }, [startRoundTimer, computeProgress]);
+    const continueQuiz = q2(() => {
+      setState(engineContinueRound);
+      startRoundTimer();
+      setTimeout(() => nextQuestionRef.current(), 0);
+    }, [startRoundTimer]);
+    const stop = q2(() => {
+      if (autoAdvanceRef.current) {
+        clearTimeout(autoAdvanceRef.current);
+        autoAdvanceRef.current = null;
+      }
+      stopRoundTimer();
+      setState(engineStop);
+      if (configRef.current.onStop) configRef.current.onStop();
+    }, [stopRoundTimer]);
+    const updateIdleMessage = q2(() => {
+      if (stateRef.current.phase !== "idle") return;
+      const items = configRef.current.getEnabledItems();
+      setState(
+        (prev) => engineUpdateIdleMessage(
+          prev,
+          selectorRef.current.checkAllAutomatic(items),
+          selectorRef.current.checkNeedsReview(items)
+        )
+      );
+    }, []);
+    y2(() => {
+      if (state.phase === "idle") return;
+      function handleKeydown(e3) {
+        const routed = engineRouteKey(stateRef.current, e3.key);
+        switch (routed.action) {
+          case "stop":
+            e3.stopImmediatePropagation();
+            stop();
+            break;
+          case "next":
+            e3.preventDefault();
+            if (autoAdvanceRef.current) {
+              clearTimeout(autoAdvanceRef.current);
+              autoAdvanceRef.current = null;
+            }
+            nextQuestionRef.current();
+            break;
+          case "continue":
+            e3.preventDefault();
+            continueQuiz();
+            break;
+          case "delegate":
+            if (configRef.current.handleKey) {
+              configRef.current.handleKey(e3, { submitAnswer });
+            }
+            break;
+          case "ignore":
+            break;
+        }
+      }
+      document.addEventListener("keydown", handleKeydown);
+      return () => document.removeEventListener("keydown", handleKeydown);
+    }, [state.phase !== "idle", stop, continueQuiz, submitAnswer]);
+    y2(() => {
+      return () => {
+        if (roundTimerRef.current) clearInterval(roundTimerRef.current);
+        if (autoAdvanceRef.current) clearTimeout(autoAdvanceRef.current);
+      };
+    }, []);
+    return {
+      state,
+      timerPct,
+      timerText,
+      timerWarning,
+      timerLastQuestion,
+      start,
+      stop,
+      submitAnswer,
+      nextQuestion,
+      continueQuiz,
+      updateIdleMessage
+    };
+  }
+
+  // node_modules/preact/jsx-runtime/dist/jsxRuntime.module.js
+  var f3 = 0;
+  function u3(e3, t3, n2, o3, i3, u4) {
+    t3 || (t3 = {});
+    var a3, c3, p3 = t3;
+    if ("ref" in p3) for (c3 in p3 = {}, t3) "ref" == c3 ? a3 = t3[c3] : p3[c3] = t3[c3];
+    var l3 = { type: e3, props: p3, key: n2, ref: a3, __k: null, __: null, __b: 0, __e: null, __c: null, constructor: void 0, __v: --f3, __i: -1, __u: 0, __source: i3, __self: u4 };
+    if ("function" == typeof e3 && (a3 = e3.defaultProps)) for (c3 in a3) void 0 === p3[c3] && (p3[c3] = a3[c3]);
+    return l.vnode && l.vnode(l3), l3;
+  }
+
+  // src/ui/buttons.tsx
+  var ALL_NOTES = [
+    "C",
+    "C#",
+    "D",
+    "D#",
+    "E",
+    "F",
+    "F#",
+    "G",
+    "G#",
+    "A",
+    "A#",
+    "B"
+  ];
+  function NoteButtons({ onAnswer, hidden }) {
+    const cls = "answer-buttons answer-buttons-notes" + (hidden ? " answer-group-hidden" : "");
+    return /* @__PURE__ */ u3("div", { class: cls, children: ALL_NOTES.map((n2) => /* @__PURE__ */ u3(
+      "button",
+      {
+        type: "button",
+        class: "answer-btn answer-btn-note",
+        "data-note": n2,
+        onClick: onAnswer ? () => onAnswer(n2) : void 0,
+        children: displayNote(n2)
+      },
+      n2
+    )) });
+  }
+  function NumberButtons({ start, end, onAnswer, hidden }) {
+    const nums = [];
+    for (let i3 = start; i3 <= end; i3++) nums.push(i3);
+    const cls = "answer-buttons answer-buttons-numbers" + (hidden ? " answer-group-hidden" : "");
+    return /* @__PURE__ */ u3("div", { class: cls, children: nums.map((i3) => /* @__PURE__ */ u3(
+      "button",
+      {
+        type: "button",
+        class: "answer-btn answer-btn-num",
+        "data-num": String(i3),
+        onClick: onAnswer ? () => onAnswer(i3) : void 0,
+        children: i3
+      },
+      i3
+    )) });
+  }
+
+  // src/ui/mode-screen.tsx
+  function ModeTopBar({ title, onBack }) {
+    return /* @__PURE__ */ u3("div", { class: "mode-top-bar", children: [
+      /* @__PURE__ */ u3(
+        "button",
+        {
+          type: "button",
+          class: "mode-back-btn",
+          "aria-label": "Back to home",
+          onClick: onBack,
+          children: "\u2190"
+        }
+      ),
+      /* @__PURE__ */ u3("h1", { class: "mode-title", children: title })
+    ] });
+  }
+  function TabbedIdle({ activeTab, onTabSwitch, practiceContent, progressContent }) {
+    return /* @__PURE__ */ u3(k, { children: [
+      /* @__PURE__ */ u3("div", { class: "mode-tabs", children: [
+        /* @__PURE__ */ u3(
+          "button",
+          {
+            type: "button",
+            class: "mode-tab" + (activeTab === "practice" ? " active" : ""),
+            "data-tab": "practice",
+            onClick: () => onTabSwitch("practice"),
+            children: "Practice"
+          }
+        ),
+        /* @__PURE__ */ u3(
+          "button",
+          {
+            type: "button",
+            class: "mode-tab" + (activeTab === "progress" ? " active" : ""),
+            "data-tab": "progress",
+            onClick: () => onTabSwitch("progress"),
+            children: "Progress"
+          }
+        )
+      ] }),
+      /* @__PURE__ */ u3(
+        "div",
+        {
+          class: "tab-content tab-practice" + (activeTab === "practice" ? " active" : ""),
+          children: practiceContent
+        }
+      ),
+      /* @__PURE__ */ u3(
+        "div",
+        {
+          class: "tab-content tab-progress" + (activeTab === "progress" ? " active" : ""),
+          children: progressContent
+        }
+      )
+    ] });
+  }
+  function PracticeCard({
+    statusLabel,
+    statusDetail,
+    recommendation,
+    mastery,
+    scope,
+    sessionSummary,
+    onStart,
+    onApplyRecommendation
+  }) {
+    const recBlock = recommendation ? /* @__PURE__ */ u3("div", { class: "practice-recommendation", children: [
+      /* @__PURE__ */ u3("span", { class: "practice-rec-text", children: recommendation }),
+      onApplyRecommendation ? /* @__PURE__ */ u3(
+        "button",
+        {
+          type: "button",
+          class: "practice-rec-btn",
+          onClick: onApplyRecommendation,
+          children: "Use suggestion"
+        }
+      ) : null
+    ] }) : null;
+    const masteryBlock = mastery ? /* @__PURE__ */ u3("div", { class: "mastery-message visible", children: mastery }) : null;
+    const statusExtra = !scope ? /* @__PURE__ */ u3(k, { children: [
+      recBlock,
+      masteryBlock
+    ] }) : null;
+    const scopeZone = scope ? /* @__PURE__ */ u3("div", { class: "practice-zone practice-zone-scope", children: [
+      recBlock,
+      /* @__PURE__ */ u3("div", { class: "practice-scope", children: /* @__PURE__ */ u3("div", { class: "settings-row", children: scope }) }),
+      masteryBlock
+    ] }) : null;
+    return /* @__PURE__ */ u3("div", { class: "practice-card", children: [
+      /* @__PURE__ */ u3("div", { class: "practice-zone practice-zone-status", children: [
+        /* @__PURE__ */ u3("div", { class: "practice-status", children: [
+          /* @__PURE__ */ u3("span", { class: "practice-status-label", children: statusLabel || "" }),
+          /* @__PURE__ */ u3("span", { class: "practice-status-detail", children: statusDetail || "" })
+        ] }),
+        statusExtra
+      ] }),
+      scopeZone,
+      /* @__PURE__ */ u3("div", { class: "practice-zone practice-zone-action", children: /* @__PURE__ */ u3(StartButton, { summary: sessionSummary, onStart }) })
+    ] });
+  }
+  function StartButton({ summary, onStart }) {
+    return /* @__PURE__ */ u3(k, { children: [
+      summary ? /* @__PURE__ */ u3("div", { class: "session-summary-text", children: summary }) : null,
+      /* @__PURE__ */ u3("button", { type: "button", class: "start-btn", onClick: onStart, children: "Start Quiz" })
+    ] });
+  }
+  function QuizSession({
+    timeLeft,
+    context,
+    count,
+    fluent,
+    total,
+    isWarning,
+    isLastQuestion,
+    onClose
+  }) {
+    const pct = total ? Math.round((fluent || 0) / total * 100) : 0;
+    return /* @__PURE__ */ u3("div", { class: "quiz-session", children: [
+      /* @__PURE__ */ u3("div", { class: "quiz-countdown-row", children: [
+        /* @__PURE__ */ u3(
+          "div",
+          {
+            class: "quiz-countdown-bar" + (isWarning ? " round-timer-warning" : "") + (isLastQuestion ? " last-question" : ""),
+            children: /* @__PURE__ */ u3("div", { class: "quiz-countdown-fill" })
+          }
+        ),
+        /* @__PURE__ */ u3("span", { class: "quiz-info-time", children: timeLeft || "" })
+      ] }),
+      /* @__PURE__ */ u3(SessionInfo, { context, count }),
+      /* @__PURE__ */ u3(
+        "button",
+        {
+          type: "button",
+          class: "quiz-header-close",
+          "aria-label": "Stop quiz",
+          onClick: onClose,
+          children: "\xD7"
+        }
+      ),
+      /* @__PURE__ */ u3("div", { class: "progress-bar", children: [
+        /* @__PURE__ */ u3("div", { class: "progress-fill", style: { width: `${pct}%` } }),
+        /* @__PURE__ */ u3("div", { class: "progress-text", children: fluent != null && total != null ? `${fluent} / ${total} fluent` : "" })
+      ] })
+    ] });
+  }
+  function SessionInfo({ context, count }) {
+    return /* @__PURE__ */ u3("div", { class: "quiz-session-info", children: [
+      /* @__PURE__ */ u3("span", { class: "quiz-info-context", children: context || "" }),
+      /* @__PURE__ */ u3("span", { class: "quiz-info-count", children: count || "" })
+    ] });
+  }
+  function QuizArea({ prompt, lastQuestion, children }) {
+    return /* @__PURE__ */ u3("div", { class: "quiz-area", children: [
+      /* @__PURE__ */ u3("div", { class: "quiz-prompt-row", children: [
+        /* @__PURE__ */ u3("div", { class: "quiz-prompt", children: prompt || "" }),
+        /* @__PURE__ */ u3("div", { class: "quiz-last-question", children: lastQuestion || "" })
+      ] }),
+      children
+    ] });
+  }
+  function RoundComplete({ context, heading, correct, median, onContinue, onStop }) {
+    return /* @__PURE__ */ u3("div", { class: "round-complete", children: [
+      /* @__PURE__ */ u3("div", { class: "round-complete-context", children: context || "" }),
+      /* @__PURE__ */ u3("div", { class: "round-complete-heading", children: heading || "" }),
+      /* @__PURE__ */ u3("div", { class: "round-complete-stats", children: [
+        /* @__PURE__ */ u3("div", { class: "round-stat-line round-stat-correct", children: correct || "" }),
+        /* @__PURE__ */ u3("div", { class: "round-stat-line round-stat-median", children: median || "" })
+      ] }),
+      /* @__PURE__ */ u3("div", { class: "round-complete-actions", children: [
+        /* @__PURE__ */ u3(
+          "button",
+          {
+            type: "button",
+            class: "round-complete-continue",
+            onClick: onContinue,
+            children: "Keep Going"
+          }
+        ),
+        /* @__PURE__ */ u3("button", { type: "button", class: "round-complete-stop", onClick: onStop, children: "Stop" })
+      ] })
+    ] });
+  }
+
+  // src/ui/stats.tsx
+  function StatsTable({ selector, rows, fwdHeader, revHeader, statsMode, baseline }) {
+    if (!rows || rows.length === 0) return null;
+    return /* @__PURE__ */ u3("table", { class: "stats-table", children: [
+      /* @__PURE__ */ u3("thead", { children: /* @__PURE__ */ u3("tr", { children: [
+        /* @__PURE__ */ u3("th", { children: rows[0]._colHeader }),
+        /* @__PURE__ */ u3("th", { children: "#" }),
+        /* @__PURE__ */ u3("th", { children: fwdHeader }),
+        /* @__PURE__ */ u3("th", { children: revHeader })
+      ] }) }),
+      /* @__PURE__ */ u3("tbody", { children: rows.map((row) => {
+        const fwdColor = getStatsCellColor(
+          selector,
+          row.fwdItemId,
+          statsMode,
+          baseline
+        );
+        const revColor = getStatsCellColor(
+          selector,
+          row.revItemId,
+          statsMode,
+          baseline
+        );
+        return /* @__PURE__ */ u3("tr", { children: [
+          /* @__PURE__ */ u3("td", { children: row.label }),
+          /* @__PURE__ */ u3("td", { children: row.sublabel }),
+          /* @__PURE__ */ u3(
+            "td",
+            {
+              class: "stats-cell",
+              style: { background: fwdColor }
+            }
+          ),
+          /* @__PURE__ */ u3(
+            "td",
+            {
+              class: "stats-cell",
+              style: { background: revColor }
+            }
+          )
+        ] }, row.fwdItemId);
+      }) })
+    ] });
+  }
+  function StatsToggle({ active, onToggle }) {
+    return /* @__PURE__ */ u3("div", { class: "stats-toggle", children: [
+      /* @__PURE__ */ u3(
+        "button",
+        {
+          type: "button",
+          class: "stats-toggle-btn" + (active === "retention" ? " active" : ""),
+          "data-mode": "retention",
+          onClick: () => onToggle("retention"),
+          children: "Recall"
+        }
+      ),
+      /* @__PURE__ */ u3(
+        "button",
+        {
+          type: "button",
+          class: "stats-toggle-btn" + (active === "speed" ? " active" : ""),
+          "data-mode": "speed",
+          onClick: () => onToggle("speed"),
+          children: "Speed"
+        }
+      )
+    ] });
+  }
+
+  // src/ui/quiz-ui.tsx
+  function FeedbackDisplay({ text, className, time, hint }) {
+    return /* @__PURE__ */ u3(k, { children: [
+      /* @__PURE__ */ u3("div", { class: className, children: text }),
+      time ? /* @__PURE__ */ u3("div", { class: "time-display", children: time }) : null,
+      hint ? /* @__PURE__ */ u3("div", { class: "hint", children: hint }) : null
+    ] });
+  }
+
+  // src/ui/modes/note-semitones-mode.tsx
+  var ALL_ITEMS = [];
+  for (const note of NOTES) {
+    ALL_ITEMS.push(note.name + ":fwd");
+    ALL_ITEMS.push(note.name + ":rev");
+  }
+  function getQuestion(itemId) {
+    const [noteName, dir] = itemId.split(":");
+    const note = NOTES.find((n2) => n2.name === noteName);
+    return {
+      noteName: note.name,
+      noteNum: note.num,
+      dir,
+      accidentalChoice: pickRandomAccidental(note.displayName)
+    };
+  }
+  function checkAnswer(q3, input) {
+    if (q3.dir === "fwd") {
+      const correct2 = parseInt(input, 10) === q3.noteNum;
+      return { correct: correct2, correctAnswer: String(q3.noteNum) };
+    }
+    const note = NOTES.find((n2) => n2.name === q3.noteName);
+    const correct = noteMatchesInput(note, input);
+    return { correct, correctAnswer: displayNote(q3.accidentalChoice) };
+  }
+  function getStatsRows() {
+    return NOTES.map((note) => ({
+      label: displayNote(note.name),
+      sublabel: String(note.num),
+      _colHeader: "Note",
+      fwdItemId: note.name + ":fwd",
+      revItemId: note.name + ":rev"
+    }));
+  }
+  function NoteSemitonesMode({ container, navigateHome, onMount }) {
+    const learner = useLearnerModel("noteSemitones", ALL_ITEMS);
+    const [currentQ, setCurrentQ] = d2(null);
+    const currentQRef = A2(null);
+    const pendingDigitRef = A2(null);
+    const pendingTimeoutRef = A2(null);
+    const engineSubmitRef = A2(() => {
+    });
+    const noteHandler = T2(
+      () => createAdaptiveKeyHandler(
+        (note) => engineSubmitRef.current(note),
+        () => true
+      ),
+      []
+    );
+    const engineConfig = T2(() => ({
+      getEnabledItems: () => ALL_ITEMS,
+      checkAnswer: (_itemId, input) => {
+        const q3 = currentQRef.current;
+        return checkAnswer(q3, input);
+      },
+      onPresent: (itemId) => {
+        const q3 = getQuestion(itemId);
+        currentQRef.current = q3;
+        setCurrentQ(q3);
+      },
+      handleKey: (e3, ctx) => {
+        const dir2 = currentQRef.current?.dir;
+        if (dir2 === "rev") {
+          return noteHandler.handleKey(e3);
+        }
+        if (e3.key >= "0" && e3.key <= "9") {
+          e3.preventDefault();
+          const d3 = parseInt(e3.key);
+          if (pendingDigitRef.current !== null) {
+            const num = pendingDigitRef.current * 10 + d3;
+            clearTimeout(pendingTimeoutRef.current);
+            pendingDigitRef.current = null;
+            pendingTimeoutRef.current = null;
+            if (num <= 11) ctx.submitAnswer(String(num));
+            return true;
+          }
+          if (d3 >= 2) {
+            ctx.submitAnswer(String(d3));
+          } else {
+            pendingDigitRef.current = d3;
+            pendingTimeoutRef.current = setTimeout(() => {
+              if (pendingDigitRef.current !== null) {
+                ctx.submitAnswer(String(pendingDigitRef.current));
+                pendingDigitRef.current = null;
+                pendingTimeoutRef.current = null;
+              }
+            }, 400);
+          }
+          return true;
+        }
+        return false;
+      },
+      onStart: () => {
+        noteHandler.reset();
+        if (pendingTimeoutRef.current) clearTimeout(pendingTimeoutRef.current);
+        pendingDigitRef.current = null;
+      },
+      onStop: () => {
+        noteHandler.reset();
+        if (pendingTimeoutRef.current) clearTimeout(pendingTimeoutRef.current);
+        pendingDigitRef.current = null;
+      },
+      getPracticingLabel: () => "all items"
+    }), [noteHandler]);
+    const engine = useQuizEngine(engineConfig, learner.selector);
+    engineSubmitRef.current = engine.submitAnswer;
+    y2(() => {
+      const phase = engine.state.phase;
+      const cls = phase === "idle" ? "phase-idle" : phase === "round-complete" ? "phase-round-complete" : "phase-active";
+      container.classList.remove(
+        "phase-idle",
+        "phase-active",
+        "phase-round-complete"
+      );
+      container.classList.add(cls);
+    }, [engine.state.phase, container]);
+    const [activeTab, setActiveTab] = d2(
+      "practice"
+    );
+    const [statsMode, setStatsMode] = d2("retention");
+    const summary = T2(
+      () => computePracticeSummary({
+        allItemIds: ALL_ITEMS,
+        selector: learner.selector,
+        itemNoun: "items",
+        recommendation: null,
+        recommendationText: "",
+        sessionSummary: ALL_ITEMS.length + " items \xB7 60s",
+        masteryText: engine.state.masteryText,
+        showMastery: engine.state.showMastery
+      }),
+      [
+        learner.selector,
+        engine.state.masteryText,
+        engine.state.showMastery,
+        engine.state.phase
+      ]
+    );
+    _2(() => {
+      onMount({
+        activate() {
+          learner.syncBaseline();
+          engine.updateIdleMessage();
+        },
+        deactivate() {
+          if (engine.state.phase !== "idle") engine.stop();
+          noteHandler.reset();
+        }
+      });
+    }, [engine, learner, noteHandler]);
+    const dir = currentQ?.dir ?? "fwd";
+    const promptText = currentQ ? currentQ.dir === "fwd" ? displayNote(currentQ.accidentalChoice) : String(currentQ.noteNum) : "";
+    const handleNoteAnswer = q2(
+      (note) => engine.submitAnswer(note),
+      [engine.submitAnswer]
+    );
+    const handleNumAnswer = q2(
+      (num) => engine.submitAnswer(String(num)),
+      [engine.submitAnswer]
+    );
+    const roundContext = T2(() => {
+      const s3 = engine.state;
+      const fluency = s3.masteredCount + " / " + s3.totalEnabledCount + " fluent";
+      return "all items \xB7 " + fluency;
+    }, [engine.state.masteredCount, engine.state.totalEnabledCount]);
+    const roundCorrect = T2(() => {
+      const s3 = engine.state;
+      const dur = Math.round((s3.roundDurationMs || 0) / 1e3);
+      return s3.roundCorrect + " / " + s3.roundAnswered + " correct \xB7 " + dur + "s";
+    }, [
+      engine.state.roundCorrect,
+      engine.state.roundAnswered,
+      engine.state.roundDurationMs
+    ]);
+    const roundMedian = T2(() => {
+      const times = engine.state.roundResponseTimes;
+      const median = computeMedian(times);
+      return median !== null ? (median / 1e3).toFixed(1) + "s median response time" : "";
+    }, [engine.state.roundResponseTimes]);
+    const statsSelector = T2(() => ({
+      getAutomaticity: (id) => learner.selector.getAutomaticity(id),
+      getStats: (id) => learner.selector.getStats(id)
+    }), [learner.selector, engine.state.phase, statsMode]);
+    const baselineText = learner.motorBaseline ? "Response time baseline: " + (learner.motorBaseline / 1e3).toFixed(1) + "s" : "Response time baseline: 1s (default)";
+    const answerCount = engine.state.roundAnswered;
+    const countText = answerCount + (answerCount === 1 ? " answer" : " answers");
+    return /* @__PURE__ */ u3(k, { children: [
+      /* @__PURE__ */ u3(ModeTopBar, { title: "Note \\u2194 Semitones", onBack: navigateHome }),
+      /* @__PURE__ */ u3(
+        TabbedIdle,
+        {
+          activeTab,
+          onTabSwitch: setActiveTab,
+          practiceContent: /* @__PURE__ */ u3(
+            PracticeCard,
+            {
+              statusLabel: summary.statusLabel,
+              statusDetail: summary.statusDetail,
+              sessionSummary: summary.sessionSummary,
+              mastery: summary.showMastery ? summary.masteryText : void 0,
+              onStart: engine.start
+            }
+          ),
+          progressContent: /* @__PURE__ */ u3("div", { children: [
+            /* @__PURE__ */ u3("div", { class: "baseline-info", children: baselineText }),
+            /* @__PURE__ */ u3("div", { class: "stats-controls", children: /* @__PURE__ */ u3(StatsToggle, { active: statsMode, onToggle: setStatsMode }) }),
+            /* @__PURE__ */ u3("div", { class: "stats-container", children: /* @__PURE__ */ u3(
+              StatsTable,
+              {
+                selector: statsSelector,
+                rows: getStatsRows(),
+                fwdHeader: "N\\u2192#",
+                revHeader: "#\\u2192N",
+                statsMode,
+                baseline: learner.motorBaseline ?? void 0
+              }
+            ) })
+          ] })
+        }
+      ),
+      /* @__PURE__ */ u3(
+        QuizSession,
+        {
+          timeLeft: engine.timerText,
+          context: "all items",
+          count: countText,
+          fluent: engine.state.masteredCount,
+          total: engine.state.totalEnabledCount,
+          isWarning: engine.timerWarning,
+          isLastQuestion: engine.timerLastQuestion,
+          onClose: engine.stop
+        }
+      ),
+      /* @__PURE__ */ u3(
+        QuizArea,
+        {
+          prompt: promptText,
+          lastQuestion: engine.state.roundTimerExpired ? "Last question" : "",
+          children: [
+            /* @__PURE__ */ u3(NoteButtons, { hidden: dir === "fwd", onAnswer: handleNoteAnswer }),
+            /* @__PURE__ */ u3(
+              NumberButtons,
+              {
+                start: 0,
+                end: 11,
+                hidden: dir === "rev",
+                onAnswer: handleNumAnswer
+              }
+            ),
+            /* @__PURE__ */ u3(
+              FeedbackDisplay,
+              {
+                text: engine.state.feedbackText,
+                className: engine.state.feedbackClass,
+                time: engine.state.timeDisplayText || void 0,
+                hint: engine.state.hintText || void 0
+              }
+            ),
+            /* @__PURE__ */ u3(
+              RoundComplete,
+              {
+                context: roundContext,
+                heading: "Round complete",
+                correct: roundCorrect,
+                median: roundMedian,
+                onContinue: engine.continueQuiz,
+                onStop: engine.stop
+              }
+            )
+          ]
+        }
+      )
+    ] });
+  }
+
   // src/app.ts
   var nav = createNavigation();
   var allControllers = [
@@ -8328,11 +9497,6 @@ button {
       def: fretboardDefinition(UKULELE)
     },
     { id: "speedTap", name: "Speed Tap", def: speedTapDefinition() },
-    {
-      id: "noteSemitones",
-      name: "Note \u2194 Semitones",
-      def: noteSemitonesDefinition()
-    },
     {
       id: "intervalSemitones",
       name: "Interval \u2194 Semitones",
@@ -8366,6 +9530,31 @@ button {
     });
     return ctrl;
   });
+  {
+    let handle = null;
+    const container = document.getElementById("mode-noteSemitones");
+    nav.registerMode("noteSemitones", {
+      name: "Note \u2194 Semitones",
+      init() {
+        J(
+          _(NoteSemitonesMode, {
+            container,
+            navigateHome: () => nav.navigateHome(),
+            onMount: (h3) => {
+              handle = h3;
+            }
+          }),
+          container
+        );
+      },
+      activate() {
+        handle?.activate();
+      },
+      deactivate() {
+        handle?.deactivate();
+      }
+    });
+  }
   nav.init();
   var settings = createSettingsModal({
     onNotationChange() {

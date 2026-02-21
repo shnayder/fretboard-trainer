@@ -2057,10 +2057,11 @@ button {
       )) })
     ] });
   }
-  function NumberButtons({ start, end, onAnswer }) {
+  function NumberButtons({ start, end, onAnswer, hidden }) {
     const nums = [];
     for (let i2 = start; i2 <= end; i2++) nums.push(i2);
-    return /* @__PURE__ */ u2("div", { class: "answer-buttons answer-buttons-numbers", children: nums.map((i2) => /* @__PURE__ */ u2(
+    const cls = "answer-buttons answer-buttons-numbers" + (hidden ? " answer-group-hidden" : "");
+    return /* @__PURE__ */ u2("div", { class: cls, children: nums.map((i2) => /* @__PURE__ */ u2(
       "button",
       {
         type: "button",
@@ -2072,8 +2073,9 @@ button {
       i2
     )) });
   }
-  function IntervalButtons({ onAnswer }) {
-    return /* @__PURE__ */ u2("div", { class: "answer-buttons answer-buttons-intervals", children: INTERVALS.map((iv) => /* @__PURE__ */ u2(
+  function IntervalButtons({ onAnswer, hidden }) {
+    const cls = "answer-buttons answer-buttons-intervals" + (hidden ? " answer-group-hidden" : "");
+    return /* @__PURE__ */ u2("div", { class: cls, children: INTERVALS.map((iv) => /* @__PURE__ */ u2(
       "button",
       {
         type: "button",

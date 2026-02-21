@@ -134,16 +134,19 @@ export function PianoNoteButtons(
 // ---------------------------------------------------------------------------
 
 export function NumberButtons(
-  { start, end, onAnswer }: {
+  { start, end, onAnswer, hidden }: {
     start: number;
     end: number;
     onAnswer?: (num: number) => void;
+    hidden?: boolean;
   },
 ) {
   const nums = [];
   for (let i = start; i <= end; i++) nums.push(i);
+  const cls = 'answer-buttons answer-buttons-numbers' +
+    (hidden ? ' answer-group-hidden' : '');
   return (
-    <div class='answer-buttons answer-buttons-numbers'>
+    <div class={cls}>
       {nums.map((i) => (
         <button
           type='button'
@@ -164,10 +167,15 @@ export function NumberButtons(
 // ---------------------------------------------------------------------------
 
 export function IntervalButtons(
-  { onAnswer }: { onAnswer?: (interval: string) => void },
+  { onAnswer, hidden }: {
+    onAnswer?: (interval: string) => void;
+    hidden?: boolean;
+  },
 ) {
+  const cls = 'answer-buttons answer-buttons-intervals' +
+    (hidden ? ' answer-group-hidden' : '');
   return (
-    <div class='answer-buttons answer-buttons-intervals'>
+    <div class={cls}>
       {INTERVALS.map((iv) => (
         <button
           type='button'

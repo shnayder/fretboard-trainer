@@ -36,6 +36,12 @@ Display layer:
   quiz-fretboard-state.ts  ← Pure fretboard helpers (factory pattern)
     imports: music-data
 
+Mode logic layer:
+  mode-utils.ts              ← Shared ID parsing/building, stats row helpers
+    imports: music-data
+  modes/{name}/logic.ts      ← Per-mode pure logic (question, answer, items, groups)
+    imports: music-data, mode-utils
+
 Hooks layer:
   hooks/use-quiz-engine.ts   ← Quiz engine lifecycle (wraps quiz-engine-state)
     imports: quiz-engine-state, adaptive
@@ -43,6 +49,8 @@ Hooks layer:
   hooks/use-learner-model.ts ← Adaptive selector + storage
     imports: adaptive
   hooks/use-key-handler.ts   ← Keyboard event attachment
+  hooks/use-phase-class.ts   ← Phase-to-CSS-class sync
+  hooks/use-round-summary.ts ← Round-complete derived state + stats selector
 
 UI layer:
   ui/mode-screen.tsx         ← Structural components (ModeScreen, QuizArea, etc.)
@@ -50,8 +58,8 @@ UI layer:
   ui/scope.tsx               ← Scope control components (toggles, filters)
   ui/stats.tsx               ← Stats table/grid/legend components
     imports: stats-display
-  ui/modes/*.tsx             ← 11 Preact mode components
-    imports: hooks, ui components, music-data, recommendations, mode-ui-state
+  modes/{name}/{name}-mode.tsx ← 11 Preact mode components
+    imports: ./logic, hooks, ui components, recommendations, mode-ui-state
 
 App layer:
   navigation.ts            ← Home screen, mode switching
@@ -60,8 +68,8 @@ App layer:
 ```
 
 **Layers**: Foundation (adaptive, music-data) → Engine (state transitions) →
-Display (stats, recommendations) → Hooks (Preact wrappers) → UI (components) →
-App init.
+Display (stats, recommendations) → Mode Logic (pure per-mode functions) → Hooks
+(Preact wrappers) → UI (components + mode compositions) → App init.
 
 ## Build System
 
@@ -569,22 +577,24 @@ rather than adding complexity. Per-mode flags are a code smell.
 
 Step-by-step checklist:
 
-1. **Create** `src/ui/modes/{mode}-mode.tsx` — a Preact component composing
-   shared hooks and UI components (~100-300 lines)
-2. **Define** item ID format, `allItemIds`, and pure logic functions
-   (`getQuestion`, `checkAnswer`, `getEnabledItems`)
-3. **Compose hooks**: `useScopeState` (if scope controls needed),
-   `useLearnerModel`, `useQuizEngine`
-4. **Groups** (if applicable): use `computeRecommendations()` from
+1. **Create** `src/modes/{name}/logic.ts` — pure functions for question
+   generation, answer checking, item IDs, group definitions. No DOM, no hooks.
+2. **Create** `src/modes/{name}/{name}-mode.tsx` — a Preact component composing
+   shared hooks and UI components (~200-400 lines)
+3. **Define** item ID format, `ALL_ITEMS`, and export from `logic.ts`:
+   `getQuestion`, `checkAnswer`, group constants, grid/stats config
+4. **Compose hooks**: `useScopeState` (if scope controls needed),
+   `useLearnerModel`, `useQuizEngine`, `usePhaseClass`, `useRoundSummary`
+5. **Groups** (if applicable): use `computeRecommendations()` from
    `recommendations.ts` for progressive unlocking
-5. **Stats**: use `StatsTable` or `StatsGrid` component from `src/ui/stats.tsx`
-6. **HTML**: add mode screen in `modeScreens()` in `src/build-template.ts`
+6. **Stats**: use `StatsTable` or `StatsGrid` component from `src/ui/stats.tsx`
+7. **HTML**: add mode screen in `modeScreens()` in `src/build-template.ts`
    (container div), and nav button in `HOME_SCREEN_HTML`
-7. **Register** mode in `app.ts` with `registerPreactMode()`
-8. **Tests**: create `src/{mode}_test.ts` if pure logic was extracted
-9. **Accidentals**: determine which naming convention applies (see
-   [accidental-conventions.md](accidental-conventions.md)) and update that
-   guide's mode table
-10. **CLAUDE.md**: update quiz modes table with item count, answer type, and ID
+8. **Register** mode in `app.ts` with `registerPreactMode()`
+9. **Tests**: create `src/modes/{name}/logic_test.ts` for the pure logic
+10. **Accidentals**: determine which naming convention applies (see
+    [accidental-conventions.md](accidental-conventions.md)) and update that
+    guide's mode table
+11. **CLAUDE.md**: update quiz modes table with item count, answer type, and ID
     format
-11. **Version**: bump `VERSION` in `src/build-template.ts`
+12. **Version**: bump `VERSION` in `src/build-template.ts`

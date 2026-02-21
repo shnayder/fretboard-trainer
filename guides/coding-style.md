@@ -6,15 +6,17 @@ rules — this guide explains them.
 
 ## File Naming
 
-| Pattern                             | Example                        | When                               |
-| ----------------------------------- | ------------------------------ | ---------------------------------- |
-| `src/ui/modes/{mode}-mode.tsx`      | `semitone-math-mode.tsx`       | Preact mode component              |
-| `src/ui/{component}.tsx`            | `buttons.tsx`, `stats.tsx`     | Shared Preact UI components        |
-| `src/hooks/use-{hook}.ts`           | `use-quiz-engine.ts`           | Preact hooks                       |
-| `src/{module}-state.ts`             | `quiz-engine-state.ts`         | Pure state/logic (no DOM)          |
-| `src/{module}.ts`                   | `adaptive.ts`, `navigation.ts` | Shared modules                     |
-| `src/{module}_test.ts`              | `adaptive_test.ts`             | Test file (underscore, TypeScript) |
-| `plans/YYYY-MM-DD-{description}.md` | `2026-02-10-add-quiz-stats.md` | Plans                              |
+| Pattern                             | Example                                | When                               |
+| ----------------------------------- | -------------------------------------- | ---------------------------------- |
+| `src/modes/{name}/{name}-mode.tsx`  | `semitone-math/semitone-math-mode.tsx` | Preact mode component              |
+| `src/modes/{name}/logic.ts`         | `semitone-math/logic.ts`               | Pure mode logic (no DOM, no hooks) |
+| `src/modes/{name}/logic_test.ts`    | `semitone-math/logic_test.ts`          | Tests for mode logic               |
+| `src/ui/{component}.tsx`            | `buttons.tsx`, `stats.tsx`             | Shared Preact UI components        |
+| `src/hooks/use-{hook}.ts`           | `use-quiz-engine.ts`                   | Preact hooks                       |
+| `src/{module}-state.ts`             | `quiz-engine-state.ts`                 | Pure state/logic (no DOM)          |
+| `src/{module}.ts`                   | `adaptive.ts`, `navigation.ts`         | Shared modules                     |
+| `src/{module}_test.ts`              | `adaptive_test.ts`                     | Test file (underscore, TypeScript) |
+| `plans/YYYY-MM-DD-{description}.md` | `2026-02-10-add-quiz-stats.md`         | Plans                              |
 
 ## Module Patterns
 

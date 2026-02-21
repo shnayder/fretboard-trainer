@@ -39,6 +39,7 @@ src/
   fretboard.ts           # Build-time SVG: fret/string/note generation
   adaptive.ts            # Adaptive question selector
   music-data.ts          # Shared music theory data
+  mode-utils.ts          # Shared ID parsing/building, stats row helpers
   quiz-engine-state.ts   # Pure engine state transitions
   quiz-engine.ts         # Keyboard handlers, calibration utilities
   stats-display.ts       # Heatmap color functions, legend builder
@@ -50,18 +51,23 @@ src/
   types.ts               # Shared type definitions
   styles.css             # Inlined CSS
   *_test.ts              # Tests (node:test)
+  modes/
+    {name}/
+      logic.ts            # Pure mode logic: questions, answers, items, groups
+      logic_test.ts        # Tests for mode logic
+      {name}-mode.tsx      # Preact mode component
   ui/
     mode-screen.tsx       # Structural layout components (ModeScreen, QuizArea, etc.)
     buttons.tsx           # Answer button components (NoteButtons, NumberButtons, etc.)
     scope.tsx             # Scope control components (GroupToggles, NoteFilter, etc.)
     stats.tsx             # Stats table/grid/legend components
-    modes/
-      note-semitones-mode.tsx .. speed-tap-mode.tsx  # 11 Preact mode components
   hooks/
     use-quiz-engine.ts    # Quiz engine lifecycle hook
     use-scope-state.ts    # Scope persistence hook
     use-learner-model.ts  # Adaptive selector + storage hook
     use-key-handler.ts    # Keyboard event hook
+    use-phase-class.ts    # Phase-to-CSS-class sync hook
+    use-round-summary.ts  # Round-complete derived state hook
 scripts/take-screenshots.ts  # Playwright screenshots
 guides/                  # Detailed developer guides (see below)
 plans/                   # Design docs, product specs, execution plans

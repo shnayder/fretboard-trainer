@@ -1633,7 +1633,7 @@ button {
     </div>
     <div class="home-footer">
       <button class="home-settings-btn" type="button">Settings</button>
-      <span class="version">v7.7</span>
+      <span class="version">v7.8</span>
     </div>
   </div>
 
@@ -5622,6 +5622,10 @@ button {
     }
     return _heatmapColors;
   }
+  function heatmapNeedsLightText(color) {
+    const m3 = color && color.match(/,\s*(\d+)%\s*\)/);
+    return m3 ? parseInt(m3[1], 10) <= 50 : false;
+  }
   var RETENTION_LABELS = [
     "Needs work (&lt;20%)",
     "Fading (&gt;20%)",
@@ -6816,17 +6820,17 @@ button {
       { length: instrument.stringCount },
       (_3, i3) => i3
     );
-    const ALL_ITEMS2 = [];
+    const ALL_ITEMS5 = [];
     for (const s3 of allStrings) {
       for (let f4 = 0; f4 < instrument.fretCount; f4++) {
-        ALL_ITEMS2.push(s3 + "-" + f4);
+        ALL_ITEMS5.push(s3 + "-" + f4);
       }
     }
     return {
       id: instrument.id,
       name: instrument.name,
       storageNamespace: instrument.storageNamespace,
-      allItemIds: ALL_ITEMS2,
+      allItemIds: ALL_ITEMS5,
       getEnabledItems(scope) {
         if (scope.kind !== "fretboard") {
           return fb.getFretboardEnabledItems(
@@ -7000,7 +7004,7 @@ button {
   var FB_TAP_NEUTRAL = "hsl(30, 4%, 90%)";
   var FB_TAP_CORRECT = "hsl(90, 45%, 35%)";
   function speedTapDefinition() {
-    const ALL_ITEMS2 = NOTES.map((n2) => n2.name);
+    const ALL_ITEMS5 = NOTES.map((n2) => n2.name);
     let currentNote = null;
     let targetPositions = [];
     let foundPositions = /* @__PURE__ */ new Set();
@@ -7017,7 +7021,7 @@ button {
       id: "speedTap",
       name: "Speed Tap",
       storageNamespace: "speedTap",
-      allItemIds: ALL_ITEMS2,
+      allItemIds: ALL_ITEMS5,
       getEnabledItems(scope) {
         const filter = scope.kind === "note-filter" ? scope.noteFilter : "natural";
         if (filter === "natural") return NATURAL_NOTES.slice();
@@ -7181,429 +7185,6 @@ button {
     };
   }
 
-  // src/modes/interval-semitones.ts
-  function intervalSemitonesDefinition() {
-    const ALL_ITEMS2 = [];
-    for (const interval of INTERVALS) {
-      ALL_ITEMS2.push(interval.abbrev + ":fwd");
-      ALL_ITEMS2.push(interval.abbrev + ":rev");
-    }
-    let currentQuestion = null;
-    return {
-      id: "intervalSemitones",
-      name: "Interval \u2194 Semitones",
-      storageNamespace: "intervalSemitones",
-      allItemIds: ALL_ITEMS2,
-      getEnabledItems(_scope) {
-        return ALL_ITEMS2;
-      },
-      scopeSpec: { kind: "none" },
-      getQuestion(itemId) {
-        const [abbrev, dir] = itemId.split(":");
-        const interval = INTERVALS.find((i3) => i3.abbrev === abbrev);
-        currentQuestion = { interval, dir };
-        return currentQuestion;
-      },
-      checkAnswer(_itemId, input) {
-        const q3 = currentQuestion;
-        if (q3.dir === "fwd") {
-          const correct = parseInt(input, 10) === q3.interval.num;
-          return { correct, correctAnswer: String(q3.interval.num) };
-        } else {
-          const correct = intervalMatchesInput(q3.interval, input);
-          return { correct, correctAnswer: q3.interval.abbrev };
-        }
-      },
-      prompt: {
-        kind: "text",
-        getText(q3) {
-          return q3.dir === "fwd" ? q3.interval.name : String(q3.interval.num);
-        }
-      },
-      response: {
-        kind: "bidirectional",
-        groups: [
-          {
-            id: "intervals",
-            html: "",
-            getButtonAnswer(btn) {
-              return btn.dataset.interval ?? null;
-            }
-          },
-          {
-            id: "numbers",
-            html: "",
-            getButtonAnswer(btn) {
-              return btn.dataset.num ?? null;
-            }
-          }
-        ],
-        getActiveGroup(question) {
-          const q3 = question;
-          return q3.dir === "fwd" ? "numbers" : "intervals";
-        },
-        createKeyHandler(submitAnswer, _getScope) {
-          let pendingDigit = null;
-          let pendingDigitTimeout = null;
-          return {
-            handleKey(e3) {
-              if (currentQuestion?.dir === "rev") {
-                return false;
-              }
-              if (e3.key >= "0" && e3.key <= "9") {
-                e3.preventDefault();
-                if (pendingDigit !== null) {
-                  const num = pendingDigit * 10 + parseInt(e3.key);
-                  clearTimeout(pendingDigitTimeout);
-                  pendingDigit = null;
-                  pendingDigitTimeout = null;
-                  if (num >= 1 && num <= 12) submitAnswer(String(num));
-                  return true;
-                }
-                const d3 = parseInt(e3.key);
-                if (d3 >= 2 && d3 <= 9) {
-                  submitAnswer(String(d3));
-                } else {
-                  pendingDigit = d3;
-                  pendingDigitTimeout = setTimeout(() => {
-                    if (pendingDigit >= 1) submitAnswer(String(pendingDigit));
-                    pendingDigit = null;
-                    pendingDigitTimeout = null;
-                  }, 400);
-                }
-                return true;
-              }
-              return false;
-            },
-            reset() {
-              if (pendingDigitTimeout) clearTimeout(pendingDigitTimeout);
-              pendingDigit = null;
-              pendingDigitTimeout = null;
-            }
-          };
-        }
-      },
-      stats: {
-        kind: "table",
-        fwdHeader: "I\u2192#",
-        revHeader: "#\u2192I",
-        getRows() {
-          return INTERVALS.map((interval) => ({
-            label: interval.abbrev,
-            sublabel: String(interval.num),
-            _colHeader: "Interval",
-            fwdItemId: interval.abbrev + ":fwd",
-            revItemId: interval.abbrev + ":rev"
-          }));
-        }
-      },
-      getPracticingLabel(_scope) {
-        return "all items";
-      },
-      getSessionSummary(_scope) {
-        return ALL_ITEMS2.length + " items \xB7 60s";
-      },
-      calibrationSpec: {
-        getButtons(container) {
-          return Array.from(container.querySelectorAll(".answer-btn-interval"));
-        },
-        getTrialConfig(buttons, prevBtn) {
-          let btn;
-          do {
-            btn = buttons[Math.floor(Math.random() * buttons.length)];
-          } while (btn === prevBtn && buttons.length > 1);
-          return { prompt: "Press " + btn.textContent, targetButtons: [btn] };
-        }
-      }
-    };
-  }
-
-  // src/modes/semitone-math.ts
-  var DISTANCE_GROUPS = [
-    { distances: [1, 2], label: "\xB11\u20132" },
-    { distances: [3, 4], label: "\xB13\u20134" },
-    { distances: [5, 6], label: "\xB15\u20136" },
-    { distances: [7, 8], label: "\xB17\u20138" },
-    { distances: [9, 10], label: "\xB19\u201310" },
-    { distances: [11], label: "\xB111" }
-  ];
-  function getItemIdsForGroup(groupIndex) {
-    const distances = DISTANCE_GROUPS[groupIndex].distances;
-    const items = [];
-    for (const note of NOTES) {
-      for (const d3 of distances) {
-        items.push(note.name + "+" + d3);
-        items.push(note.name + "-" + d3);
-      }
-    }
-    return items;
-  }
-  function semitoneMathDefinition() {
-    const ALL_ITEMS2 = [];
-    for (const note of NOTES) {
-      for (let s3 = 1; s3 <= 11; s3++) {
-        ALL_ITEMS2.push(note.name + "+" + s3);
-        ALL_ITEMS2.push(note.name + "-" + s3);
-      }
-    }
-    const groups = DISTANCE_GROUPS.map((g2, i3) => ({
-      index: i3,
-      label: g2.label,
-      itemIds: getItemIdsForGroup(i3)
-    }));
-    let currentQuestion = null;
-    return {
-      id: "semitoneMath",
-      name: "Semitone Math",
-      storageNamespace: "semitoneMath",
-      allItemIds: ALL_ITEMS2,
-      getEnabledItems(scope) {
-        if (scope.kind !== "groups") return ALL_ITEMS2;
-        const items = [];
-        for (const g2 of scope.enabledGroups) {
-          items.push(...getItemIdsForGroup(g2));
-        }
-        return items;
-      },
-      scopeSpec: {
-        kind: "groups",
-        groups,
-        defaultEnabled: [0],
-        storageKey: "semitoneMath_enabledGroups",
-        label: "Distances",
-        sortUnstarted: (a3, b) => a3.string - b.string
-      },
-      getQuestion(itemId) {
-        const match = itemId.match(/^([A-G]#?)([+-])(\d+)$/);
-        const noteName = match[1];
-        const op = match[2];
-        const semitones = parseInt(match[3]);
-        const note = NOTES.find((n2) => n2.name === noteName);
-        const answer = op === "+" ? noteAdd(note.num, semitones) : noteSub(note.num, semitones);
-        const useFlats = op === "-";
-        const promptNoteName = displayNote(
-          pickAccidentalName(note.displayName, useFlats)
-        );
-        currentQuestion = {
-          note,
-          op,
-          semitones,
-          answer,
-          useFlats,
-          promptText: promptNoteName + " " + op + " " + semitones
-        };
-        return currentQuestion;
-      },
-      checkAnswer(_itemId, input) {
-        const q3 = currentQuestion;
-        const correct = noteMatchesInput(q3.answer, input);
-        return {
-          correct,
-          correctAnswer: displayNote(
-            pickAccidentalName(q3.answer.displayName, q3.useFlats)
-          )
-        };
-      },
-      prompt: {
-        kind: "custom",
-        render(q3, els) {
-          els.promptEl.textContent = q3.promptText;
-          els.container.querySelectorAll(".answer-btn-note").forEach((btn) => {
-            const note = NOTES.find((n2) => n2.name === btn.dataset.note);
-            if (note) {
-              btn.textContent = displayNote(
-                pickAccidentalName(note.displayName, q3.useFlats)
-              );
-            }
-          });
-        },
-        clear(els) {
-          refreshNoteButtonLabels(els.container);
-        }
-      },
-      response: {
-        kind: "buttons",
-        answerButtonsHTML: "",
-        // already in build-template
-        createKeyHandler(submitAnswer, _getScope) {
-          return createAdaptiveKeyHandler(submitAnswer, () => true);
-        },
-        getButtonAnswer(btn) {
-          return btn.dataset.note ?? null;
-        }
-      },
-      stats: {
-        kind: "grid",
-        colLabels: Array.from({ length: 11 }, (_3, i3) => String(i3 + 1)),
-        getItemId(noteName, colIdx) {
-          const n2 = colIdx + 1;
-          return [noteName + "+" + n2, noteName + "-" + n2];
-        }
-      },
-      getPracticingLabel(scope) {
-        if (scope.kind !== "groups") return "all distances";
-        if (scope.enabledGroups.size === DISTANCE_GROUPS.length) {
-          return "all distances";
-        }
-        const labels = [...scope.enabledGroups].sort((a3, b) => a3 - b).map((g2) => DISTANCE_GROUPS[g2].label);
-        return labels.join(", ") + " semitones";
-      },
-      getSessionSummary(scope) {
-        const count = this.getEnabledItems(scope).length;
-        return count + " items \xB7 60s";
-      },
-      calibrationSpec: {
-        getButtons(container) {
-          return Array.from(container.querySelectorAll(".answer-btn-note"));
-        }
-      }
-    };
-  }
-
-  // src/modes/interval-math.ts
-  var MATH_INTERVALS = INTERVALS.filter((i3) => i3.num >= 1 && i3.num <= 11);
-  var DISTANCE_GROUPS2 = [
-    { distances: [1, 2], label: "m2 M2" },
-    { distances: [3, 4], label: "m3 M3" },
-    { distances: [5, 6], label: "P4 TT" },
-    { distances: [7, 8], label: "P5 m6" },
-    { distances: [9, 10], label: "M6 m7" },
-    { distances: [11], label: "M7" }
-  ];
-  function getItemIdsForGroup2(groupIndex) {
-    const distances = DISTANCE_GROUPS2[groupIndex].distances;
-    const intervals = MATH_INTERVALS.filter((i3) => distances.includes(i3.num));
-    const items = [];
-    for (const note of NOTES) {
-      for (const interval of intervals) {
-        items.push(note.name + "+" + interval.abbrev);
-        items.push(note.name + "-" + interval.abbrev);
-      }
-    }
-    return items;
-  }
-  function intervalMathDefinition() {
-    const ALL_ITEMS2 = [];
-    for (const note of NOTES) {
-      for (const interval of MATH_INTERVALS) {
-        ALL_ITEMS2.push(note.name + "+" + interval.abbrev);
-        ALL_ITEMS2.push(note.name + "-" + interval.abbrev);
-      }
-    }
-    const groups = DISTANCE_GROUPS2.map((g2, i3) => ({
-      index: i3,
-      label: g2.label,
-      itemIds: getItemIdsForGroup2(i3)
-    }));
-    let currentQuestion = null;
-    return {
-      id: "intervalMath",
-      name: "Interval Math",
-      storageNamespace: "intervalMath",
-      allItemIds: ALL_ITEMS2,
-      getEnabledItems(scope) {
-        if (scope.kind !== "groups") return ALL_ITEMS2;
-        const items = [];
-        for (const g2 of scope.enabledGroups) {
-          items.push(...getItemIdsForGroup2(g2));
-        }
-        return items;
-      },
-      scopeSpec: {
-        kind: "groups",
-        groups,
-        defaultEnabled: [0],
-        storageKey: "intervalMath_enabledGroups",
-        label: "Intervals",
-        sortUnstarted: (a3, b) => a3.string - b.string
-      },
-      getQuestion(itemId) {
-        const match = itemId.match(/^([A-G]#?)([+-])(.+)$/);
-        const noteName = match[1];
-        const op = match[2];
-        const abbrev = match[3];
-        const note = NOTES.find((n2) => n2.name === noteName);
-        const interval = MATH_INTERVALS.find((i3) => i3.abbrev === abbrev);
-        const answer = op === "+" ? noteAdd(note.num, interval.num) : noteSub(note.num, interval.num);
-        const useFlats = op === "-";
-        const promptNoteName = displayNote(
-          pickAccidentalName(note.displayName, useFlats)
-        );
-        currentQuestion = {
-          note,
-          op,
-          interval,
-          answer,
-          useFlats,
-          promptText: promptNoteName + " " + op + " " + interval.abbrev
-        };
-        return currentQuestion;
-      },
-      checkAnswer(_itemId, input) {
-        const q3 = currentQuestion;
-        const correct = noteMatchesInput(q3.answer, input);
-        return {
-          correct,
-          correctAnswer: displayNote(
-            pickAccidentalName(q3.answer.displayName, q3.useFlats)
-          )
-        };
-      },
-      prompt: {
-        kind: "custom",
-        render(q3, els) {
-          els.promptEl.textContent = q3.promptText;
-          els.container.querySelectorAll(".answer-btn-note").forEach((btn) => {
-            const note = NOTES.find((n2) => n2.name === btn.dataset.note);
-            if (note) {
-              btn.textContent = displayNote(
-                pickAccidentalName(note.displayName, q3.useFlats)
-              );
-            }
-          });
-        },
-        clear(els) {
-          refreshNoteButtonLabels(els.container);
-        }
-      },
-      response: {
-        kind: "buttons",
-        answerButtonsHTML: "",
-        createKeyHandler(submitAnswer, _getScope) {
-          return createAdaptiveKeyHandler(submitAnswer, () => true);
-        },
-        getButtonAnswer(btn) {
-          return btn.dataset.note ?? null;
-        }
-      },
-      stats: {
-        kind: "grid",
-        colLabels: MATH_INTERVALS.map((i3) => i3.abbrev),
-        getItemId(noteName, colIdx) {
-          const abbrev = MATH_INTERVALS[colIdx].abbrev;
-          return [noteName + "+" + abbrev, noteName + "-" + abbrev];
-        }
-      },
-      getPracticingLabel(scope) {
-        if (scope.kind !== "groups") return "all intervals";
-        if (scope.enabledGroups.size === DISTANCE_GROUPS2.length) {
-          return "all intervals";
-        }
-        const labels = [...scope.enabledGroups].sort((a3, b) => a3 - b).map((g2) => DISTANCE_GROUPS2[g2].label);
-        return labels.join(", ") + " intervals";
-      },
-      getSessionSummary(scope) {
-        const count = this.getEnabledItems(scope).length;
-        return count + " items \xB7 60s";
-      },
-      calibrationSpec: {
-        getButtons(container) {
-          return Array.from(container.querySelectorAll(".answer-btn-note"));
-        }
-      }
-    };
-  }
-
   // src/modes/key-signatures.ts
   var KEY_GROUPS = [
     { keys: ["C", "G", "F"], label: "C G F" },
@@ -7612,7 +7193,7 @@ button {
     { keys: ["E", "Ab"], label: "E A\u266D" },
     { keys: ["B", "Db", "F#"], label: "B D\u266D F\u266F" }
   ];
-  function getItemIdsForGroup3(groupIndex) {
+  function getItemIdsForGroup(groupIndex) {
     const roots = KEY_GROUPS[groupIndex].keys;
     const items = [];
     for (const root of roots) {
@@ -7622,27 +7203,27 @@ button {
     return items;
   }
   function keySignaturesDefinition() {
-    const ALL_ITEMS2 = [];
+    const ALL_ITEMS5 = [];
     for (const key of MAJOR_KEYS) {
-      ALL_ITEMS2.push(key.root + ":fwd");
-      ALL_ITEMS2.push(key.root + ":rev");
+      ALL_ITEMS5.push(key.root + ":fwd");
+      ALL_ITEMS5.push(key.root + ":rev");
     }
     const groups = KEY_GROUPS.map((g2, i3) => ({
       index: i3,
       label: g2.label,
-      itemIds: getItemIdsForGroup3(i3)
+      itemIds: getItemIdsForGroup(i3)
     }));
     let currentQuestion = null;
     return {
       id: "keySignatures",
       name: "Key Signatures",
       storageNamespace: "keySignatures",
-      allItemIds: ALL_ITEMS2,
+      allItemIds: ALL_ITEMS5,
       getEnabledItems(scope) {
-        if (scope.kind !== "groups") return ALL_ITEMS2;
+        if (scope.kind !== "groups") return ALL_ITEMS5;
         const items = [];
         for (const g2 of scope.enabledGroups) {
-          items.push(...getItemIdsForGroup3(g2));
+          items.push(...getItemIdsForGroup(g2));
         }
         return items;
       },
@@ -7787,7 +7368,7 @@ button {
     { degrees: [3, 7], label: "3rd,7th" },
     { degrees: [2, 6], label: "2nd,6th" }
   ];
-  function getItemIdsForGroup4(groupIndex) {
+  function getItemIdsForGroup2(groupIndex) {
     const degrees = DEGREE_GROUPS[groupIndex].degrees;
     const items = [];
     for (const key of MAJOR_KEYS) {
@@ -7799,29 +7380,29 @@ button {
     return items;
   }
   function scaleDegreesDefinition() {
-    const ALL_ITEMS2 = [];
+    const ALL_ITEMS5 = [];
     for (const key of MAJOR_KEYS) {
       for (let d3 = 1; d3 <= 7; d3++) {
-        ALL_ITEMS2.push(key.root + ":" + d3 + ":fwd");
-        ALL_ITEMS2.push(key.root + ":" + d3 + ":rev");
+        ALL_ITEMS5.push(key.root + ":" + d3 + ":fwd");
+        ALL_ITEMS5.push(key.root + ":" + d3 + ":rev");
       }
     }
     const groups = DEGREE_GROUPS.map((g2, i3) => ({
       index: i3,
       label: g2.label,
-      itemIds: getItemIdsForGroup4(i3)
+      itemIds: getItemIdsForGroup2(i3)
     }));
     let currentQuestion = null;
     return {
       id: "scaleDegrees",
       name: "Scale Degrees",
       storageNamespace: "scaleDegrees",
-      allItemIds: ALL_ITEMS2,
+      allItemIds: ALL_ITEMS5,
       getEnabledItems(scope) {
-        if (scope.kind !== "groups") return ALL_ITEMS2;
+        if (scope.kind !== "groups") return ALL_ITEMS5;
         const items = [];
         for (const g2 of scope.enabledGroups) {
-          items.push(...getItemIdsForGroup4(g2));
+          items.push(...getItemIdsForGroup2(g2));
         }
         return items;
       },
@@ -7949,7 +7530,7 @@ button {
     { degrees: [2, 6], label: "ii,vi" },
     { degrees: [3, 7], label: "iii,vii\xB0" }
   ];
-  function getItemIdsForGroup5(groupIndex) {
+  function getItemIdsForGroup3(groupIndex) {
     const degrees = CHORD_GROUPS[groupIndex].degrees;
     const items = [];
     for (const key of MAJOR_KEYS) {
@@ -7961,29 +7542,29 @@ button {
     return items;
   }
   function diatonicChordsDefinition() {
-    const ALL_ITEMS2 = [];
+    const ALL_ITEMS5 = [];
     for (const key of MAJOR_KEYS) {
       for (let d3 = 1; d3 <= 7; d3++) {
-        ALL_ITEMS2.push(key.root + ":" + d3 + ":fwd");
-        ALL_ITEMS2.push(key.root + ":" + d3 + ":rev");
+        ALL_ITEMS5.push(key.root + ":" + d3 + ":fwd");
+        ALL_ITEMS5.push(key.root + ":" + d3 + ":rev");
       }
     }
     const groups = CHORD_GROUPS.map((g2, i3) => ({
       index: i3,
       label: g2.label,
-      itemIds: getItemIdsForGroup5(i3)
+      itemIds: getItemIdsForGroup3(i3)
     }));
     let currentQuestion = null;
     return {
       id: "diatonicChords",
       name: "Diatonic Chords",
       storageNamespace: "diatonicChords",
-      allItemIds: ALL_ITEMS2,
+      allItemIds: ALL_ITEMS5,
       getEnabledItems(scope) {
-        if (scope.kind !== "groups") return ALL_ITEMS2;
+        if (scope.kind !== "groups") return ALL_ITEMS5;
         const items = [];
         for (const g2 of scope.enabledGroups) {
-          items.push(...getItemIdsForGroup5(g2));
+          items.push(...getItemIdsForGroup3(g2));
         }
         return items;
       },
@@ -8123,7 +7704,7 @@ button {
     return result;
   }
   var SPELLING_GROUPS = buildGroups();
-  function getItemIdsForGroup6(groupIndex) {
+  function getItemIdsForGroup4(groupIndex) {
     const types = SPELLING_GROUPS[groupIndex].types;
     const items = [];
     for (const root of CHORD_ROOTS) {
@@ -8134,27 +7715,27 @@ button {
     return items;
   }
   function chordSpellingDefinition() {
-    const ALL_ITEMS2 = [];
+    const ALL_ITEMS5 = [];
     for (const root of CHORD_ROOTS) {
       for (const type of CHORD_TYPES) {
-        ALL_ITEMS2.push(root + ":" + type.name);
+        ALL_ITEMS5.push(root + ":" + type.name);
       }
     }
     const groups = SPELLING_GROUPS.map((g2, i3) => ({
       index: i3,
       label: g2.label,
-      itemIds: getItemIdsForGroup6(i3)
+      itemIds: getItemIdsForGroup4(i3)
     }));
     return {
       id: "chordSpelling",
       name: "Chord Spelling",
       storageNamespace: "chordSpelling",
-      allItemIds: ALL_ITEMS2,
+      allItemIds: ALL_ITEMS5,
       getEnabledItems(scope) {
-        if (scope.kind !== "groups") return ALL_ITEMS2;
+        if (scope.kind !== "groups") return ALL_ITEMS5;
         const items = [];
         for (const g2 of scope.enabledGroups) {
-          items.push(...getItemIdsForGroup6(g2));
+          items.push(...getItemIdsForGroup4(g2));
         }
         return items;
       },
@@ -8916,19 +8497,42 @@ button {
     "A#",
     "B"
   ];
-  function NoteButtons({ onAnswer, hidden }) {
+  var INTERVALS2 = [
+    "m2",
+    "M2",
+    "m3",
+    "M3",
+    "P4",
+    "TT",
+    "P5",
+    "m6",
+    "M6",
+    "m7",
+    "M7",
+    "P8"
+  ];
+  function NoteButtons({ onAnswer, hidden, useFlats }) {
     const cls = "answer-buttons answer-buttons-notes" + (hidden ? " answer-group-hidden" : "");
-    return /* @__PURE__ */ u3("div", { class: cls, children: ALL_NOTES.map((n2) => /* @__PURE__ */ u3(
-      "button",
-      {
-        type: "button",
-        class: "answer-btn answer-btn-note",
-        "data-note": n2,
-        onClick: onAnswer ? () => onAnswer(n2) : void 0,
-        children: displayNote(n2)
-      },
-      n2
-    )) });
+    return /* @__PURE__ */ u3("div", { class: cls, children: ALL_NOTES.map((n2) => {
+      let label;
+      if (useFlats !== void 0) {
+        const note = NOTES.find((x2) => x2.name === n2);
+        label = note ? displayNote(pickAccidentalName(note.displayName, useFlats)) : displayNote(n2);
+      } else {
+        label = displayNote(n2);
+      }
+      return /* @__PURE__ */ u3(
+        "button",
+        {
+          type: "button",
+          class: "answer-btn answer-btn-note",
+          "data-note": n2,
+          onClick: onAnswer ? () => onAnswer(n2) : void 0,
+          children: label
+        },
+        n2
+      );
+    }) });
   }
   function NumberButtons({ start, end, onAnswer, hidden }) {
     const nums = [];
@@ -8944,6 +8548,20 @@ button {
         children: i3
       },
       i3
+    )) });
+  }
+  function IntervalButtons({ onAnswer, hidden }) {
+    const cls = "answer-buttons answer-buttons-intervals" + (hidden ? " answer-group-hidden" : "");
+    return /* @__PURE__ */ u3("div", { class: cls, children: INTERVALS2.map((iv) => /* @__PURE__ */ u3(
+      "button",
+      {
+        type: "button",
+        class: "answer-btn answer-btn-interval",
+        "data-interval": iv,
+        onClick: onAnswer ? () => onAnswer(iv) : void 0,
+        children: iv
+      },
+      iv
     )) });
   }
 
@@ -9172,6 +8790,39 @@ button {
           )
         ] }, row.fwdItemId);
       }) })
+    ] });
+  }
+  function StatsGrid({ selector, colLabels, getItemId, statsMode, notes, baseline }) {
+    const noteList = notes || NOTES;
+    return /* @__PURE__ */ u3("table", { class: "stats-grid", children: [
+      /* @__PURE__ */ u3("thead", { children: /* @__PURE__ */ u3("tr", { children: [
+        /* @__PURE__ */ u3("th", {}),
+        colLabels.map((c3) => /* @__PURE__ */ u3("th", { children: c3 }, c3))
+      ] }) }),
+      /* @__PURE__ */ u3("tbody", { children: noteList.map((note) => /* @__PURE__ */ u3("tr", { children: [
+        /* @__PURE__ */ u3("td", { class: "stats-grid-row-label", children: displayNote(note.name || note.displayName) }),
+        colLabels.map((_3, i3) => {
+          const itemId = getItemId(note.name, i3);
+          const color = Array.isArray(itemId) ? getStatsCellColorMerged(
+            selector,
+            itemId,
+            statsMode,
+            baseline
+          ) : getStatsCellColor(selector, itemId, statsMode, baseline);
+          const light = heatmapNeedsLightText(color);
+          return /* @__PURE__ */ u3(
+            "td",
+            {
+              class: "stats-cell",
+              style: {
+                background: color,
+                color: light ? "white" : void 0
+              }
+            },
+            i3
+          );
+        })
+      ] }, note.name)) })
     ] });
   }
   function StatsToggle({ active, onToggle }) {
@@ -9483,6 +9134,1099 @@ button {
     ] });
   }
 
+  // src/ui/modes/interval-semitones-mode.tsx
+  var ALL_ITEMS2 = [];
+  for (const interval of INTERVALS) {
+    ALL_ITEMS2.push(interval.abbrev + ":fwd");
+    ALL_ITEMS2.push(interval.abbrev + ":rev");
+  }
+  function getQuestion2(itemId) {
+    const [abbrev, dir] = itemId.split(":");
+    const interval = INTERVALS.find((i3) => i3.abbrev === abbrev);
+    return {
+      abbrev: interval.abbrev,
+      name: interval.name,
+      num: interval.num,
+      dir
+    };
+  }
+  function checkAnswer2(q3, input) {
+    if (q3.dir === "fwd") {
+      const correct2 = parseInt(input, 10) === q3.num;
+      return { correct: correct2, correctAnswer: String(q3.num) };
+    }
+    const interval = INTERVALS.find((i3) => i3.abbrev === q3.abbrev);
+    const correct = intervalMatchesInput(interval, input);
+    return { correct, correctAnswer: q3.abbrev };
+  }
+  function getStatsRows2() {
+    return INTERVALS.map((interval) => ({
+      label: interval.abbrev,
+      sublabel: String(interval.num),
+      _colHeader: "Interval",
+      fwdItemId: interval.abbrev + ":fwd",
+      revItemId: interval.abbrev + ":rev"
+    }));
+  }
+  function IntervalSemitonesMode({ container, navigateHome, onMount }) {
+    const learner = useLearnerModel("intervalSemitones", ALL_ITEMS2);
+    const [currentQ, setCurrentQ] = d2(null);
+    const currentQRef = A2(null);
+    const pendingDigitRef = A2(null);
+    const pendingTimeoutRef = A2(null);
+    const engineConfig = T2(() => ({
+      getEnabledItems: () => ALL_ITEMS2,
+      checkAnswer: (_itemId, input) => {
+        const q3 = currentQRef.current;
+        return checkAnswer2(q3, input);
+      },
+      onPresent: (itemId) => {
+        const q3 = getQuestion2(itemId);
+        currentQRef.current = q3;
+        setCurrentQ(q3);
+      },
+      handleKey: (e3, ctx) => {
+        const dir2 = currentQRef.current?.dir;
+        if (dir2 === "rev") {
+          return false;
+        }
+        if (e3.key >= "0" && e3.key <= "9") {
+          e3.preventDefault();
+          const d3 = parseInt(e3.key);
+          if (pendingDigitRef.current !== null) {
+            const num = pendingDigitRef.current * 10 + d3;
+            clearTimeout(pendingTimeoutRef.current);
+            pendingDigitRef.current = null;
+            pendingTimeoutRef.current = null;
+            if (num >= 1 && num <= 12) ctx.submitAnswer(String(num));
+            return true;
+          }
+          if (d3 >= 2 && d3 <= 9) {
+            ctx.submitAnswer(String(d3));
+          } else {
+            pendingDigitRef.current = d3;
+            pendingTimeoutRef.current = setTimeout(() => {
+              if (pendingDigitRef.current !== null) {
+                if (pendingDigitRef.current >= 1) {
+                  ctx.submitAnswer(String(pendingDigitRef.current));
+                }
+                pendingDigitRef.current = null;
+                pendingTimeoutRef.current = null;
+              }
+            }, 400);
+          }
+          return true;
+        }
+        return false;
+      },
+      onStart: () => {
+        if (pendingTimeoutRef.current) clearTimeout(pendingTimeoutRef.current);
+        pendingDigitRef.current = null;
+      },
+      onStop: () => {
+        if (pendingTimeoutRef.current) clearTimeout(pendingTimeoutRef.current);
+        pendingDigitRef.current = null;
+      },
+      getPracticingLabel: () => "all items"
+    }), []);
+    const engine = useQuizEngine(engineConfig, learner.selector);
+    y2(() => {
+      const phase = engine.state.phase;
+      const cls = phase === "idle" ? "phase-idle" : phase === "round-complete" ? "phase-round-complete" : "phase-active";
+      container.classList.remove(
+        "phase-idle",
+        "phase-active",
+        "phase-round-complete"
+      );
+      container.classList.add(cls);
+    }, [engine.state.phase, container]);
+    const [activeTab, setActiveTab] = d2(
+      "practice"
+    );
+    const [statsMode, setStatsMode] = d2("retention");
+    const summary = T2(
+      () => computePracticeSummary({
+        allItemIds: ALL_ITEMS2,
+        selector: learner.selector,
+        itemNoun: "items",
+        recommendation: null,
+        recommendationText: "",
+        sessionSummary: ALL_ITEMS2.length + " items \xB7 60s",
+        masteryText: engine.state.masteryText,
+        showMastery: engine.state.showMastery
+      }),
+      [
+        learner.selector,
+        engine.state.masteryText,
+        engine.state.showMastery,
+        engine.state.phase
+      ]
+    );
+    _2(() => {
+      onMount({
+        activate() {
+          learner.syncBaseline();
+          engine.updateIdleMessage();
+        },
+        deactivate() {
+          if (engine.state.phase !== "idle") engine.stop();
+        }
+      });
+    }, [engine, learner]);
+    const dir = currentQ?.dir ?? "fwd";
+    const promptText = currentQ ? currentQ.dir === "fwd" ? currentQ.name : String(currentQ.num) : "";
+    const handleIntervalAnswer = q2(
+      (interval) => engine.submitAnswer(interval),
+      [engine.submitAnswer]
+    );
+    const handleNumAnswer = q2(
+      (num) => engine.submitAnswer(String(num)),
+      [engine.submitAnswer]
+    );
+    const roundContext = T2(() => {
+      const s3 = engine.state;
+      const fluency = s3.masteredCount + " / " + s3.totalEnabledCount + " fluent";
+      return "all items \xB7 " + fluency;
+    }, [engine.state.masteredCount, engine.state.totalEnabledCount]);
+    const roundCorrect = T2(() => {
+      const s3 = engine.state;
+      const dur = Math.round((s3.roundDurationMs || 0) / 1e3);
+      return s3.roundCorrect + " / " + s3.roundAnswered + " correct \xB7 " + dur + "s";
+    }, [
+      engine.state.roundCorrect,
+      engine.state.roundAnswered,
+      engine.state.roundDurationMs
+    ]);
+    const roundMedian = T2(() => {
+      const times = engine.state.roundResponseTimes;
+      const median = computeMedian(times);
+      return median !== null ? (median / 1e3).toFixed(1) + "s median response time" : "";
+    }, [engine.state.roundResponseTimes]);
+    const statsSelector = T2(() => ({
+      getAutomaticity: (id) => learner.selector.getAutomaticity(id),
+      getStats: (id) => learner.selector.getStats(id)
+    }), [learner.selector, engine.state.phase, statsMode]);
+    const baselineText = learner.motorBaseline ? "Response time baseline: " + (learner.motorBaseline / 1e3).toFixed(1) + "s" : "Response time baseline: 1s (default)";
+    const answerCount = engine.state.roundAnswered;
+    const countText = answerCount + (answerCount === 1 ? " answer" : " answers");
+    return /* @__PURE__ */ u3(k, { children: [
+      /* @__PURE__ */ u3(ModeTopBar, { title: "Interval \\u2194 Semitones", onBack: navigateHome }),
+      /* @__PURE__ */ u3(
+        TabbedIdle,
+        {
+          activeTab,
+          onTabSwitch: setActiveTab,
+          practiceContent: /* @__PURE__ */ u3(
+            PracticeCard,
+            {
+              statusLabel: summary.statusLabel,
+              statusDetail: summary.statusDetail,
+              sessionSummary: summary.sessionSummary,
+              mastery: summary.showMastery ? summary.masteryText : void 0,
+              onStart: engine.start
+            }
+          ),
+          progressContent: /* @__PURE__ */ u3("div", { children: [
+            /* @__PURE__ */ u3("div", { class: "baseline-info", children: baselineText }),
+            /* @__PURE__ */ u3("div", { class: "stats-controls", children: /* @__PURE__ */ u3(StatsToggle, { active: statsMode, onToggle: setStatsMode }) }),
+            /* @__PURE__ */ u3("div", { class: "stats-container", children: /* @__PURE__ */ u3(
+              StatsTable,
+              {
+                selector: statsSelector,
+                rows: getStatsRows2(),
+                fwdHeader: "I\\u2192#",
+                revHeader: "#\\u2192I",
+                statsMode,
+                baseline: learner.motorBaseline ?? void 0
+              }
+            ) })
+          ] })
+        }
+      ),
+      /* @__PURE__ */ u3(
+        QuizSession,
+        {
+          timeLeft: engine.timerText,
+          context: "all items",
+          count: countText,
+          fluent: engine.state.masteredCount,
+          total: engine.state.totalEnabledCount,
+          isWarning: engine.timerWarning,
+          isLastQuestion: engine.timerLastQuestion,
+          onClose: engine.stop
+        }
+      ),
+      /* @__PURE__ */ u3(
+        QuizArea,
+        {
+          prompt: promptText,
+          lastQuestion: engine.state.roundTimerExpired ? "Last question" : "",
+          children: [
+            /* @__PURE__ */ u3(
+              IntervalButtons,
+              {
+                hidden: dir === "fwd",
+                onAnswer: handleIntervalAnswer
+              }
+            ),
+            /* @__PURE__ */ u3(
+              NumberButtons,
+              {
+                start: 1,
+                end: 12,
+                hidden: dir === "rev",
+                onAnswer: handleNumAnswer
+              }
+            ),
+            /* @__PURE__ */ u3(
+              FeedbackDisplay,
+              {
+                text: engine.state.feedbackText,
+                className: engine.state.feedbackClass,
+                time: engine.state.timeDisplayText || void 0,
+                hint: engine.state.hintText || void 0
+              }
+            ),
+            /* @__PURE__ */ u3(
+              RoundComplete,
+              {
+                context: roundContext,
+                heading: "Round complete",
+                correct: roundCorrect,
+                median: roundMedian,
+                onContinue: engine.continueQuiz,
+                onStop: engine.stop
+              }
+            )
+          ]
+        }
+      )
+    ] });
+  }
+
+  // src/hooks/use-scope-state.ts
+  function loadScope(spec) {
+    if (spec.kind === "none") return { kind: "none" };
+    if (spec.kind === "groups") {
+      let enabled = new Set(spec.defaultEnabled);
+      const saved = localStorage.getItem(spec.storageKey);
+      if (saved) {
+        try {
+          enabled = new Set(JSON.parse(saved));
+        } catch (_3) {
+        }
+      }
+      return { kind: "groups", enabledGroups: enabled };
+    }
+    if (spec.kind === "fretboard") {
+      const inst = spec.instrument;
+      let enabledStrings = /* @__PURE__ */ new Set([inst.defaultString]);
+      const saved = localStorage.getItem(
+        inst.storageNamespace + "_enabledStrings"
+      );
+      if (saved) {
+        try {
+          enabledStrings = new Set(JSON.parse(saved));
+        } catch (_3) {
+        }
+      }
+      let noteFilter = "natural";
+      const savedFilter = localStorage.getItem(
+        inst.storageNamespace + "_noteFilter"
+      );
+      if (savedFilter === "natural" || savedFilter === "sharps-flats" || savedFilter === "all") {
+        noteFilter = savedFilter;
+      }
+      return { kind: "fretboard", enabledStrings, noteFilter };
+    }
+    if (spec.kind === "note-filter") {
+      let noteFilter = "natural";
+      const saved = localStorage.getItem(spec.storageKey);
+      if (saved === "natural" || saved === "sharps-flats" || saved === "all") {
+        noteFilter = saved;
+      }
+      return { kind: "note-filter", noteFilter };
+    }
+    return { kind: "none" };
+  }
+  function saveScope(spec, scope) {
+    if (spec.kind === "groups" && scope.kind === "groups") {
+      localStorage.setItem(
+        spec.storageKey,
+        JSON.stringify([...scope.enabledGroups])
+      );
+    } else if (spec.kind === "fretboard" && scope.kind === "fretboard") {
+      const inst = spec.instrument;
+      localStorage.setItem(
+        inst.storageNamespace + "_enabledStrings",
+        JSON.stringify([...scope.enabledStrings])
+      );
+      try {
+        localStorage.setItem(
+          inst.storageNamespace + "_noteFilter",
+          scope.noteFilter
+        );
+      } catch (_3) {
+      }
+    } else if (spec.kind === "note-filter" && scope.kind === "note-filter") {
+      try {
+        localStorage.setItem(spec.storageKey, scope.noteFilter);
+      } catch (_3) {
+      }
+    }
+  }
+  function useScopeState(spec) {
+    const [scope, setScopeRaw] = d2(() => loadScope(spec));
+    const setScope = q2((next) => {
+      setScopeRaw(next);
+      saveScope(spec, next);
+    }, [spec]);
+    const toggleGroup = q2((index) => {
+      setScopeRaw((prev) => {
+        if (prev.kind !== "groups") return prev;
+        const next = new Set(prev.enabledGroups);
+        if (next.has(index)) {
+          if (next.size > 1) next.delete(index);
+        } else {
+          next.add(index);
+        }
+        const updated = { kind: "groups", enabledGroups: next };
+        saveScope(spec, updated);
+        return updated;
+      });
+    }, [spec]);
+    const toggleString = q2((index) => {
+      setScopeRaw((prev) => {
+        if (prev.kind !== "fretboard") return prev;
+        const next = new Set(prev.enabledStrings);
+        if (next.has(index)) {
+          if (next.size > 1) next.delete(index);
+        } else {
+          next.add(index);
+        }
+        const updated = {
+          kind: "fretboard",
+          enabledStrings: next,
+          noteFilter: prev.noteFilter
+        };
+        saveScope(spec, updated);
+        return updated;
+      });
+    }, [spec]);
+    const setNoteFilter = q2((filter) => {
+      setScopeRaw((prev) => {
+        if (prev.kind === "fretboard") {
+          const updated = {
+            kind: "fretboard",
+            enabledStrings: prev.enabledStrings,
+            noteFilter: filter
+          };
+          saveScope(spec, updated);
+          return updated;
+        }
+        if (prev.kind === "note-filter") {
+          const updated = { kind: "note-filter", noteFilter: filter };
+          saveScope(spec, updated);
+          return updated;
+        }
+        return prev;
+      });
+    }, [spec]);
+    return [scope, { toggleGroup, toggleString, setNoteFilter, setScope }];
+  }
+
+  // src/ui/scope.tsx
+  function GroupToggles({ labels, active, recommended, onToggle }) {
+    return /* @__PURE__ */ u3("div", { class: "toggle-group", children: [
+      /* @__PURE__ */ u3("span", { class: "toggle-group-label", children: "Groups" }),
+      /* @__PURE__ */ u3("div", { class: "distance-toggles", children: labels.map((label, i3) => {
+        let cls = "distance-toggle";
+        if (active.has(i3)) cls += " active";
+        if (recommended === i3) cls += " recommended";
+        return /* @__PURE__ */ u3(
+          "button",
+          {
+            type: "button",
+            class: cls,
+            "data-group": String(i3),
+            onClick: () => onToggle(i3),
+            children: label
+          },
+          i3
+        );
+      }) })
+    ] });
+  }
+
+  // src/ui/modes/semitone-math-mode.tsx
+  var DISTANCE_GROUPS = [
+    { distances: [1, 2], label: "\xB11\u20132" },
+    { distances: [3, 4], label: "\xB13\u20134" },
+    { distances: [5, 6], label: "\xB15\u20136" },
+    { distances: [7, 8], label: "\xB17\u20138" },
+    { distances: [9, 10], label: "\xB19\u201310" },
+    { distances: [11], label: "\xB111" }
+  ];
+  function getItemIdsForGroup5(groupIndex) {
+    const distances = DISTANCE_GROUPS[groupIndex].distances;
+    const items = [];
+    for (const note of NOTES) {
+      for (const d3 of distances) {
+        items.push(note.name + "+" + d3);
+        items.push(note.name + "-" + d3);
+      }
+    }
+    return items;
+  }
+  var ALL_ITEMS3 = [];
+  for (const note of NOTES) {
+    for (let s3 = 1; s3 <= 11; s3++) {
+      ALL_ITEMS3.push(note.name + "+" + s3);
+      ALL_ITEMS3.push(note.name + "-" + s3);
+    }
+  }
+  var ALL_GROUP_INDICES = DISTANCE_GROUPS.map((_3, i3) => i3);
+  function getQuestion3(itemId) {
+    const match = itemId.match(/^([A-G]#?)([+-])(\d+)$/);
+    const noteName = match[1];
+    const op = match[2];
+    const semitones = parseInt(match[3]);
+    const note = NOTES.find((n2) => n2.name === noteName);
+    const answer = op === "+" ? noteAdd(note.num, semitones) : noteSub(note.num, semitones);
+    const useFlats = op === "-";
+    const promptNoteName = displayNote(
+      pickAccidentalName(note.displayName, useFlats)
+    );
+    return {
+      note,
+      op,
+      semitones,
+      answer,
+      useFlats,
+      promptText: promptNoteName + " " + op + " " + semitones
+    };
+  }
+  function checkAnswer3(q3, input) {
+    const correct = noteMatchesInput(q3.answer, input);
+    return {
+      correct,
+      correctAnswer: displayNote(
+        pickAccidentalName(q3.answer.displayName, q3.useFlats)
+      )
+    };
+  }
+  var GRID_COL_LABELS = Array.from({ length: 11 }, (_3, i3) => String(i3 + 1));
+  function getGridItemId(noteName, colIdx) {
+    const n2 = colIdx + 1;
+    return [noteName + "+" + n2, noteName + "-" + n2];
+  }
+  function SemitoneMathMode({ container, navigateHome, onMount }) {
+    const [scope, scopeActions] = useScopeState({
+      kind: "groups",
+      groups: DISTANCE_GROUPS.map((g2, i3) => ({
+        index: i3,
+        label: g2.label,
+        itemIds: getItemIdsForGroup5(i3)
+      })),
+      defaultEnabled: [0],
+      storageKey: "semitoneMath_enabledGroups",
+      label: "Distances",
+      sortUnstarted: (a3, b) => a3.string - b.string
+    });
+    const enabledGroups = scope.kind === "groups" ? scope.enabledGroups : /* @__PURE__ */ new Set([0]);
+    const learner = useLearnerModel("semitoneMath", ALL_ITEMS3);
+    const enabledItems = T2(() => {
+      const items = [];
+      for (const g2 of enabledGroups) {
+        items.push(...getItemIdsForGroup5(g2));
+      }
+      return items;
+    }, [enabledGroups]);
+    const [currentQ, setCurrentQ] = d2(null);
+    const currentQRef = A2(null);
+    const engineSubmitRef = A2(() => {
+    });
+    const noteHandler = T2(
+      () => createAdaptiveKeyHandler(
+        (note) => engineSubmitRef.current(note),
+        () => true
+      ),
+      []
+    );
+    const recommendation = T2(() => {
+      return computeRecommendations(
+        learner.selector,
+        ALL_GROUP_INDICES,
+        getItemIdsForGroup5,
+        { expansionThreshold: 0.7 },
+        { sortUnstarted: (a3, b) => a3.string - b.string }
+      );
+    }, [learner.selector]);
+    const recommendationText = T2(() => {
+      return buildRecommendationText(
+        recommendation,
+        (i3) => DISTANCE_GROUPS[i3].label
+      );
+    }, [recommendation]);
+    const applyRecommendation = q2(() => {
+      if (recommendation.enabled) {
+        scopeActions.setScope({
+          kind: "groups",
+          enabledGroups: recommendation.enabled
+        });
+      }
+    }, [recommendation, scopeActions]);
+    const practicingLabel = T2(() => {
+      if (enabledGroups.size === DISTANCE_GROUPS.length) return "all distances";
+      const labels = [...enabledGroups].sort((a3, b) => a3 - b).map((g2) => DISTANCE_GROUPS[g2].label);
+      return labels.join(", ") + " semitones";
+    }, [enabledGroups]);
+    const engineConfig = T2(() => ({
+      getEnabledItems: () => {
+        const items = [];
+        const groups = scope.kind === "groups" ? scope.enabledGroups : /* @__PURE__ */ new Set([0]);
+        for (const g2 of groups) {
+          items.push(...getItemIdsForGroup5(g2));
+        }
+        return items;
+      },
+      checkAnswer: (_itemId, input) => {
+        const q3 = currentQRef.current;
+        return checkAnswer3(q3, input);
+      },
+      onPresent: (itemId) => {
+        const q3 = getQuestion3(itemId);
+        currentQRef.current = q3;
+        setCurrentQ(q3);
+      },
+      handleKey: (e3, _ctx) => {
+        return noteHandler.handleKey(e3);
+      },
+      onStart: () => {
+        noteHandler.reset();
+      },
+      onStop: () => {
+        noteHandler.reset();
+      },
+      getPracticingLabel: () => {
+        const groups = scope.kind === "groups" ? scope.enabledGroups : /* @__PURE__ */ new Set([0]);
+        if (groups.size === DISTANCE_GROUPS.length) return "all distances";
+        const labels = [...groups].sort((a3, b) => a3 - b).map((g2) => DISTANCE_GROUPS[g2].label);
+        return labels.join(", ") + " semitones";
+      }
+    }), [scope, noteHandler]);
+    const engine = useQuizEngine(engineConfig, learner.selector);
+    engineSubmitRef.current = engine.submitAnswer;
+    y2(() => {
+      const phase = engine.state.phase;
+      const cls = phase === "idle" ? "phase-idle" : phase === "round-complete" ? "phase-round-complete" : "phase-active";
+      container.classList.remove(
+        "phase-idle",
+        "phase-active",
+        "phase-round-complete"
+      );
+      container.classList.add(cls);
+    }, [engine.state.phase, container]);
+    const [activeTab, setActiveTab] = d2(
+      "practice"
+    );
+    const [statsMode, setStatsMode] = d2("retention");
+    const sessionSummary = enabledItems.length + " items \xB7 60s";
+    const summary = T2(
+      () => computePracticeSummary({
+        allItemIds: ALL_ITEMS3,
+        selector: learner.selector,
+        itemNoun: "items",
+        recommendation,
+        recommendationText,
+        sessionSummary,
+        masteryText: engine.state.masteryText,
+        showMastery: engine.state.showMastery
+      }),
+      [
+        learner.selector,
+        recommendation,
+        recommendationText,
+        sessionSummary,
+        engine.state.masteryText,
+        engine.state.showMastery,
+        engine.state.phase
+      ]
+    );
+    _2(() => {
+      onMount({
+        activate() {
+          learner.syncBaseline();
+          engine.updateIdleMessage();
+        },
+        deactivate() {
+          if (engine.state.phase !== "idle") engine.stop();
+          noteHandler.reset();
+        }
+      });
+    }, [engine, learner, noteHandler]);
+    const promptText = currentQ?.promptText ?? "";
+    const useFlats = currentQ?.useFlats;
+    const handleNoteAnswer = q2(
+      (note) => engine.submitAnswer(note),
+      [engine.submitAnswer]
+    );
+    const roundContext = T2(() => {
+      const s3 = engine.state;
+      const fluency = s3.masteredCount + " / " + s3.totalEnabledCount + " fluent";
+      return practicingLabel + " \xB7 " + fluency;
+    }, [
+      engine.state.masteredCount,
+      engine.state.totalEnabledCount,
+      practicingLabel
+    ]);
+    const roundCorrect = T2(() => {
+      const s3 = engine.state;
+      const dur = Math.round((s3.roundDurationMs || 0) / 1e3);
+      return s3.roundCorrect + " / " + s3.roundAnswered + " correct \xB7 " + dur + "s";
+    }, [
+      engine.state.roundCorrect,
+      engine.state.roundAnswered,
+      engine.state.roundDurationMs
+    ]);
+    const roundMedian = T2(() => {
+      const times = engine.state.roundResponseTimes;
+      const median = computeMedian(times);
+      return median !== null ? (median / 1e3).toFixed(1) + "s median response time" : "";
+    }, [engine.state.roundResponseTimes]);
+    const statsSelector = T2(() => ({
+      getAutomaticity: (id) => learner.selector.getAutomaticity(id),
+      getStats: (id) => learner.selector.getStats(id)
+    }), [learner.selector, engine.state.phase, statsMode]);
+    const baselineText = learner.motorBaseline ? "Response time baseline: " + (learner.motorBaseline / 1e3).toFixed(1) + "s" : "Response time baseline: 1s (default)";
+    const answerCount = engine.state.roundAnswered;
+    const countText = answerCount + (answerCount === 1 ? " answer" : " answers");
+    return /* @__PURE__ */ u3(k, { children: [
+      /* @__PURE__ */ u3(ModeTopBar, { title: "Semitone Math", onBack: navigateHome }),
+      /* @__PURE__ */ u3(
+        TabbedIdle,
+        {
+          activeTab,
+          onTabSwitch: setActiveTab,
+          practiceContent: /* @__PURE__ */ u3(
+            PracticeCard,
+            {
+              statusLabel: summary.statusLabel,
+              statusDetail: summary.statusDetail,
+              recommendation: summary.recommendationText || void 0,
+              mastery: summary.showMastery ? summary.masteryText : void 0,
+              sessionSummary,
+              onStart: engine.start,
+              onApplyRecommendation: summary.showRecommendationButton ? applyRecommendation : void 0,
+              scope: /* @__PURE__ */ u3(
+                GroupToggles,
+                {
+                  labels: DISTANCE_GROUPS.map((g2) => g2.label),
+                  active: enabledGroups,
+                  recommended: recommendation.expandIndex ?? void 0,
+                  onToggle: scopeActions.toggleGroup
+                }
+              )
+            }
+          ),
+          progressContent: /* @__PURE__ */ u3("div", { children: [
+            /* @__PURE__ */ u3("div", { class: "baseline-info", children: baselineText }),
+            /* @__PURE__ */ u3("div", { class: "stats-controls", children: /* @__PURE__ */ u3(StatsToggle, { active: statsMode, onToggle: setStatsMode }) }),
+            /* @__PURE__ */ u3("div", { class: "stats-container", children: /* @__PURE__ */ u3(
+              StatsGrid,
+              {
+                selector: statsSelector,
+                colLabels: GRID_COL_LABELS,
+                getItemId: getGridItemId,
+                statsMode,
+                baseline: learner.motorBaseline ?? void 0
+              }
+            ) })
+          ] })
+        }
+      ),
+      /* @__PURE__ */ u3(
+        QuizSession,
+        {
+          timeLeft: engine.timerText,
+          context: practicingLabel,
+          count: countText,
+          fluent: engine.state.masteredCount,
+          total: engine.state.totalEnabledCount,
+          isWarning: engine.timerWarning,
+          isLastQuestion: engine.timerLastQuestion,
+          onClose: engine.stop
+        }
+      ),
+      /* @__PURE__ */ u3(
+        QuizArea,
+        {
+          prompt: promptText,
+          lastQuestion: engine.state.roundTimerExpired ? "Last question" : "",
+          children: [
+            /* @__PURE__ */ u3(NoteButtons, { onAnswer: handleNoteAnswer, useFlats }),
+            /* @__PURE__ */ u3(
+              FeedbackDisplay,
+              {
+                text: engine.state.feedbackText,
+                className: engine.state.feedbackClass,
+                time: engine.state.timeDisplayText || void 0,
+                hint: engine.state.hintText || void 0
+              }
+            ),
+            /* @__PURE__ */ u3(
+              RoundComplete,
+              {
+                context: roundContext,
+                heading: "Round complete",
+                correct: roundCorrect,
+                median: roundMedian,
+                onContinue: engine.continueQuiz,
+                onStop: engine.stop
+              }
+            )
+          ]
+        }
+      )
+    ] });
+  }
+
+  // src/ui/modes/interval-math-mode.tsx
+  var MATH_INTERVALS = INTERVALS.filter((i3) => i3.num >= 1 && i3.num <= 11);
+  var DISTANCE_GROUPS2 = [
+    { distances: [1, 2], label: "m2 M2" },
+    { distances: [3, 4], label: "m3 M3" },
+    { distances: [5, 6], label: "P4 TT" },
+    { distances: [7, 8], label: "P5 m6" },
+    { distances: [9, 10], label: "M6 m7" },
+    { distances: [11], label: "M7" }
+  ];
+  function getItemIdsForGroup6(groupIndex) {
+    const distances = DISTANCE_GROUPS2[groupIndex].distances;
+    const intervals = MATH_INTERVALS.filter((i3) => distances.includes(i3.num));
+    const items = [];
+    for (const note of NOTES) {
+      for (const interval of intervals) {
+        items.push(note.name + "+" + interval.abbrev);
+        items.push(note.name + "-" + interval.abbrev);
+      }
+    }
+    return items;
+  }
+  var ALL_ITEMS4 = [];
+  for (const note of NOTES) {
+    for (const interval of MATH_INTERVALS) {
+      ALL_ITEMS4.push(note.name + "+" + interval.abbrev);
+      ALL_ITEMS4.push(note.name + "-" + interval.abbrev);
+    }
+  }
+  var ALL_GROUP_INDICES2 = DISTANCE_GROUPS2.map((_3, i3) => i3);
+  function getQuestion4(itemId) {
+    const match = itemId.match(/^([A-G]#?)([+-])(.+)$/);
+    const noteName = match[1];
+    const op = match[2];
+    const abbrev = match[3];
+    const note = NOTES.find((n2) => n2.name === noteName);
+    const interval = MATH_INTERVALS.find((i3) => i3.abbrev === abbrev);
+    const answer = op === "+" ? noteAdd(note.num, interval.num) : noteSub(note.num, interval.num);
+    const useFlats = op === "-";
+    const promptNoteName = displayNote(
+      pickAccidentalName(note.displayName, useFlats)
+    );
+    return {
+      note,
+      op,
+      interval,
+      answer,
+      useFlats,
+      promptText: promptNoteName + " " + op + " " + interval.abbrev
+    };
+  }
+  function checkAnswer4(q3, input) {
+    const correct = noteMatchesInput(q3.answer, input);
+    return {
+      correct,
+      correctAnswer: displayNote(
+        pickAccidentalName(q3.answer.displayName, q3.useFlats)
+      )
+    };
+  }
+  var GRID_COL_LABELS2 = MATH_INTERVALS.map((i3) => i3.abbrev);
+  function getGridItemId2(noteName, colIdx) {
+    const abbrev = MATH_INTERVALS[colIdx].abbrev;
+    return [noteName + "+" + abbrev, noteName + "-" + abbrev];
+  }
+  function IntervalMathMode({ container, navigateHome, onMount }) {
+    const [scope, scopeActions] = useScopeState({
+      kind: "groups",
+      groups: DISTANCE_GROUPS2.map((g2, i3) => ({
+        index: i3,
+        label: g2.label,
+        itemIds: getItemIdsForGroup6(i3)
+      })),
+      defaultEnabled: [0],
+      storageKey: "intervalMath_enabledGroups",
+      label: "Intervals",
+      sortUnstarted: (a3, b) => a3.string - b.string
+    });
+    const enabledGroups = scope.kind === "groups" ? scope.enabledGroups : /* @__PURE__ */ new Set([0]);
+    const learner = useLearnerModel("intervalMath", ALL_ITEMS4);
+    const enabledItems = T2(() => {
+      const items = [];
+      for (const g2 of enabledGroups) {
+        items.push(...getItemIdsForGroup6(g2));
+      }
+      return items;
+    }, [enabledGroups]);
+    const [currentQ, setCurrentQ] = d2(null);
+    const currentQRef = A2(null);
+    const engineSubmitRef = A2(() => {
+    });
+    const noteHandler = T2(
+      () => createAdaptiveKeyHandler(
+        (note) => engineSubmitRef.current(note),
+        () => true
+      ),
+      []
+    );
+    const recommendation = T2(() => {
+      return computeRecommendations(
+        learner.selector,
+        ALL_GROUP_INDICES2,
+        getItemIdsForGroup6,
+        { expansionThreshold: 0.7 },
+        { sortUnstarted: (a3, b) => a3.string - b.string }
+      );
+    }, [learner.selector]);
+    const recommendationText = T2(() => {
+      return buildRecommendationText(
+        recommendation,
+        (i3) => DISTANCE_GROUPS2[i3].label
+      );
+    }, [recommendation]);
+    const applyRecommendation = q2(() => {
+      if (recommendation.enabled) {
+        scopeActions.setScope({
+          kind: "groups",
+          enabledGroups: recommendation.enabled
+        });
+      }
+    }, [recommendation, scopeActions]);
+    const practicingLabel = T2(() => {
+      if (enabledGroups.size === DISTANCE_GROUPS2.length) return "all intervals";
+      const labels = [...enabledGroups].sort((a3, b) => a3 - b).map((g2) => DISTANCE_GROUPS2[g2].label);
+      return labels.join(", ") + " intervals";
+    }, [enabledGroups]);
+    const engineConfig = T2(() => ({
+      getEnabledItems: () => {
+        const items = [];
+        const groups = scope.kind === "groups" ? scope.enabledGroups : /* @__PURE__ */ new Set([0]);
+        for (const g2 of groups) {
+          items.push(...getItemIdsForGroup6(g2));
+        }
+        return items;
+      },
+      checkAnswer: (_itemId, input) => {
+        const q3 = currentQRef.current;
+        return checkAnswer4(q3, input);
+      },
+      onPresent: (itemId) => {
+        const q3 = getQuestion4(itemId);
+        currentQRef.current = q3;
+        setCurrentQ(q3);
+      },
+      handleKey: (e3, _ctx) => {
+        return noteHandler.handleKey(e3);
+      },
+      onStart: () => {
+        noteHandler.reset();
+      },
+      onStop: () => {
+        noteHandler.reset();
+      },
+      getPracticingLabel: () => {
+        const groups = scope.kind === "groups" ? scope.enabledGroups : /* @__PURE__ */ new Set([0]);
+        if (groups.size === DISTANCE_GROUPS2.length) return "all intervals";
+        const labels = [...groups].sort((a3, b) => a3 - b).map((g2) => DISTANCE_GROUPS2[g2].label);
+        return labels.join(", ") + " intervals";
+      }
+    }), [scope, noteHandler]);
+    const engine = useQuizEngine(engineConfig, learner.selector);
+    engineSubmitRef.current = engine.submitAnswer;
+    y2(() => {
+      const phase = engine.state.phase;
+      const cls = phase === "idle" ? "phase-idle" : phase === "round-complete" ? "phase-round-complete" : "phase-active";
+      container.classList.remove(
+        "phase-idle",
+        "phase-active",
+        "phase-round-complete"
+      );
+      container.classList.add(cls);
+    }, [engine.state.phase, container]);
+    const [activeTab, setActiveTab] = d2(
+      "practice"
+    );
+    const [statsMode, setStatsMode] = d2("retention");
+    const sessionSummary = enabledItems.length + " items \xB7 60s";
+    const summary = T2(
+      () => computePracticeSummary({
+        allItemIds: ALL_ITEMS4,
+        selector: learner.selector,
+        itemNoun: "items",
+        recommendation,
+        recommendationText,
+        sessionSummary,
+        masteryText: engine.state.masteryText,
+        showMastery: engine.state.showMastery
+      }),
+      [
+        learner.selector,
+        recommendation,
+        recommendationText,
+        sessionSummary,
+        engine.state.masteryText,
+        engine.state.showMastery,
+        engine.state.phase
+      ]
+    );
+    _2(() => {
+      onMount({
+        activate() {
+          learner.syncBaseline();
+          engine.updateIdleMessage();
+        },
+        deactivate() {
+          if (engine.state.phase !== "idle") engine.stop();
+          noteHandler.reset();
+        }
+      });
+    }, [engine, learner, noteHandler]);
+    const promptText = currentQ?.promptText ?? "";
+    const useFlats = currentQ?.useFlats;
+    const handleNoteAnswer = q2(
+      (note) => engine.submitAnswer(note),
+      [engine.submitAnswer]
+    );
+    const roundContext = T2(() => {
+      const s3 = engine.state;
+      const fluency = s3.masteredCount + " / " + s3.totalEnabledCount + " fluent";
+      return practicingLabel + " \xB7 " + fluency;
+    }, [
+      engine.state.masteredCount,
+      engine.state.totalEnabledCount,
+      practicingLabel
+    ]);
+    const roundCorrect = T2(() => {
+      const s3 = engine.state;
+      const dur = Math.round((s3.roundDurationMs || 0) / 1e3);
+      return s3.roundCorrect + " / " + s3.roundAnswered + " correct \xB7 " + dur + "s";
+    }, [
+      engine.state.roundCorrect,
+      engine.state.roundAnswered,
+      engine.state.roundDurationMs
+    ]);
+    const roundMedian = T2(() => {
+      const times = engine.state.roundResponseTimes;
+      const median = computeMedian(times);
+      return median !== null ? (median / 1e3).toFixed(1) + "s median response time" : "";
+    }, [engine.state.roundResponseTimes]);
+    const statsSelector = T2(() => ({
+      getAutomaticity: (id) => learner.selector.getAutomaticity(id),
+      getStats: (id) => learner.selector.getStats(id)
+    }), [learner.selector, engine.state.phase, statsMode]);
+    const baselineText = learner.motorBaseline ? "Response time baseline: " + (learner.motorBaseline / 1e3).toFixed(1) + "s" : "Response time baseline: 1s (default)";
+    const answerCount = engine.state.roundAnswered;
+    const countText = answerCount + (answerCount === 1 ? " answer" : " answers");
+    return /* @__PURE__ */ u3(k, { children: [
+      /* @__PURE__ */ u3(ModeTopBar, { title: "Interval Math", onBack: navigateHome }),
+      /* @__PURE__ */ u3(
+        TabbedIdle,
+        {
+          activeTab,
+          onTabSwitch: setActiveTab,
+          practiceContent: /* @__PURE__ */ u3(
+            PracticeCard,
+            {
+              statusLabel: summary.statusLabel,
+              statusDetail: summary.statusDetail,
+              recommendation: summary.recommendationText || void 0,
+              mastery: summary.showMastery ? summary.masteryText : void 0,
+              sessionSummary,
+              onStart: engine.start,
+              onApplyRecommendation: summary.showRecommendationButton ? applyRecommendation : void 0,
+              scope: /* @__PURE__ */ u3(
+                GroupToggles,
+                {
+                  labels: DISTANCE_GROUPS2.map((g2) => g2.label),
+                  active: enabledGroups,
+                  recommended: recommendation.expandIndex ?? void 0,
+                  onToggle: scopeActions.toggleGroup
+                }
+              )
+            }
+          ),
+          progressContent: /* @__PURE__ */ u3("div", { children: [
+            /* @__PURE__ */ u3("div", { class: "baseline-info", children: baselineText }),
+            /* @__PURE__ */ u3("div", { class: "stats-controls", children: /* @__PURE__ */ u3(StatsToggle, { active: statsMode, onToggle: setStatsMode }) }),
+            /* @__PURE__ */ u3("div", { class: "stats-container", children: /* @__PURE__ */ u3(
+              StatsGrid,
+              {
+                selector: statsSelector,
+                colLabels: GRID_COL_LABELS2,
+                getItemId: getGridItemId2,
+                statsMode,
+                baseline: learner.motorBaseline ?? void 0
+              }
+            ) })
+          ] })
+        }
+      ),
+      /* @__PURE__ */ u3(
+        QuizSession,
+        {
+          timeLeft: engine.timerText,
+          context: practicingLabel,
+          count: countText,
+          fluent: engine.state.masteredCount,
+          total: engine.state.totalEnabledCount,
+          isWarning: engine.timerWarning,
+          isLastQuestion: engine.timerLastQuestion,
+          onClose: engine.stop
+        }
+      ),
+      /* @__PURE__ */ u3(
+        QuizArea,
+        {
+          prompt: promptText,
+          lastQuestion: engine.state.roundTimerExpired ? "Last question" : "",
+          children: [
+            /* @__PURE__ */ u3(NoteButtons, { onAnswer: handleNoteAnswer, useFlats }),
+            /* @__PURE__ */ u3(
+              FeedbackDisplay,
+              {
+                text: engine.state.feedbackText,
+                className: engine.state.feedbackClass,
+                time: engine.state.timeDisplayText || void 0,
+                hint: engine.state.hintText || void 0
+              }
+            ),
+            /* @__PURE__ */ u3(
+              RoundComplete,
+              {
+                context: roundContext,
+                heading: "Round complete",
+                correct: roundCorrect,
+                median: roundMedian,
+                onContinue: engine.continueQuiz,
+                onStop: engine.stop
+              }
+            )
+          ]
+        }
+      )
+    ] });
+  }
+
   // src/app.ts
   var nav = createNavigation();
   var allControllers = [
@@ -9497,13 +10241,6 @@ button {
       def: fretboardDefinition(UKULELE)
     },
     { id: "speedTap", name: "Speed Tap", def: speedTapDefinition() },
-    {
-      id: "intervalSemitones",
-      name: "Interval \u2194 Semitones",
-      def: intervalSemitonesDefinition()
-    },
-    { id: "semitoneMath", name: "Semitone Math", def: semitoneMathDefinition() },
-    { id: "intervalMath", name: "Interval Math", def: intervalMathDefinition() },
     {
       id: "keySignatures",
       name: "Key Signatures",
@@ -9538,6 +10275,81 @@ button {
       init() {
         J(
           _(NoteSemitonesMode, {
+            container,
+            navigateHome: () => nav.navigateHome(),
+            onMount: (h3) => {
+              handle = h3;
+            }
+          }),
+          container
+        );
+      },
+      activate() {
+        handle?.activate();
+      },
+      deactivate() {
+        handle?.deactivate();
+      }
+    });
+  }
+  {
+    let handle = null;
+    const container = document.getElementById("mode-intervalSemitones");
+    nav.registerMode("intervalSemitones", {
+      name: "Interval \u2194 Semitones",
+      init() {
+        J(
+          _(IntervalSemitonesMode, {
+            container,
+            navigateHome: () => nav.navigateHome(),
+            onMount: (h3) => {
+              handle = h3;
+            }
+          }),
+          container
+        );
+      },
+      activate() {
+        handle?.activate();
+      },
+      deactivate() {
+        handle?.deactivate();
+      }
+    });
+  }
+  {
+    let handle = null;
+    const container = document.getElementById("mode-semitoneMath");
+    nav.registerMode("semitoneMath", {
+      name: "Semitone Math",
+      init() {
+        J(
+          _(SemitoneMathMode, {
+            container,
+            navigateHome: () => nav.navigateHome(),
+            onMount: (h3) => {
+              handle = h3;
+            }
+          }),
+          container
+        );
+      },
+      activate() {
+        handle?.activate();
+      },
+      deactivate() {
+        handle?.deactivate();
+      }
+    });
+  }
+  {
+    let handle = null;
+    const container = document.getElementById("mode-intervalMath");
+    nav.registerMode("intervalMath", {
+      name: "Interval Math",
+      init() {
+        J(
+          _(IntervalMathMode, {
             container,
             navigateHome: () => nav.navigateHome(),
             onMount: (h3) => {

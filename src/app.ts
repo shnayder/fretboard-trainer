@@ -12,9 +12,6 @@ import { GUITAR, UKULELE } from './music-data.ts';
 import { createModeController } from './mode-controller.ts';
 import { fretboardDefinition } from './modes/fretboard.ts';
 import { speedTapDefinition } from './modes/speed-tap.ts';
-import { intervalSemitonesDefinition } from './modes/interval-semitones.ts';
-import { semitoneMathDefinition } from './modes/semitone-math.ts';
-import { intervalMathDefinition } from './modes/interval-math.ts';
 import { keySignaturesDefinition } from './modes/key-signatures.ts';
 import { scaleDegreesDefinition } from './modes/scale-degrees.ts';
 import { diatonicChordsDefinition } from './modes/diatonic-chords.ts';
@@ -24,6 +21,9 @@ import { createSettingsModal } from './settings.ts';
 import { refreshNoteButtonLabels } from './quiz-engine.ts';
 import type { ModeHandle } from './ui/modes/note-semitones-mode.tsx';
 import { NoteSemitonesMode } from './ui/modes/note-semitones-mode.tsx';
+import { IntervalSemitonesMode } from './ui/modes/interval-semitones-mode.tsx';
+import { SemitoneMathMode } from './ui/modes/semitone-math-mode.tsx';
+import { IntervalMathMode } from './ui/modes/interval-math-mode.tsx';
 
 const nav = createNavigation();
 
@@ -43,13 +43,6 @@ const allControllers = [
     def: fretboardDefinition(UKULELE),
   },
   { id: 'speedTap', name: 'Speed Tap', def: speedTapDefinition() },
-  {
-    id: 'intervalSemitones',
-    name: 'Interval \u2194 Semitones',
-    def: intervalSemitonesDefinition(),
-  },
-  { id: 'semitoneMath', name: 'Semitone Math', def: semitoneMathDefinition() },
-  { id: 'intervalMath', name: 'Interval Math', def: intervalMathDefinition() },
   {
     id: 'keySignatures',
     name: 'Key Signatures',
@@ -87,6 +80,84 @@ const allControllers = [
     init() {
       render(
         h(NoteSemitonesMode, {
+          container,
+          navigateHome: () => nav.navigateHome(),
+          onMount: (h: ModeHandle) => {
+            handle = h;
+          },
+        }),
+        container,
+      );
+    },
+    activate() {
+      handle?.activate();
+    },
+    deactivate() {
+      handle?.deactivate();
+    },
+  });
+}
+
+{
+  let handle: ModeHandle | null = null;
+  const container = document.getElementById('mode-intervalSemitones')!;
+  nav.registerMode('intervalSemitones', {
+    name: 'Interval \u2194 Semitones',
+    init() {
+      render(
+        h(IntervalSemitonesMode, {
+          container,
+          navigateHome: () => nav.navigateHome(),
+          onMount: (h: ModeHandle) => {
+            handle = h;
+          },
+        }),
+        container,
+      );
+    },
+    activate() {
+      handle?.activate();
+    },
+    deactivate() {
+      handle?.deactivate();
+    },
+  });
+}
+
+{
+  let handle: ModeHandle | null = null;
+  const container = document.getElementById('mode-semitoneMath')!;
+  nav.registerMode('semitoneMath', {
+    name: 'Semitone Math',
+    init() {
+      render(
+        h(SemitoneMathMode, {
+          container,
+          navigateHome: () => nav.navigateHome(),
+          onMount: (h: ModeHandle) => {
+            handle = h;
+          },
+        }),
+        container,
+      );
+    },
+    activate() {
+      handle?.activate();
+    },
+    deactivate() {
+      handle?.deactivate();
+    },
+  });
+}
+
+{
+  let handle: ModeHandle | null = null;
+  const container = document.getElementById('mode-intervalMath')!;
+  nav.registerMode('intervalMath', {
+    name: 'Interval Math',
+    init() {
+      render(
+        h(IntervalMathMode, {
           container,
           navigateHome: () => nav.navigateHome(),
           onMount: (h: ModeHandle) => {

@@ -1,7 +1,7 @@
 // Answer button components: Preact equivalents of html-helpers button generators.
 // Each emits the same CSS class names as the build-time HTML for style parity.
 
-import { displayNote } from '../music-data.ts';
+import { displayNote, NOTES, pickAccidentalName } from '../music-data.ts';
 
 const ALL_NOTES = [
   'C',
@@ -66,26 +66,39 @@ const NUMERALS = ['I', 'ii', 'iii', 'IV', 'V', 'vi', 'vii\u00B0'];
 // ---------------------------------------------------------------------------
 
 export function NoteButtons(
-  { onAnswer, hidden }: {
+  { onAnswer, hidden, useFlats }: {
     onAnswer?: (note: string) => void;
     hidden?: boolean;
+    /** When set, accidental buttons show flats (true) or sharps (false). */
+    useFlats?: boolean;
   },
 ) {
   const cls = 'answer-buttons answer-buttons-notes' +
     (hidden ? ' answer-group-hidden' : '');
   return (
     <div class={cls}>
-      {ALL_NOTES.map((n) => (
-        <button
-          type='button'
-          key={n}
-          class='answer-btn answer-btn-note'
-          data-note={n}
-          onClick={onAnswer ? () => onAnswer(n) : undefined}
-        >
-          {displayNote(n)}
-        </button>
-      ))}
+      {ALL_NOTES.map((n) => {
+        let label: string;
+        if (useFlats !== undefined) {
+          const note = NOTES.find((x) => x.name === n);
+          label = note
+            ? displayNote(pickAccidentalName(note.displayName, useFlats))
+            : displayNote(n);
+        } else {
+          label = displayNote(n);
+        }
+        return (
+          <button
+            type='button'
+            key={n}
+            class='answer-btn answer-btn-note'
+            data-note={n}
+            onClick={onAnswer ? () => onAnswer(n) : undefined}
+          >
+            {label}
+          </button>
+        );
+      })}
     </div>
   );
 }

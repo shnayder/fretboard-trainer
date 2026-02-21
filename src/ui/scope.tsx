@@ -10,7 +10,7 @@ import { displayNote } from '../music-data.ts';
 export function GroupToggles(
   { labels, active, recommended, onToggle }: {
     labels: string[];
-    active: Set<number>;
+    active: ReadonlySet<number>;
     recommended?: number;
     onToggle: (index: number) => void;
   },
@@ -47,7 +47,7 @@ export function GroupToggles(
 export function StringToggles(
   { stringNames, active, recommended, onToggle }: {
     stringNames: string[];
-    active: Set<number>;
+    active: ReadonlySet<number>;
     recommended?: number;
     onToggle: (index: number) => void;
   },

@@ -12,9 +12,6 @@ import { GUITAR, UKULELE } from './music-data.ts';
 import { createModeController } from './mode-controller.ts';
 import { fretboardDefinition } from './modes/fretboard.ts';
 import { speedTapDefinition } from './modes/speed-tap.ts';
-import { keySignaturesDefinition } from './modes/key-signatures.ts';
-import { scaleDegreesDefinition } from './modes/scale-degrees.ts';
-import { diatonicChordsDefinition } from './modes/diatonic-chords.ts';
 import { chordSpellingDefinition } from './modes/chord-spelling.ts';
 import { createNavigation } from './navigation.ts';
 import { createSettingsModal } from './settings.ts';
@@ -24,6 +21,9 @@ import { NoteSemitonesMode } from './ui/modes/note-semitones-mode.tsx';
 import { IntervalSemitonesMode } from './ui/modes/interval-semitones-mode.tsx';
 import { SemitoneMathMode } from './ui/modes/semitone-math-mode.tsx';
 import { IntervalMathMode } from './ui/modes/interval-math-mode.tsx';
+import { KeySignaturesMode } from './ui/modes/key-signatures-mode.tsx';
+import { ScaleDegreesMode } from './ui/modes/scale-degrees-mode.tsx';
+import { DiatonicChordsMode } from './ui/modes/diatonic-chords-mode.tsx';
 
 const nav = createNavigation();
 
@@ -44,17 +44,6 @@ const allControllers = [
   },
   { id: 'speedTap', name: 'Speed Tap', def: speedTapDefinition() },
   {
-    id: 'keySignatures',
-    name: 'Key Signatures',
-    def: keySignaturesDefinition(),
-  },
-  { id: 'scaleDegrees', name: 'Scale Degrees', def: scaleDegreesDefinition() },
-  {
-    id: 'diatonicChords',
-    name: 'Diatonic Chords',
-    def: diatonicChordsDefinition(),
-  },
-  {
     id: 'chordSpelling',
     name: 'Chord Spelling',
     def: chordSpellingDefinition(),
@@ -72,14 +61,15 @@ const allControllers = [
 
 // --- Preact-based modes ---
 
-{
+// deno-lint-ignore no-explicit-any
+function registerPreactMode(id: string, name: string, Component: any) {
   let handle: ModeHandle | null = null;
-  const container = document.getElementById('mode-noteSemitones')!;
-  nav.registerMode('noteSemitones', {
-    name: 'Note \u2194 Semitones',
+  const container = document.getElementById('mode-' + id)!;
+  nav.registerMode(id, {
+    name,
     init() {
       render(
-        h(NoteSemitonesMode, {
+        h(Component, {
           container,
           navigateHome: () => nav.navigateHome(),
           onMount: (h: ModeHandle) => {
@@ -98,83 +88,17 @@ const allControllers = [
   });
 }
 
-{
-  let handle: ModeHandle | null = null;
-  const container = document.getElementById('mode-intervalSemitones')!;
-  nav.registerMode('intervalSemitones', {
-    name: 'Interval \u2194 Semitones',
-    init() {
-      render(
-        h(IntervalSemitonesMode, {
-          container,
-          navigateHome: () => nav.navigateHome(),
-          onMount: (h: ModeHandle) => {
-            handle = h;
-          },
-        }),
-        container,
-      );
-    },
-    activate() {
-      handle?.activate();
-    },
-    deactivate() {
-      handle?.deactivate();
-    },
-  });
-}
-
-{
-  let handle: ModeHandle | null = null;
-  const container = document.getElementById('mode-semitoneMath')!;
-  nav.registerMode('semitoneMath', {
-    name: 'Semitone Math',
-    init() {
-      render(
-        h(SemitoneMathMode, {
-          container,
-          navigateHome: () => nav.navigateHome(),
-          onMount: (h: ModeHandle) => {
-            handle = h;
-          },
-        }),
-        container,
-      );
-    },
-    activate() {
-      handle?.activate();
-    },
-    deactivate() {
-      handle?.deactivate();
-    },
-  });
-}
-
-{
-  let handle: ModeHandle | null = null;
-  const container = document.getElementById('mode-intervalMath')!;
-  nav.registerMode('intervalMath', {
-    name: 'Interval Math',
-    init() {
-      render(
-        h(IntervalMathMode, {
-          container,
-          navigateHome: () => nav.navigateHome(),
-          onMount: (h: ModeHandle) => {
-            handle = h;
-          },
-        }),
-        container,
-      );
-    },
-    activate() {
-      handle?.activate();
-    },
-    deactivate() {
-      handle?.deactivate();
-    },
-  });
-}
+registerPreactMode('noteSemitones', 'Note \u2194 Semitones', NoteSemitonesMode);
+registerPreactMode(
+  'intervalSemitones',
+  'Interval \u2194 Semitones',
+  IntervalSemitonesMode,
+);
+registerPreactMode('semitoneMath', 'Semitone Math', SemitoneMathMode);
+registerPreactMode('intervalMath', 'Interval Math', IntervalMathMode);
+registerPreactMode('keySignatures', 'Key Signatures', KeySignaturesMode);
+registerPreactMode('scaleDegrees', 'Scale Degrees', ScaleDegreesMode);
+registerPreactMode('diatonicChords', 'Diatonic Chords', DiatonicChordsMode);
 
 nav.init();
 

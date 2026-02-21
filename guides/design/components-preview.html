@@ -2101,8 +2101,9 @@ button {
       iv
     )) });
   }
-  function KeysigButtons({ onAnswer }) {
-    return /* @__PURE__ */ u2("div", { class: "answer-buttons answer-buttons-keysig", children: KEYSIGS.map((s2) => /* @__PURE__ */ u2(
+  function KeysigButtons({ onAnswer, hidden }) {
+    const cls = "answer-buttons answer-buttons-keysig" + (hidden ? " answer-group-hidden" : "");
+    return /* @__PURE__ */ u2("div", { class: cls, children: KEYSIGS.map((s2) => /* @__PURE__ */ u2(
       "button",
       {
         type: "button",

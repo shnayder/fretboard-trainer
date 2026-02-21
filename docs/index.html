@@ -1633,7 +1633,7 @@ button {
     </div>
     <div class="home-footer">
       <button class="home-settings-btn" type="button">Settings</button>
-      <span class="version">v8.0</span>
+      <span class="version">v8.2</span>
     </div>
   </div>
 
@@ -5362,6 +5362,53 @@ button {
     };
   }
 
+  // src/hooks/use-phase-class.ts
+  var PHASE_CLASSES = ["phase-idle", "phase-active", "phase-round-complete"];
+  function usePhaseClass(container, phase) {
+    y2(() => {
+      const cls = phase === "idle" ? "phase-idle" : phase === "round-complete" ? "phase-round-complete" : "phase-active";
+      container.classList.remove(...PHASE_CLASSES);
+      container.classList.add(cls);
+    }, [phase, container]);
+  }
+
+  // src/hooks/use-round-summary.ts
+  function useStatsSelector(selector, enginePhase, statsMode) {
+    return T2(() => ({
+      getAutomaticity: (id) => selector.getAutomaticity(id),
+      getStats: (id) => selector.getStats(id)
+    }), [selector, enginePhase, statsMode]);
+  }
+  function useRoundSummary(engine, learner, practicingLabel) {
+    const roundContext = T2(() => {
+      const s3 = engine.state;
+      const fluency = s3.masteredCount + " / " + s3.totalEnabledCount + " fluent";
+      return practicingLabel + " \xB7 " + fluency;
+    }, [
+      engine.state.masteredCount,
+      engine.state.totalEnabledCount,
+      practicingLabel
+    ]);
+    const roundCorrect = T2(() => {
+      const s3 = engine.state;
+      const dur = Math.round((s3.roundDurationMs || 0) / 1e3);
+      return s3.roundCorrect + " / " + s3.roundAnswered + " correct \xB7 " + dur + "s";
+    }, [
+      engine.state.roundCorrect,
+      engine.state.roundAnswered,
+      engine.state.roundDurationMs
+    ]);
+    const roundMedian = T2(() => {
+      const times = engine.state.roundResponseTimes;
+      const median = computeMedian(times);
+      return median !== null ? (median / 1e3).toFixed(1) + "s median response time" : "";
+    }, [engine.state.roundResponseTimes]);
+    const baselineText = learner.motorBaseline ? "Response time baseline: " + (learner.motorBaseline / 1e3).toFixed(1) + "s" : "Response time baseline: 1s (default)";
+    const answerCount = engine.state.roundAnswered;
+    const countText = answerCount + (answerCount === 1 ? " answer" : " answers");
+    return { roundContext, roundCorrect, roundMedian, baselineText, countText };
+  }
+
   // node_modules/preact/jsx-runtime/dist/jsxRuntime.module.js
   var f3 = 0;
   function u3(e3, t3, n2, o3, i3, u4) {
@@ -5967,12 +6014,37 @@ button {
     ] });
   }
 
-  // src/ui/modes/note-semitones-mode.tsx
-  var ALL_ITEMS = [];
-  for (const note of NOTES) {
-    ALL_ITEMS.push(note.name + ":fwd");
-    ALL_ITEMS.push(note.name + ":rev");
+  // src/mode-utils.ts
+  function buildBidirectionalIds(keys) {
+    const ids = [];
+    for (let i3 = 0; i3 < keys.length; i3++) {
+      ids.push(keys[i3] + ":fwd", keys[i3] + ":rev");
+    }
+    return ids;
   }
+  function buildMathIds(notes, values) {
+    const ids = [];
+    for (let i3 = 0; i3 < notes.length; i3++) {
+      for (let j3 = 0; j3 < values.length; j3++) {
+        ids.push(notes[i3] + "+" + values[j3], notes[i3] + "-" + values[j3]);
+      }
+    }
+    return ids;
+  }
+  function parseMathId(id) {
+    const match = id.match(/^([A-Ga-g][#b]?)([+-])(.+)$/);
+    if (!match) {
+      return { note: id, op: "+", value: "" };
+    }
+    return {
+      note: match[1],
+      op: match[2],
+      value: match[3]
+    };
+  }
+
+  // src/modes/note-semitones/logic.ts
+  var ALL_ITEMS = buildBidirectionalIds(NOTES.map((n2) => n2.name));
   function getQuestion(itemId) {
     const [noteName, dir] = itemId.split(":");
     const note = NOTES.find((n2) => n2.name === noteName);
@@ -6001,6 +6073,8 @@ button {
       revItemId: note.name + ":rev"
     }));
   }
+
+  // src/modes/note-semitones/note-semitones-mode.tsx
   function NoteSemitonesMode({ container, navigateHome, onMount }) {
     const learner = useLearnerModel("noteSemitones", ALL_ITEMS);
     const [currentQ, setCurrentQ] = d2(null);
@@ -6073,16 +6147,8 @@ button {
     }), [noteHandler]);
     const engine = useQuizEngine(engineConfig, learner.selector);
     engineSubmitRef.current = engine.submitAnswer;
-    y2(() => {
-      const phase = engine.state.phase;
-      const cls = phase === "idle" ? "phase-idle" : phase === "round-complete" ? "phase-round-complete" : "phase-active";
-      container.classList.remove(
-        "phase-idle",
-        "phase-active",
-        "phase-round-complete"
-      );
-      container.classList.add(cls);
-    }, [engine.state.phase, container]);
+    usePhaseClass(container, engine.state.phase);
+    const round = useRoundSummary(engine, learner, "all items");
     const [activeTab, setActiveTab] = d2(
       "practice"
     );
@@ -6127,32 +6193,11 @@ button {
       (num) => engine.submitAnswer(String(num)),
       [engine.submitAnswer]
     );
-    const roundContext = T2(() => {
-      const s3 = engine.state;
-      const fluency = s3.masteredCount + " / " + s3.totalEnabledCount + " fluent";
-      return "all items \xB7 " + fluency;
-    }, [engine.state.masteredCount, engine.state.totalEnabledCount]);
-    const roundCorrect = T2(() => {
-      const s3 = engine.state;
-      const dur = Math.round((s3.roundDurationMs || 0) / 1e3);
-      return s3.roundCorrect + " / " + s3.roundAnswered + " correct \xB7 " + dur + "s";
-    }, [
-      engine.state.roundCorrect,
-      engine.state.roundAnswered,
-      engine.state.roundDurationMs
-    ]);
-    const roundMedian = T2(() => {
-      const times = engine.state.roundResponseTimes;
-      const median = computeMedian(times);
-      return median !== null ? (median / 1e3).toFixed(1) + "s median response time" : "";
-    }, [engine.state.roundResponseTimes]);
-    const statsSelector = T2(() => ({
-      getAutomaticity: (id) => learner.selector.getAutomaticity(id),
-      getStats: (id) => learner.selector.getStats(id)
-    }), [learner.selector, engine.state.phase, statsMode]);
-    const baselineText = learner.motorBaseline ? "Response time baseline: " + (learner.motorBaseline / 1e3).toFixed(1) + "s" : "Response time baseline: 1s (default)";
-    const answerCount = engine.state.roundAnswered;
-    const countText = answerCount + (answerCount === 1 ? " answer" : " answers");
+    const statsSel = useStatsSelector(
+      learner.selector,
+      engine.state.phase,
+      statsMode
+    );
     return /* @__PURE__ */ u3(k, { children: [
       /* @__PURE__ */ u3(ModeTopBar, { title: "Note \\u2194 Semitones", onBack: navigateHome }),
       /* @__PURE__ */ u3(
@@ -6171,12 +6216,12 @@ button {
             }
           ),
           progressContent: /* @__PURE__ */ u3("div", { children: [
-            /* @__PURE__ */ u3("div", { class: "baseline-info", children: baselineText }),
+            /* @__PURE__ */ u3("div", { class: "baseline-info", children: round.baselineText }),
             /* @__PURE__ */ u3("div", { class: "stats-controls", children: /* @__PURE__ */ u3(StatsToggle, { active: statsMode, onToggle: setStatsMode }) }),
             /* @__PURE__ */ u3("div", { class: "stats-container", children: /* @__PURE__ */ u3(
               StatsTable,
               {
-                selector: statsSelector,
+                selector: statsSel,
                 rows: getStatsRows(),
                 fwdHeader: "N\\u2192#",
                 revHeader: "#\\u2192N",
@@ -6192,7 +6237,7 @@ button {
         {
           timeLeft: engine.timerText,
           context: "all items",
-          count: countText,
+          count: round.countText,
           fluent: engine.state.masteredCount,
           total: engine.state.totalEnabledCount,
           isWarning: engine.timerWarning,
@@ -6228,10 +6273,10 @@ button {
             /* @__PURE__ */ u3(
               RoundComplete,
               {
-                context: roundContext,
+                context: round.roundContext,
                 heading: "Round complete",
-                correct: roundCorrect,
-                median: roundMedian,
+                correct: round.roundCorrect,
+                median: round.roundMedian,
                 onContinue: engine.continueQuiz,
                 onStop: engine.stop
               }
@@ -6242,12 +6287,10 @@ button {
     ] });
   }
 
-  // src/ui/modes/interval-semitones-mode.tsx
-  var ALL_ITEMS2 = [];
-  for (const interval of INTERVALS) {
-    ALL_ITEMS2.push(interval.abbrev + ":fwd");
-    ALL_ITEMS2.push(interval.abbrev + ":rev");
-  }
+  // src/modes/interval-semitones/logic.ts
+  var ALL_ITEMS2 = buildBidirectionalIds(
+    INTERVALS.map((i3) => i3.abbrev)
+  );
   function getQuestion2(itemId) {
     const [abbrev, dir] = itemId.split(":");
     const interval = INTERVALS.find((i3) => i3.abbrev === abbrev);
@@ -6276,6 +6319,8 @@ button {
       revItemId: interval.abbrev + ":rev"
     }));
   }
+
+  // src/modes/interval-semitones/interval-semitones-mode.tsx
   function IntervalSemitonesMode({ container, navigateHome, onMount }) {
     const learner = useLearnerModel("intervalSemitones", ALL_ITEMS2);
     const [currentQ, setCurrentQ] = d2(null);
@@ -6338,16 +6383,7 @@ button {
       getPracticingLabel: () => "all items"
     }), []);
     const engine = useQuizEngine(engineConfig, learner.selector);
-    y2(() => {
-      const phase = engine.state.phase;
-      const cls = phase === "idle" ? "phase-idle" : phase === "round-complete" ? "phase-round-complete" : "phase-active";
-      container.classList.remove(
-        "phase-idle",
-        "phase-active",
-        "phase-round-complete"
-      );
-      container.classList.add(cls);
-    }, [engine.state.phase, container]);
+    usePhaseClass(container, engine.state.phase);
     const [activeTab, setActiveTab] = d2(
       "practice"
     );
@@ -6391,32 +6427,12 @@ button {
       (num) => engine.submitAnswer(String(num)),
       [engine.submitAnswer]
     );
-    const roundContext = T2(() => {
-      const s3 = engine.state;
-      const fluency = s3.masteredCount + " / " + s3.totalEnabledCount + " fluent";
-      return "all items \xB7 " + fluency;
-    }, [engine.state.masteredCount, engine.state.totalEnabledCount]);
-    const roundCorrect = T2(() => {
-      const s3 = engine.state;
-      const dur = Math.round((s3.roundDurationMs || 0) / 1e3);
-      return s3.roundCorrect + " / " + s3.roundAnswered + " correct \xB7 " + dur + "s";
-    }, [
-      engine.state.roundCorrect,
-      engine.state.roundAnswered,
-      engine.state.roundDurationMs
-    ]);
-    const roundMedian = T2(() => {
-      const times = engine.state.roundResponseTimes;
-      const median = computeMedian(times);
-      return median !== null ? (median / 1e3).toFixed(1) + "s median response time" : "";
-    }, [engine.state.roundResponseTimes]);
-    const statsSelector = T2(() => ({
-      getAutomaticity: (id) => learner.selector.getAutomaticity(id),
-      getStats: (id) => learner.selector.getStats(id)
-    }), [learner.selector, engine.state.phase, statsMode]);
-    const baselineText = learner.motorBaseline ? "Response time baseline: " + (learner.motorBaseline / 1e3).toFixed(1) + "s" : "Response time baseline: 1s (default)";
-    const answerCount = engine.state.roundAnswered;
-    const countText = answerCount + (answerCount === 1 ? " answer" : " answers");
+    const round = useRoundSummary(engine, learner, "all items");
+    const statsSel = useStatsSelector(
+      learner.selector,
+      engine.state.phase,
+      statsMode
+    );
     return /* @__PURE__ */ u3(k, { children: [
       /* @__PURE__ */ u3(ModeTopBar, { title: "Interval \\u2194 Semitones", onBack: navigateHome }),
       /* @__PURE__ */ u3(
@@ -6435,12 +6451,12 @@ button {
             }
           ),
           progressContent: /* @__PURE__ */ u3("div", { children: [
-            /* @__PURE__ */ u3("div", { class: "baseline-info", children: baselineText }),
+            /* @__PURE__ */ u3("div", { class: "baseline-info", children: round.baselineText }),
             /* @__PURE__ */ u3("div", { class: "stats-controls", children: /* @__PURE__ */ u3(StatsToggle, { active: statsMode, onToggle: setStatsMode }) }),
             /* @__PURE__ */ u3("div", { class: "stats-container", children: /* @__PURE__ */ u3(
               StatsTable,
               {
-                selector: statsSelector,
+                selector: statsSel,
                 rows: getStatsRows2(),
                 fwdHeader: "I\\u2192#",
                 revHeader: "#\\u2192I",
@@ -6456,7 +6472,7 @@ button {
         {
           timeLeft: engine.timerText,
           context: "all items",
-          count: countText,
+          count: round.countText,
           fluent: engine.state.masteredCount,
           total: engine.state.totalEnabledCount,
           isWarning: engine.timerWarning,
@@ -6498,10 +6514,10 @@ button {
             /* @__PURE__ */ u3(
               RoundComplete,
               {
-                context: roundContext,
+                context: round.roundContext,
                 heading: "Round complete",
-                correct: roundCorrect,
-                median: roundMedian,
+                correct: round.roundCorrect,
+                median: round.roundMedian,
                 onContinue: engine.continueQuiz,
                 onStop: engine.stop
               }
@@ -6803,7 +6819,7 @@ button {
     ] });
   }
 
-  // src/ui/modes/semitone-math-mode.tsx
+  // src/modes/semitone-math/logic.ts
   var DISTANCE_GROUPS = [
     { distances: [1, 2], label: "\xB11\u20132" },
     { distances: [3, 4], label: "\xB13\u20134" },
@@ -6823,19 +6839,16 @@ button {
     }
     return items;
   }
-  var ALL_ITEMS3 = [];
-  for (const note of NOTES) {
-    for (let s3 = 1; s3 <= 11; s3++) {
-      ALL_ITEMS3.push(note.name + "+" + s3);
-      ALL_ITEMS3.push(note.name + "-" + s3);
-    }
-  }
+  var ALL_ITEMS3 = buildMathIds(
+    NOTES.map((n2) => n2.name),
+    Array.from({ length: 11 }, (_3, i3) => i3 + 1)
+  );
   var ALL_GROUP_INDICES = DISTANCE_GROUPS.map((_3, i3) => i3);
   function getQuestion3(itemId) {
-    const match = itemId.match(/^([A-G]#?)([+-])(\d+)$/);
-    const noteName = match[1];
-    const op = match[2];
-    const semitones = parseInt(match[3]);
+    const parsed = parseMathId(itemId);
+    const noteName = parsed.note;
+    const op = parsed.op;
+    const semitones = parseInt(parsed.value);
     const note = NOTES.find((n2) => n2.name === noteName);
     const answer = op === "+" ? noteAdd(note.num, semitones) : noteSub(note.num, semitones);
     const useFlats = op === "-";
@@ -6860,11 +6873,16 @@ button {
       )
     };
   }
-  var GRID_COL_LABELS = Array.from({ length: 11 }, (_3, i3) => String(i3 + 1));
+  var GRID_COL_LABELS = Array.from(
+    { length: 11 },
+    (_3, i3) => String(i3 + 1)
+  );
   function getGridItemId(noteName, colIdx) {
     const n2 = colIdx + 1;
     return [noteName + "+" + n2, noteName + "-" + n2];
   }
+
+  // src/modes/semitone-math/semitone-math-mode.tsx
   function SemitoneMathMode({ container, navigateHome, onMount }) {
     const [scope, scopeActions] = useScopeState({
       kind: "groups",
@@ -6962,16 +6980,7 @@ button {
     }), [scope, noteHandler]);
     const engine = useQuizEngine(engineConfig, learner.selector);
     engineSubmitRef.current = engine.submitAnswer;
-    y2(() => {
-      const phase = engine.state.phase;
-      const cls = phase === "idle" ? "phase-idle" : phase === "round-complete" ? "phase-round-complete" : "phase-active";
-      container.classList.remove(
-        "phase-idle",
-        "phase-active",
-        "phase-round-complete"
-      );
-      container.classList.add(cls);
-    }, [engine.state.phase, container]);
+    usePhaseClass(container, engine.state.phase);
     const [activeTab, setActiveTab] = d2(
       "practice"
     );
@@ -7016,36 +7025,12 @@ button {
       (note) => engine.submitAnswer(note),
       [engine.submitAnswer]
     );
-    const roundContext = T2(() => {
-      const s3 = engine.state;
-      const fluency = s3.masteredCount + " / " + s3.totalEnabledCount + " fluent";
-      return practicingLabel + " \xB7 " + fluency;
-    }, [
-      engine.state.masteredCount,
-      engine.state.totalEnabledCount,
-      practicingLabel
-    ]);
-    const roundCorrect = T2(() => {
-      const s3 = engine.state;
-      const dur = Math.round((s3.roundDurationMs || 0) / 1e3);
-      return s3.roundCorrect + " / " + s3.roundAnswered + " correct \xB7 " + dur + "s";
-    }, [
-      engine.state.roundCorrect,
-      engine.state.roundAnswered,
-      engine.state.roundDurationMs
-    ]);
-    const roundMedian = T2(() => {
-      const times = engine.state.roundResponseTimes;
-      const median = computeMedian(times);
-      return median !== null ? (median / 1e3).toFixed(1) + "s median response time" : "";
-    }, [engine.state.roundResponseTimes]);
-    const statsSelector = T2(() => ({
-      getAutomaticity: (id) => learner.selector.getAutomaticity(id),
-      getStats: (id) => learner.selector.getStats(id)
-    }), [learner.selector, engine.state.phase, statsMode]);
-    const baselineText = learner.motorBaseline ? "Response time baseline: " + (learner.motorBaseline / 1e3).toFixed(1) + "s" : "Response time baseline: 1s (default)";
-    const answerCount = engine.state.roundAnswered;
-    const countText = answerCount + (answerCount === 1 ? " answer" : " answers");
+    const round = useRoundSummary(engine, learner, practicingLabel);
+    const statsSel = useStatsSelector(
+      learner.selector,
+      engine.state.phase,
+      statsMode
+    );
     return /* @__PURE__ */ u3(k, { children: [
       /* @__PURE__ */ u3(ModeTopBar, { title: "Semitone Math", onBack: navigateHome }),
       /* @__PURE__ */ u3(
@@ -7075,12 +7060,12 @@ button {
             }
           ),
           progressContent: /* @__PURE__ */ u3("div", { children: [
-            /* @__PURE__ */ u3("div", { class: "baseline-info", children: baselineText }),
+            /* @__PURE__ */ u3("div", { class: "baseline-info", children: round.baselineText }),
             /* @__PURE__ */ u3("div", { class: "stats-controls", children: /* @__PURE__ */ u3(StatsToggle, { active: statsMode, onToggle: setStatsMode }) }),
             /* @__PURE__ */ u3("div", { class: "stats-container", children: /* @__PURE__ */ u3(
               StatsGrid,
               {
-                selector: statsSelector,
+                selector: statsSel,
                 colLabels: GRID_COL_LABELS,
                 getItemId: getGridItemId,
                 statsMode,
@@ -7095,7 +7080,7 @@ button {
         {
           timeLeft: engine.timerText,
           context: practicingLabel,
-          count: countText,
+          count: round.countText,
           fluent: engine.state.masteredCount,
           total: engine.state.totalEnabledCount,
           isWarning: engine.timerWarning,
@@ -7122,10 +7107,10 @@ button {
             /* @__PURE__ */ u3(
               RoundComplete,
               {
-                context: roundContext,
+                context: round.roundContext,
                 heading: "Round complete",
-                correct: roundCorrect,
-                median: roundMedian,
+                correct: round.roundCorrect,
+                median: round.roundMedian,
                 onContinue: engine.continueQuiz,
                 onStop: engine.stop
               }
@@ -7136,8 +7121,10 @@ button {
     ] });
   }
 
-  // src/ui/modes/interval-math-mode.tsx
-  var MATH_INTERVALS = INTERVALS.filter((i3) => i3.num >= 1 && i3.num <= 11);
+  // src/modes/interval-math/logic.ts
+  var MATH_INTERVALS = INTERVALS.filter(
+    (i3) => i3.num >= 1 && i3.num <= 11
+  );
   var DISTANCE_GROUPS2 = [
     { distances: [1, 2], label: "m2 M2" },
     { distances: [3, 4], label: "m3 M3" },
@@ -7158,19 +7145,16 @@ button {
     }
     return items;
   }
-  var ALL_ITEMS4 = [];
-  for (const note of NOTES) {
-    for (const interval of MATH_INTERVALS) {
-      ALL_ITEMS4.push(note.name + "+" + interval.abbrev);
-      ALL_ITEMS4.push(note.name + "-" + interval.abbrev);
-    }
-  }
+  var ALL_ITEMS4 = buildMathIds(
+    NOTES.map((n2) => n2.name),
+    MATH_INTERVALS.map((i3) => i3.abbrev)
+  );
   var ALL_GROUP_INDICES2 = DISTANCE_GROUPS2.map((_3, i3) => i3);
   function getQuestion4(itemId) {
-    const match = itemId.match(/^([A-G]#?)([+-])(.+)$/);
-    const noteName = match[1];
-    const op = match[2];
-    const abbrev = match[3];
+    const parsed = parseMathId(itemId);
+    const noteName = parsed.note;
+    const op = parsed.op;
+    const abbrev = parsed.value;
     const note = NOTES.find((n2) => n2.name === noteName);
     const interval = MATH_INTERVALS.find((i3) => i3.abbrev === abbrev);
     const answer = op === "+" ? noteAdd(note.num, interval.num) : noteSub(note.num, interval.num);
@@ -7201,6 +7185,8 @@ button {
     const abbrev = MATH_INTERVALS[colIdx].abbrev;
     return [noteName + "+" + abbrev, noteName + "-" + abbrev];
   }
+
+  // src/modes/interval-math/interval-math-mode.tsx
   function IntervalMathMode({ container, navigateHome, onMount }) {
     const [scope, scopeActions] = useScopeState({
       kind: "groups",
@@ -7298,16 +7284,8 @@ button {
     }), [scope, noteHandler]);
     const engine = useQuizEngine(engineConfig, learner.selector);
     engineSubmitRef.current = engine.submitAnswer;
-    y2(() => {
-      const phase = engine.state.phase;
-      const cls = phase === "idle" ? "phase-idle" : phase === "round-complete" ? "phase-round-complete" : "phase-active";
-      container.classList.remove(
-        "phase-idle",
-        "phase-active",
-        "phase-round-complete"
-      );
-      container.classList.add(cls);
-    }, [engine.state.phase, container]);
+    usePhaseClass(container, engine.state.phase);
+    const round = useRoundSummary(engine, learner, practicingLabel);
     const [activeTab, setActiveTab] = d2(
       "practice"
     );
@@ -7352,36 +7330,11 @@ button {
       (note) => engine.submitAnswer(note),
       [engine.submitAnswer]
     );
-    const roundContext = T2(() => {
-      const s3 = engine.state;
-      const fluency = s3.masteredCount + " / " + s3.totalEnabledCount + " fluent";
-      return practicingLabel + " \xB7 " + fluency;
-    }, [
-      engine.state.masteredCount,
-      engine.state.totalEnabledCount,
-      practicingLabel
-    ]);
-    const roundCorrect = T2(() => {
-      const s3 = engine.state;
-      const dur = Math.round((s3.roundDurationMs || 0) / 1e3);
-      return s3.roundCorrect + " / " + s3.roundAnswered + " correct \xB7 " + dur + "s";
-    }, [
-      engine.state.roundCorrect,
-      engine.state.roundAnswered,
-      engine.state.roundDurationMs
-    ]);
-    const roundMedian = T2(() => {
-      const times = engine.state.roundResponseTimes;
-      const median = computeMedian(times);
-      return median !== null ? (median / 1e3).toFixed(1) + "s median response time" : "";
-    }, [engine.state.roundResponseTimes]);
-    const statsSelector = T2(() => ({
-      getAutomaticity: (id) => learner.selector.getAutomaticity(id),
-      getStats: (id) => learner.selector.getStats(id)
-    }), [learner.selector, engine.state.phase, statsMode]);
-    const baselineText = learner.motorBaseline ? "Response time baseline: " + (learner.motorBaseline / 1e3).toFixed(1) + "s" : "Response time baseline: 1s (default)";
-    const answerCount = engine.state.roundAnswered;
-    const countText = answerCount + (answerCount === 1 ? " answer" : " answers");
+    const statsSel = useStatsSelector(
+      learner.selector,
+      engine.state.phase,
+      statsMode
+    );
     return /* @__PURE__ */ u3(k, { children: [
       /* @__PURE__ */ u3(ModeTopBar, { title: "Interval Math", onBack: navigateHome }),
       /* @__PURE__ */ u3(
@@ -7411,12 +7364,12 @@ button {
             }
           ),
           progressContent: /* @__PURE__ */ u3("div", { children: [
-            /* @__PURE__ */ u3("div", { class: "baseline-info", children: baselineText }),
+            /* @__PURE__ */ u3("div", { class: "baseline-info", children: round.baselineText }),
             /* @__PURE__ */ u3("div", { class: "stats-controls", children: /* @__PURE__ */ u3(StatsToggle, { active: statsMode, onToggle: setStatsMode }) }),
             /* @__PURE__ */ u3("div", { class: "stats-container", children: /* @__PURE__ */ u3(
               StatsGrid,
               {
-                selector: statsSelector,
+                selector: statsSel,
                 colLabels: GRID_COL_LABELS2,
                 getItemId: getGridItemId2,
                 statsMode,
@@ -7431,7 +7384,7 @@ button {
         {
           timeLeft: engine.timerText,
           context: practicingLabel,
-          count: countText,
+          count: round.countText,
           fluent: engine.state.masteredCount,
           total: engine.state.totalEnabledCount,
           isWarning: engine.timerWarning,
@@ -7458,10 +7411,10 @@ button {
             /* @__PURE__ */ u3(
               RoundComplete,
               {
-                context: roundContext,
+                context: round.roundContext,
                 heading: "Round complete",
-                correct: roundCorrect,
-                median: roundMedian,
+                correct: round.roundCorrect,
+                median: round.roundMedian,
                 onContinue: engine.continueQuiz,
                 onStop: engine.stop
               }
@@ -7472,7 +7425,7 @@ button {
     ] });
   }
 
-  // src/ui/modes/key-signatures-mode.tsx
+  // src/modes/key-signatures/logic.ts
   var KEY_GROUPS = [
     { keys: ["C", "G", "F"], label: "C G F" },
     { keys: ["D", "Bb"], label: "D B\u266D" },
@@ -7522,6 +7475,8 @@ button {
       revItemId: key.root + ":rev"
     }));
   }
+
+  // src/modes/key-signatures/key-signatures-mode.tsx
   function KeySignaturesMode({ container, navigateHome, onMount }) {
     const [scope, scopeActions] = useScopeState({
       kind: "groups",
@@ -7659,20 +7614,17 @@ button {
     }), [scope, noteHandler]);
     const engine = useQuizEngine(engineConfig, learner.selector);
     engineSubmitRef.current = engine.submitAnswer;
-    y2(() => {
-      const phase = engine.state.phase;
-      const cls = phase === "idle" ? "phase-idle" : phase === "round-complete" ? "phase-round-complete" : "phase-active";
-      container.classList.remove(
-        "phase-idle",
-        "phase-active",
-        "phase-round-complete"
-      );
-      container.classList.add(cls);
-    }, [engine.state.phase, container]);
+    usePhaseClass(container, engine.state.phase);
     const [activeTab, setActiveTab] = d2(
       "practice"
     );
     const [statsMode, setStatsMode] = d2("retention");
+    const round = useRoundSummary(engine, learner, practicingLabel);
+    const statsSel = useStatsSelector(
+      learner.selector,
+      engine.state.phase,
+      statsMode
+    );
     const sessionSummary = enabledItems.length + " items \xB7 60s";
     const summary = T2(
       () => computePracticeSummary({
@@ -7721,36 +7673,6 @@ button {
       (note) => engine.submitAnswer(note),
       [engine.submitAnswer]
     );
-    const roundContext = T2(() => {
-      const s3 = engine.state;
-      const fluency = s3.masteredCount + " / " + s3.totalEnabledCount + " fluent";
-      return practicingLabel + " \xB7 " + fluency;
-    }, [
-      engine.state.masteredCount,
-      engine.state.totalEnabledCount,
-      practicingLabel
-    ]);
-    const roundCorrect = T2(() => {
-      const s3 = engine.state;
-      const dur = Math.round((s3.roundDurationMs || 0) / 1e3);
-      return s3.roundCorrect + " / " + s3.roundAnswered + " correct \xB7 " + dur + "s";
-    }, [
-      engine.state.roundCorrect,
-      engine.state.roundAnswered,
-      engine.state.roundDurationMs
-    ]);
-    const roundMedian = T2(() => {
-      const times = engine.state.roundResponseTimes;
-      const median = computeMedian(times);
-      return median !== null ? (median / 1e3).toFixed(1) + "s median response time" : "";
-    }, [engine.state.roundResponseTimes]);
-    const statsSelector = T2(() => ({
-      getAutomaticity: (id) => learner.selector.getAutomaticity(id),
-      getStats: (id) => learner.selector.getStats(id)
-    }), [learner.selector, engine.state.phase, statsMode]);
-    const baselineText = learner.motorBaseline ? "Response time baseline: " + (learner.motorBaseline / 1e3).toFixed(1) + "s" : "Response time baseline: 1s (default)";
-    const answerCount = engine.state.roundAnswered;
-    const countText = answerCount + (answerCount === 1 ? " answer" : " answers");
     return /* @__PURE__ */ u3(k, { children: [
       /* @__PURE__ */ u3(ModeTopBar, { title: "Key Signatures", onBack: navigateHome }),
       /* @__PURE__ */ u3(
@@ -7780,12 +7702,12 @@ button {
             }
           ),
           progressContent: /* @__PURE__ */ u3("div", { children: [
-            /* @__PURE__ */ u3("div", { class: "baseline-info", children: baselineText }),
+            /* @__PURE__ */ u3("div", { class: "baseline-info", children: round.baselineText }),
             /* @__PURE__ */ u3("div", { class: "stats-controls", children: /* @__PURE__ */ u3(StatsToggle, { active: statsMode, onToggle: setStatsMode }) }),
             /* @__PURE__ */ u3("div", { class: "stats-container", children: /* @__PURE__ */ u3(
               StatsTable,
               {
-                selector: statsSelector,
+                selector: statsSel,
                 rows: getStatsRows3(),
                 fwdHeader: "Key\\u2192Sig",
                 revHeader: "Sig\\u2192Key",
@@ -7801,7 +7723,7 @@ button {
         {
           timeLeft: engine.timerText,
           context: practicingLabel,
-          count: countText,
+          count: round.countText,
           fluent: engine.state.masteredCount,
           total: engine.state.totalEnabledCount,
           isWarning: engine.timerWarning,
@@ -7829,10 +7751,10 @@ button {
             /* @__PURE__ */ u3(
               RoundComplete,
               {
-                context: roundContext,
+                context: round.roundContext,
                 heading: "Round complete",
-                correct: roundCorrect,
-                median: roundMedian,
+                correct: round.roundCorrect,
+                median: round.roundMedian,
                 onContinue: engine.continueQuiz,
                 onStop: engine.stop
               }
@@ -7843,7 +7765,7 @@ button {
     ] });
   }
 
-  // src/ui/modes/scale-degrees-mode.tsx
+  // src/modes/scale-degrees/logic.ts
   var DEGREE_LABELS = ["1st", "2nd", "3rd", "4th", "5th", "6th", "7th"];
   var DEGREE_GROUPS = [
     { degrees: [1, 5], label: "1st,5th" },
@@ -7897,6 +7819,8 @@ button {
     const d3 = colIdx + 1;
     return [keyRoot + ":" + d3 + ":fwd", keyRoot + ":" + d3 + ":rev"];
   }
+
+  // src/modes/scale-degrees/scale-degrees-mode.tsx
   function ScaleDegreesMode({ container, navigateHome, onMount }) {
     const [scope, scopeActions] = useScopeState({
       kind: "groups",
@@ -7998,16 +7922,7 @@ button {
     }), [scope, noteHandler]);
     const engine = useQuizEngine(engineConfig, learner.selector);
     engineSubmitRef.current = engine.submitAnswer;
-    y2(() => {
-      const phase = engine.state.phase;
-      const cls = phase === "idle" ? "phase-idle" : phase === "round-complete" ? "phase-round-complete" : "phase-active";
-      container.classList.remove(
-        "phase-idle",
-        "phase-active",
-        "phase-round-complete"
-      );
-      container.classList.add(cls);
-    }, [engine.state.phase, container]);
+    usePhaseClass(container, engine.state.phase);
     const [activeTab, setActiveTab] = d2(
       "practice"
     );
@@ -8056,35 +7971,12 @@ button {
       (degree) => engine.submitAnswer(degree),
       [engine.submitAnswer]
     );
-    const roundContext = T2(() => {
-      const s3 = engine.state;
-      return practicingLabel + " \xB7 " + s3.masteredCount + " / " + s3.totalEnabledCount + " fluent";
-    }, [
-      engine.state.masteredCount,
-      engine.state.totalEnabledCount,
-      practicingLabel
-    ]);
-    const roundCorrect = T2(() => {
-      const s3 = engine.state;
-      const dur = Math.round((s3.roundDurationMs || 0) / 1e3);
-      return s3.roundCorrect + " / " + s3.roundAnswered + " correct \xB7 " + dur + "s";
-    }, [
-      engine.state.roundCorrect,
-      engine.state.roundAnswered,
-      engine.state.roundDurationMs
-    ]);
-    const roundMedian = T2(() => {
-      const times = engine.state.roundResponseTimes;
-      const median = computeMedian(times);
-      return median !== null ? (median / 1e3).toFixed(1) + "s median response time" : "";
-    }, [engine.state.roundResponseTimes]);
-    const statsSelector = T2(() => ({
-      getAutomaticity: (id) => learner.selector.getAutomaticity(id),
-      getStats: (id) => learner.selector.getStats(id)
-    }), [learner.selector, engine.state.phase, statsMode]);
-    const baselineText = learner.motorBaseline ? "Response time baseline: " + (learner.motorBaseline / 1e3).toFixed(1) + "s" : "Response time baseline: 1s (default)";
-    const answerCount = engine.state.roundAnswered;
-    const countText = answerCount + (answerCount === 1 ? " answer" : " answers");
+    const round = useRoundSummary(engine, learner, practicingLabel);
+    const statsSel = useStatsSelector(
+      learner.selector,
+      engine.state.phase,
+      statsMode
+    );
     return /* @__PURE__ */ u3(k, { children: [
       /* @__PURE__ */ u3(ModeTopBar, { title: "Scale Degrees", onBack: navigateHome }),
       /* @__PURE__ */ u3(
@@ -8114,12 +8006,12 @@ button {
             }
           ),
           progressContent: /* @__PURE__ */ u3("div", { children: [
-            /* @__PURE__ */ u3("div", { class: "baseline-info", children: baselineText }),
+            /* @__PURE__ */ u3("div", { class: "baseline-info", children: round.baselineText }),
             /* @__PURE__ */ u3("div", { class: "stats-controls", children: /* @__PURE__ */ u3(StatsToggle, { active: statsMode, onToggle: setStatsMode }) }),
             /* @__PURE__ */ u3("div", { class: "stats-container", children: /* @__PURE__ */ u3(
               StatsGrid,
               {
-                selector: statsSelector,
+                selector: statsSel,
                 colLabels: DEGREE_LABELS,
                 getItemId: getGridItemId3,
                 statsMode,
@@ -8135,7 +8027,7 @@ button {
         {
           timeLeft: engine.timerText,
           context: practicingLabel,
-          count: countText,
+          count: round.countText,
           fluent: engine.state.masteredCount,
           total: engine.state.totalEnabledCount,
           isWarning: engine.timerWarning,
@@ -8163,10 +8055,10 @@ button {
             /* @__PURE__ */ u3(
               RoundComplete,
               {
-                context: roundContext,
+                context: round.roundContext,
                 heading: "Round complete",
-                correct: roundCorrect,
-                median: roundMedian,
+                correct: round.roundCorrect,
+                median: round.roundMedian,
                 onContinue: engine.continueQuiz,
                 onStop: engine.stop
               }
@@ -8177,7 +8069,7 @@ button {
     ] });
   }
 
-  // src/ui/modes/diatonic-chords-mode.tsx
+  // src/modes/diatonic-chords/logic.ts
   var CHORD_GROUPS = [
     { degrees: [1, 4, 5], label: "I,IV,V" },
     { degrees: [2, 6], label: "ii,vi" },
@@ -8231,6 +8123,8 @@ button {
     const d3 = colIdx + 1;
     return [keyRoot + ":" + d3 + ":fwd", keyRoot + ":" + d3 + ":rev"];
   }
+
+  // src/modes/diatonic-chords/diatonic-chords-mode.tsx
   function DiatonicChordsMode({ container, navigateHome, onMount }) {
     const [scope, scopeActions] = useScopeState({
       kind: "groups",
@@ -8332,16 +8226,7 @@ button {
     }), [scope, noteHandler]);
     const engine = useQuizEngine(engineConfig, learner.selector);
     engineSubmitRef.current = engine.submitAnswer;
-    y2(() => {
-      const phase = engine.state.phase;
-      const cls = phase === "idle" ? "phase-idle" : phase === "round-complete" ? "phase-round-complete" : "phase-active";
-      container.classList.remove(
-        "phase-idle",
-        "phase-active",
-        "phase-round-complete"
-      );
-      container.classList.add(cls);
-    }, [engine.state.phase, container]);
+    usePhaseClass(container, engine.state.phase);
     const [activeTab, setActiveTab] = d2(
       "practice"
     );
@@ -8390,35 +8275,12 @@ button {
       (numeral) => engine.submitAnswer(numeral),
       [engine.submitAnswer]
     );
-    const roundContext = T2(() => {
-      const s3 = engine.state;
-      return practicingLabel + " \xB7 " + s3.masteredCount + " / " + s3.totalEnabledCount + " fluent";
-    }, [
-      engine.state.masteredCount,
-      engine.state.totalEnabledCount,
-      practicingLabel
-    ]);
-    const roundCorrect = T2(() => {
-      const s3 = engine.state;
-      const dur = Math.round((s3.roundDurationMs || 0) / 1e3);
-      return s3.roundCorrect + " / " + s3.roundAnswered + " correct \xB7 " + dur + "s";
-    }, [
-      engine.state.roundCorrect,
-      engine.state.roundAnswered,
-      engine.state.roundDurationMs
-    ]);
-    const roundMedian = T2(() => {
-      const times = engine.state.roundResponseTimes;
-      const median = computeMedian(times);
-      return median !== null ? (median / 1e3).toFixed(1) + "s median response time" : "";
-    }, [engine.state.roundResponseTimes]);
-    const statsSelector = T2(() => ({
-      getAutomaticity: (id) => learner.selector.getAutomaticity(id),
-      getStats: (id) => learner.selector.getStats(id)
-    }), [learner.selector, engine.state.phase, statsMode]);
-    const baselineText = learner.motorBaseline ? "Response time baseline: " + (learner.motorBaseline / 1e3).toFixed(1) + "s" : "Response time baseline: 1s (default)";
-    const answerCount = engine.state.roundAnswered;
-    const countText = answerCount + (answerCount === 1 ? " answer" : " answers");
+    const round = useRoundSummary(engine, learner, practicingLabel);
+    const statsSel = useStatsSelector(
+      learner.selector,
+      engine.state.phase,
+      statsMode
+    );
     return /* @__PURE__ */ u3(k, { children: [
       /* @__PURE__ */ u3(ModeTopBar, { title: "Diatonic Chords", onBack: navigateHome }),
       /* @__PURE__ */ u3(
@@ -8448,12 +8310,12 @@ button {
             }
           ),
           progressContent: /* @__PURE__ */ u3("div", { children: [
-            /* @__PURE__ */ u3("div", { class: "baseline-info", children: baselineText }),
+            /* @__PURE__ */ u3("div", { class: "baseline-info", children: round.baselineText }),
             /* @__PURE__ */ u3("div", { class: "stats-controls", children: /* @__PURE__ */ u3(StatsToggle, { active: statsMode, onToggle: setStatsMode }) }),
             /* @__PURE__ */ u3("div", { class: "stats-container", children: /* @__PURE__ */ u3(
               StatsGrid,
               {
-                selector: statsSelector,
+                selector: statsSel,
                 colLabels: ROMAN_NUMERALS,
                 getItemId: getGridItemId4,
                 statsMode,
@@ -8469,7 +8331,7 @@ button {
         {
           timeLeft: engine.timerText,
           context: practicingLabel,
-          count: countText,
+          count: round.countText,
           fluent: engine.state.masteredCount,
           total: engine.state.totalEnabledCount,
           isWarning: engine.timerWarning,
@@ -8503,10 +8365,10 @@ button {
             /* @__PURE__ */ u3(
               RoundComplete,
               {
-                context: roundContext,
+                context: round.roundContext,
                 heading: "Round complete",
-                correct: roundCorrect,
-                median: roundMedian,
+                correct: round.roundCorrect,
+                median: round.roundMedian,
                 onContinue: engine.continueQuiz,
                 onStop: engine.stop
               }
@@ -8517,7 +8379,7 @@ button {
     ] });
   }
 
-  // src/ui/modes/chord-spelling-mode.tsx
+  // src/modes/chord-spelling/logic.ts
   function buildGroups() {
     let maxGroup = 0;
     for (const ct of CHORD_TYPES) {
@@ -8613,6 +8475,8 @@ button {
   function getGridItemId5(rootName, colIdx) {
     return rootName + ":" + CHORD_TYPES[colIdx].name;
   }
+
+  // src/modes/chord-spelling/chord-spelling-mode.tsx
   function ChordSlots({ state }) {
     if (!state) return /* @__PURE__ */ u3("div", { class: "chord-slots" });
     return /* @__PURE__ */ u3("div", { class: "chord-slots", children: Array.from({ length: state.expectedCount }, (_3, i3) => {
@@ -8743,16 +8607,7 @@ button {
     }), [scope, noteHandler]);
     const engine = useQuizEngine(engineConfig, learner.selector);
     engineSubmitRef.current = engine.submitAnswer;
-    y2(() => {
-      const phase = engine.state.phase;
-      const cls = phase === "idle" ? "phase-idle" : phase === "round-complete" ? "phase-round-complete" : "phase-active";
-      container.classList.remove(
-        "phase-idle",
-        "phase-active",
-        "phase-round-complete"
-      );
-      container.classList.add(cls);
-    }, [engine.state.phase, container]);
+    usePhaseClass(container, engine.state.phase);
     const [activeTab, setActiveTab] = d2(
       "practice"
     );
@@ -8796,35 +8651,12 @@ button {
       (note) => handleSequentialInput(note),
       [handleSequentialInput]
     );
-    const roundContext = T2(() => {
-      const s3 = engine.state;
-      return practicingLabel + " \xB7 " + s3.masteredCount + " / " + s3.totalEnabledCount + " fluent";
-    }, [
-      engine.state.masteredCount,
-      engine.state.totalEnabledCount,
-      practicingLabel
-    ]);
-    const roundCorrect = T2(() => {
-      const s3 = engine.state;
-      const dur = Math.round((s3.roundDurationMs || 0) / 1e3);
-      return s3.roundCorrect + " / " + s3.roundAnswered + " correct \xB7 " + dur + "s";
-    }, [
-      engine.state.roundCorrect,
-      engine.state.roundAnswered,
-      engine.state.roundDurationMs
-    ]);
-    const roundMedian = T2(() => {
-      const times = engine.state.roundResponseTimes;
-      const median = computeMedian(times);
-      return median !== null ? (median / 1e3).toFixed(1) + "s median response time" : "";
-    }, [engine.state.roundResponseTimes]);
-    const statsSelector = T2(() => ({
-      getAutomaticity: (id) => learner.selector.getAutomaticity(id),
-      getStats: (id) => learner.selector.getStats(id)
-    }), [learner.selector, engine.state.phase, statsMode]);
-    const baselineText = learner.motorBaseline ? "Response time baseline: " + (learner.motorBaseline / 1e3).toFixed(1) + "s" : "Response time baseline: 1s (default)";
-    const answerCount = engine.state.roundAnswered;
-    const countText = answerCount + (answerCount === 1 ? " answer" : " answers");
+    const round = useRoundSummary(engine, learner, practicingLabel);
+    const statsSel = useStatsSelector(
+      learner.selector,
+      engine.state.phase,
+      statsMode
+    );
     return /* @__PURE__ */ u3(k, { children: [
       /* @__PURE__ */ u3(ModeTopBar, { title: "Chord Spelling", onBack: navigateHome }),
       /* @__PURE__ */ u3(
@@ -8854,12 +8686,12 @@ button {
             }
           ),
           progressContent: /* @__PURE__ */ u3("div", { children: [
-            /* @__PURE__ */ u3("div", { class: "baseline-info", children: baselineText }),
+            /* @__PURE__ */ u3("div", { class: "baseline-info", children: round.baselineText }),
             /* @__PURE__ */ u3("div", { class: "stats-controls", children: /* @__PURE__ */ u3(StatsToggle, { active: statsMode, onToggle: setStatsMode }) }),
             /* @__PURE__ */ u3("div", { class: "stats-container", children: /* @__PURE__ */ u3(
               StatsGrid,
               {
-                selector: statsSelector,
+                selector: statsSel,
                 colLabels: GRID_COL_LABELS3,
                 getItemId: getGridItemId5,
                 statsMode,
@@ -8875,7 +8707,7 @@ button {
         {
           timeLeft: engine.timerText,
           context: practicingLabel,
-          count: countText,
+          count: round.countText,
           fluent: engine.state.masteredCount,
           total: engine.state.totalEnabledCount,
           isWarning: engine.timerWarning,
@@ -8903,10 +8735,10 @@ button {
             /* @__PURE__ */ u3(
               RoundComplete,
               {
-                context: roundContext,
+                context: round.roundContext,
                 heading: "Round complete",
-                correct: roundCorrect,
-                median: roundMedian,
+                correct: round.roundCorrect,
+                median: round.roundMedian,
                 onContinue: engine.continueQuiz,
                 onStop: engine.stop
               }
@@ -9091,7 +8923,7 @@ button {
     </div>`;
   }
 
-  // src/ui/modes/fretboard-mode.tsx
+  // src/modes/fretboard/fretboard-mode.tsx
   var FB_QUIZ_HL = "hsl(50, 100%, 50%)";
   function setCircleFill(root, string, fret, color) {
     const circle = root.querySelector(
@@ -9359,16 +9191,8 @@ button {
     }), [scope, noteHandler, fb, instrument]);
     const engine = useQuizEngine(engineConfig, learner.selector);
     engineSubmitRef.current = engine.submitAnswer;
-    y2(() => {
-      const phase = engine.state.phase;
-      const cls = phase === "idle" ? "phase-idle" : phase === "round-complete" ? "phase-round-complete" : "phase-active";
-      container.classList.remove(
-        "phase-idle",
-        "phase-active",
-        "phase-round-complete"
-      );
-      container.classList.add(cls);
-    }, [engine.state.phase, container]);
+    usePhaseClass(container, engine.state.phase);
+    const round = useRoundSummary(engine, learner, practicingLabel);
     const [activeTab, setActiveTab] = d2(
       "practice"
     );
@@ -9450,31 +9274,6 @@ button {
       (note) => engine.submitAnswer(note),
       [engine.submitAnswer]
     );
-    const roundContext = T2(() => {
-      const s3 = engine.state;
-      return practicingLabel + " \xB7 " + s3.masteredCount + " / " + s3.totalEnabledCount + " fluent";
-    }, [
-      engine.state.masteredCount,
-      engine.state.totalEnabledCount,
-      practicingLabel
-    ]);
-    const roundCorrect = T2(() => {
-      const s3 = engine.state;
-      const dur = Math.round((s3.roundDurationMs || 0) / 1e3);
-      return s3.roundCorrect + " / " + s3.roundAnswered + " correct \xB7 " + dur + "s";
-    }, [
-      engine.state.roundCorrect,
-      engine.state.roundAnswered,
-      engine.state.roundDurationMs
-    ]);
-    const roundMedian = T2(() => {
-      const times = engine.state.roundResponseTimes;
-      const median = computeMedian(times);
-      return median !== null ? (median / 1e3).toFixed(1) + "s median response time" : "";
-    }, [engine.state.roundResponseTimes]);
-    const baselineText = learner.motorBaseline ? "Response time baseline: " + (learner.motorBaseline / 1e3).toFixed(1) + "s" : "Response time baseline: 1s (default)";
-    const answerCount = engine.state.roundAnswered;
-    const countText = answerCount + (answerCount === 1 ? " answer" : " answers");
     return /* @__PURE__ */ u3(k, { children: [
       /* @__PURE__ */ u3(ModeTopBar, { title: instrument.name, onBack: navigateHome }),
       /* @__PURE__ */ u3(
@@ -9513,7 +9312,7 @@ button {
             }
           ),
           progressContent: /* @__PURE__ */ u3("div", { children: [
-            /* @__PURE__ */ u3("div", { class: "baseline-info", children: baselineText }),
+            /* @__PURE__ */ u3("div", { class: "baseline-info", children: round.baselineText }),
             /* @__PURE__ */ u3("div", { class: "stats-controls", children: /* @__PURE__ */ u3(StatsToggle, { active: statsMode, onToggle: setStatsMode }) }),
             /* @__PURE__ */ u3("div", { class: "stats-container", children: [
               /* @__PURE__ */ u3(
@@ -9538,7 +9337,7 @@ button {
         {
           timeLeft: engine.timerText,
           context: practicingLabel,
-          count: countText,
+          count: round.countText,
           fluent: engine.state.masteredCount,
           total: engine.state.totalEnabledCount,
           isWarning: engine.timerWarning,
@@ -9578,10 +9377,10 @@ button {
             /* @__PURE__ */ u3(
               RoundComplete,
               {
-                context: roundContext,
+                context: round.roundContext,
                 heading: "Round complete",
-                correct: roundCorrect,
-                median: roundMedian,
+                correct: round.roundCorrect,
+                median: round.roundMedian,
                 onContinue: engine.continueQuiz,
                 onStop: engine.stop
               }
@@ -9592,11 +9391,9 @@ button {
     ] });
   }
 
-  // src/ui/modes/speed-tap-mode.tsx
+  // src/modes/speed-tap/logic.ts
   var noteNames = NOTES.map((n2) => n2.name);
   var ALL_ITEMS9 = NOTES.map((n2) => n2.name);
-  var FB_TAP_NEUTRAL = "hsl(30, 4%, 90%)";
-  var FB_TAP_CORRECT = "hsl(90, 45%, 35%)";
   function getNoteAtPosition(string, fret) {
     const offset = STRING_OFFSETS[string];
     return noteNames[(offset + fret) % 12];
@@ -9612,6 +9409,17 @@ button {
     }
     return positions;
   }
+  function getEnabledNotes(filter) {
+    if (filter === "natural") return NATURAL_NOTES.slice();
+    if (filter === "sharps-flats") {
+      return NOTES.filter((n2) => !NATURAL_NOTES.includes(n2.name)).map((n2) => n2.name);
+    }
+    return NOTES.map((n2) => n2.name);
+  }
+
+  // src/modes/speed-tap/speed-tap-mode.tsx
+  var FB_TAP_NEUTRAL = "hsl(30, 4%, 90%)";
+  var FB_TAP_CORRECT = "hsl(90, 45%, 35%)";
   function setCircleFill2(root, string, fret, color) {
     const circle = root.querySelector(
       'circle.fb-pos[data-string="' + string + '"][data-fret="' + fret + '"]'
@@ -9622,13 +9430,6 @@ button {
     root.querySelectorAll(".fb-pos").forEach((c3) => {
       c3.style.fill = "";
     });
-  }
-  function getEnabledNotes(filter) {
-    if (filter === "natural") return NATURAL_NOTES.slice();
-    if (filter === "sharps-flats") {
-      return NOTES.filter((n2) => !NATURAL_NOTES.includes(n2.name)).map((n2) => n2.name);
-    }
-    return NOTES.map((n2) => n2.name);
   }
   function SpeedTapMode({ container, navigateHome, onMount }) {
     const [scope, scopeActions] = useScopeState({
@@ -9769,16 +9570,13 @@ button {
     }), [scope]);
     const engine = useQuizEngine(engineConfig, learner.selector);
     engineSubmitRef.current = engine.submitAnswer;
-    y2(() => {
-      const phase = engine.state.phase;
-      const cls = phase === "idle" ? "phase-idle" : phase === "round-complete" ? "phase-round-complete" : "phase-active";
-      container.classList.remove(
-        "phase-idle",
-        "phase-active",
-        "phase-round-complete"
-      );
-      container.classList.add(cls);
-    }, [engine.state.phase, container]);
+    usePhaseClass(container, engine.state.phase);
+    const practicingLabel = T2(() => {
+      if (noteFilter === "all") return "all notes";
+      if (noteFilter === "sharps-flats") return "sharps & flats";
+      return "natural notes";
+    }, [noteFilter]);
+    const round = useRoundSummary(engine, learner, practicingLabel);
     const [activeTab, setActiveTab] = d2(
       "practice"
     );
@@ -9788,11 +9586,6 @@ button {
       [noteFilter]
     );
     const sessionSummary = enabledNotes.length + " notes \xB7 60s";
-    const practicingLabel = T2(() => {
-      if (noteFilter === "all") return "all notes";
-      if (noteFilter === "sharps-flats") return "sharps & flats";
-      return "natural notes";
-    }, [noteFilter]);
     const summary = T2(
       () => computePracticeSummary({
         allItemIds: ALL_ITEMS9,
@@ -9849,31 +9642,6 @@ button {
       html += buildStatsLegend(statsMode, learner.motorBaseline ?? void 0);
       return html;
     }, [learner.selector, statsMode, engine.state.phase, learner.motorBaseline]);
-    const roundContext = T2(() => {
-      const s3 = engine.state;
-      return practicingLabel + " \xB7 " + s3.masteredCount + " / " + s3.totalEnabledCount + " fluent";
-    }, [
-      engine.state.masteredCount,
-      engine.state.totalEnabledCount,
-      practicingLabel
-    ]);
-    const roundCorrect = T2(() => {
-      const s3 = engine.state;
-      const dur = Math.round((s3.roundDurationMs || 0) / 1e3);
-      return s3.roundCorrect + " / " + s3.roundAnswered + " correct \xB7 " + dur + "s";
-    }, [
-      engine.state.roundCorrect,
-      engine.state.roundAnswered,
-      engine.state.roundDurationMs
-    ]);
-    const roundMedian = T2(() => {
-      const times = engine.state.roundResponseTimes;
-      const median = computeMedian(times);
-      return median !== null ? (median / 1e3).toFixed(1) + "s median response time" : "";
-    }, [engine.state.roundResponseTimes]);
-    const baselineText = learner.motorBaseline ? "Response time baseline: " + (learner.motorBaseline / 1e3).toFixed(1) + "s" : "Response time baseline: 1s (default)";
-    const answerCount = engine.state.roundAnswered;
-    const countText = answerCount + (answerCount === 1 ? " answer" : " answers");
     const promptText = currentDisplayName ? "Tap all " + currentDisplayName : "";
     return /* @__PURE__ */ u3(k, { children: [
       /* @__PURE__ */ u3(ModeTopBar, { title: "Speed Tap", onBack: navigateHome }),
@@ -9900,7 +9668,7 @@ button {
             }
           ),
           progressContent: /* @__PURE__ */ u3("div", { children: [
-            /* @__PURE__ */ u3("div", { class: "baseline-info", children: baselineText }),
+            /* @__PURE__ */ u3("div", { class: "baseline-info", children: round.baselineText }),
             /* @__PURE__ */ u3("div", { class: "stats-controls", children: /* @__PURE__ */ u3(StatsToggle, { active: statsMode, onToggle: setStatsMode }) }),
             /* @__PURE__ */ u3(
               "div",
@@ -9917,7 +9685,7 @@ button {
         {
           timeLeft: engine.timerText,
           context: practicingLabel,
-          count: countText,
+          count: round.countText,
           fluent: engine.state.masteredCount,
           total: engine.state.totalEnabledCount,
           isWarning: engine.timerWarning,
@@ -9953,10 +9721,10 @@ button {
             /* @__PURE__ */ u3(
               RoundComplete,
               {
-                context: roundContext,
+                context: round.roundContext,
                 heading: "Round complete",
-                correct: roundCorrect,
-                median: roundMedian,
+                correct: round.roundCorrect,
+                median: round.roundMedian,
                 onContinue: engine.continueQuiz,
                 onStop: engine.stop
               }

@@ -38,15 +38,16 @@ import {
   createFretboardHelpers,
 } from '../../quiz-fretboard-state.ts';
 import { fretboardSVG } from '../../html-helpers.ts';
-import { computeMedian } from '../../adaptive.ts';
 
 import { useLearnerModel } from '../../hooks/use-learner-model.ts';
 import { useScopeState } from '../../hooks/use-scope-state.ts';
 import type { QuizEngineConfig } from '../../hooks/use-quiz-engine.ts';
 import { useQuizEngine } from '../../hooks/use-quiz-engine.ts';
+import { usePhaseClass } from '../../hooks/use-phase-class.ts';
+import { useRoundSummary } from '../../hooks/use-round-summary.ts';
 
-import { PianoNoteButtons } from '../buttons.tsx';
-import { NoteFilter, StringToggles } from '../scope.tsx';
+import { PianoNoteButtons } from '../../ui/buttons.tsx';
+import { NoteFilter, StringToggles } from '../../ui/scope.tsx';
 import {
   ModeTopBar,
   PracticeCard,
@@ -54,9 +55,9 @@ import {
   QuizSession,
   RoundComplete,
   TabbedIdle,
-} from '../mode-screen.tsx';
-import { StatsToggle } from '../stats.tsx';
-import { FeedbackDisplay } from '../quiz-ui.tsx';
+} from '../../ui/mode-screen.tsx';
+import { StatsToggle } from '../../ui/stats.tsx';
+import { FeedbackDisplay } from '../../ui/quiz-ui.tsx';
 
 // ---------------------------------------------------------------------------
 // SVG helpers
@@ -438,20 +439,10 @@ export function FretboardMode(
   engineSubmitRef.current = engine.submitAnswer;
 
   // --- Phase class sync ---
-  useEffect(() => {
-    const phase = engine.state.phase;
-    const cls = phase === 'idle'
-      ? 'phase-idle'
-      : phase === 'round-complete'
-      ? 'phase-round-complete'
-      : 'phase-active';
-    container.classList.remove(
-      'phase-idle',
-      'phase-active',
-      'phase-round-complete',
-    );
-    container.classList.add(cls);
-  }, [engine.state.phase, container]);
+  usePhaseClass(container, engine.state.phase);
+
+  // --- Round summary (context, correct, median, baseline, count) ---
+  const round = useRoundSummary(engine, learner, practicingLabel);
 
   // --- Tab + stats state ---
   const [activeTab, setActiveTab] = useState<'practice' | 'progress'>(
@@ -550,44 +541,6 @@ export function FretboardMode(
     [engine.submitAnswer],
   );
 
-  const roundContext = useMemo(() => {
-    const s = engine.state;
-    return practicingLabel + ' \u00B7 ' + s.masteredCount + ' / ' +
-      s.totalEnabledCount + ' fluent';
-  }, [
-    engine.state.masteredCount,
-    engine.state.totalEnabledCount,
-    practicingLabel,
-  ]);
-
-  const roundCorrect = useMemo(() => {
-    const s = engine.state;
-    const dur = Math.round((s.roundDurationMs || 0) / 1000);
-    return s.roundCorrect + ' / ' + s.roundAnswered + ' correct \u00B7 ' +
-      dur + 's';
-  }, [
-    engine.state.roundCorrect,
-    engine.state.roundAnswered,
-    engine.state.roundDurationMs,
-  ]);
-
-  const roundMedian = useMemo(() => {
-    const times = engine.state.roundResponseTimes;
-    const median = computeMedian(times);
-    return median !== null
-      ? (median / 1000).toFixed(1) + 's median response time'
-      : '';
-  }, [engine.state.roundResponseTimes]);
-
-  const baselineText = learner.motorBaseline
-    ? 'Response time baseline: ' +
-      (learner.motorBaseline / 1000).toFixed(1) + 's'
-    : 'Response time baseline: 1s (default)';
-
-  const answerCount = engine.state.roundAnswered;
-  const countText = answerCount +
-    (answerCount === 1 ? ' answer' : ' answers');
-
   return (
     <>
       <ModeTopBar title={instrument.name} onBack={navigateHome} />
@@ -624,7 +577,7 @@ export function FretboardMode(
         }
         progressContent={
           <div>
-            <div class='baseline-info'>{baselineText}</div>
+            <div class='baseline-info'>{round.baselineText}</div>
             <div class='stats-controls'>
               <StatsToggle active={statsMode} onToggle={setStatsMode} />
             </div>
@@ -645,7 +598,7 @@ export function FretboardMode(
       <QuizSession
         timeLeft={engine.timerText}
         context={practicingLabel}
-        count={countText}
+        count={round.countText}
         fluent={engine.state.masteredCount}
         total={engine.state.totalEnabledCount}
         isWarning={engine.timerWarning}
@@ -672,10 +625,10 @@ export function FretboardMode(
           hint={engine.state.hintText || undefined}
         />
         <RoundComplete
-          context={roundContext}
+          context={round.roundContext}
           heading='Round complete'
-          correct={roundCorrect}
-          median={roundMedian}
+          correct={round.roundCorrect}
+          median={round.roundMedian}
           onContinue={engine.continueQuiz}
           onStop={engine.stop}
         />

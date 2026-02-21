@@ -1,40 +1,34 @@
-// Interval Math Preact mode: note +/- interval = note.
-// "C + m3 = ?" -> D#/Eb.  Nearly identical to Semitone Math but with
-// interval abbreviations instead of semitone counts.
+// Semitone Math Preact mode: note +/- semitone count = note.
+// "C + 3 = ?" -> D#/Eb.  Has distance group toggles, recommendations,
+// grid stats, and dynamic note button labels (flats for subtraction).
 
 import {
   useCallback,
-  useEffect,
   useLayoutEffect,
   useMemo,
   useRef,
   useState,
 } from 'preact/hooks';
-import type { Interval, Note, RecommendationResult } from '../../types.ts';
-import {
-  displayNote,
-  INTERVALS,
-  noteAdd,
-  noteMatchesInput,
-  NOTES,
-  noteSub,
-  pickAccidentalName,
-} from '../../music-data.ts';
+import type { RecommendationResult } from '../../types.ts';
 import { createAdaptiveKeyHandler } from '../../quiz-engine.ts';
 import { computeRecommendations } from '../../recommendations.ts';
 import {
   buildRecommendationText,
   computePracticeSummary,
 } from '../../mode-ui-state.ts';
-import { computeMedian } from '../../adaptive.ts';
 
 import { useLearnerModel } from '../../hooks/use-learner-model.ts';
 import { useScopeState } from '../../hooks/use-scope-state.ts';
 import type { QuizEngineConfig } from '../../hooks/use-quiz-engine.ts';
 import { useQuizEngine } from '../../hooks/use-quiz-engine.ts';
+import { usePhaseClass } from '../../hooks/use-phase-class.ts';
+import {
+  useRoundSummary,
+  useStatsSelector,
+} from '../../hooks/use-round-summary.ts';
 
-import { NoteButtons } from '../buttons.tsx';
-import { GroupToggles } from '../scope.tsx';
+import { NoteButtons } from '../../ui/buttons.tsx';
+import { GroupToggles } from '../../ui/scope.tsx';
 import {
   ModeTopBar,
   PracticeCard,
@@ -42,101 +36,21 @@ import {
   QuizSession,
   RoundComplete,
   TabbedIdle,
-} from '../mode-screen.tsx';
-import type { StatsSelector } from '../stats.tsx';
-import { StatsGrid, StatsToggle } from '../stats.tsx';
-import { FeedbackDisplay } from '../quiz-ui.tsx';
+} from '../../ui/mode-screen.tsx';
+import { StatsGrid, StatsToggle } from '../../ui/stats.tsx';
+import { FeedbackDisplay } from '../../ui/quiz-ui.tsx';
 
-// ---------------------------------------------------------------------------
-// Constants
-// ---------------------------------------------------------------------------
-
-const MATH_INTERVALS = INTERVALS.filter((i) => i.num >= 1 && i.num <= 11);
-
-const DISTANCE_GROUPS = [
-  { distances: [1, 2], label: 'm2 M2' },
-  { distances: [3, 4], label: 'm3 M3' },
-  { distances: [5, 6], label: 'P4 TT' },
-  { distances: [7, 8], label: 'P5 m6' },
-  { distances: [9, 10], label: 'M6 m7' },
-  { distances: [11], label: 'M7' },
-];
-
-function getItemIdsForGroup(groupIndex: number): string[] {
-  const distances = DISTANCE_GROUPS[groupIndex].distances;
-  const intervals = MATH_INTERVALS.filter((i) => distances.includes(i.num));
-  const items: string[] = [];
-  for (const note of NOTES) {
-    for (const interval of intervals) {
-      items.push(note.name + '+' + interval.abbrev);
-      items.push(note.name + '-' + interval.abbrev);
-    }
-  }
-  return items;
-}
-
-const ALL_ITEMS: string[] = [];
-for (const note of NOTES) {
-  for (const interval of MATH_INTERVALS) {
-    ALL_ITEMS.push(note.name + '+' + interval.abbrev);
-    ALL_ITEMS.push(note.name + '-' + interval.abbrev);
-  }
-}
-
-const ALL_GROUP_INDICES = DISTANCE_GROUPS.map((_, i) => i);
-
-type Question = {
-  note: Note;
-  op: string;
-  interval: Interval;
-  answer: Note;
-  useFlats: boolean;
-  promptText: string;
-};
-
-function getQuestion(itemId: string): Question {
-  const match = itemId.match(/^([A-G]#?)([+-])(.+)$/)!;
-  const noteName = match[1];
-  const op = match[2];
-  const abbrev = match[3];
-  const note = NOTES.find((n) => n.name === noteName)!;
-  const interval = MATH_INTERVALS.find((i) => i.abbrev === abbrev)!;
-  const answer = op === '+'
-    ? noteAdd(note.num, interval.num)
-    : noteSub(note.num, interval.num);
-  const useFlats = op === '-';
-  const promptNoteName = displayNote(
-    pickAccidentalName(note.displayName, useFlats),
-  );
-  return {
-    note,
-    op,
-    interval,
-    answer,
-    useFlats,
-    promptText: promptNoteName + ' ' + op + ' ' + interval.abbrev,
-  };
-}
-
-function checkAnswer(q: Question, input: string) {
-  const correct = noteMatchesInput(q.answer, input);
-  return {
-    correct,
-    correctAnswer: displayNote(
-      pickAccidentalName(q.answer.displayName, q.useFlats),
-    ),
-  };
-}
-
-// Stats grid column config
-const GRID_COL_LABELS = MATH_INTERVALS.map((i) => i.abbrev);
-function getGridItemId(
-  noteName: string,
-  colIdx: number,
-): string[] {
-  const abbrev = MATH_INTERVALS[colIdx].abbrev;
-  return [noteName + '+' + abbrev, noteName + '-' + abbrev];
-}
+import {
+  ALL_GROUP_INDICES,
+  ALL_ITEMS,
+  checkAnswer,
+  DISTANCE_GROUPS,
+  getGridItemId,
+  getItemIdsForGroup,
+  getQuestion,
+  GRID_COL_LABELS,
+  type Question,
+} from './logic.ts';
 
 // ---------------------------------------------------------------------------
 // Mode handle for navigation integration
@@ -151,7 +65,7 @@ export type ModeHandle = {
 // Component
 // ---------------------------------------------------------------------------
 
-export function IntervalMathMode(
+export function SemitoneMathMode(
   { container, navigateHome, onMount }: {
     container: HTMLElement;
     navigateHome: () => void;
@@ -167,8 +81,8 @@ export function IntervalMathMode(
       itemIds: getItemIdsForGroup(i),
     })),
     defaultEnabled: [0],
-    storageKey: 'intervalMath_enabledGroups',
-    label: 'Intervals',
+    storageKey: 'semitoneMath_enabledGroups',
+    label: 'Distances',
     sortUnstarted: (a, b) => a.string - b.string,
   });
 
@@ -177,7 +91,7 @@ export function IntervalMathMode(
     : new Set([0]);
 
   // --- Core hooks ---
-  const learner = useLearnerModel('intervalMath', ALL_ITEMS);
+  const learner = useLearnerModel('semitoneMath', ALL_ITEMS);
 
   // --- Enabled items (derived from scope) ---
   const enabledItems = useMemo(() => {
@@ -232,10 +146,10 @@ export function IntervalMathMode(
 
   // --- Practicing label ---
   const practicingLabel = useMemo(() => {
-    if (enabledGroups.size === DISTANCE_GROUPS.length) return 'all intervals';
+    if (enabledGroups.size === DISTANCE_GROUPS.length) return 'all distances';
     const labels = [...enabledGroups].sort((a, b) => a - b)
       .map((g) => DISTANCE_GROUPS[g].label);
-    return labels.join(', ') + ' intervals';
+    return labels.join(', ') + ' semitones';
   }, [enabledGroups]);
 
   // --- Engine config ---
@@ -281,10 +195,10 @@ export function IntervalMathMode(
       const groups = scope.kind === 'groups'
         ? scope.enabledGroups
         : new Set([0]);
-      if (groups.size === DISTANCE_GROUPS.length) return 'all intervals';
+      if (groups.size === DISTANCE_GROUPS.length) return 'all distances';
       const labels = [...groups].sort((a, b) => a - b)
         .map((g) => DISTANCE_GROUPS[g].label);
-      return labels.join(', ') + ' intervals';
+      return labels.join(', ') + ' semitones';
     },
   }), [scope, noteHandler]);
 
@@ -292,20 +206,7 @@ export function IntervalMathMode(
   engineSubmitRef.current = engine.submitAnswer;
 
   // --- Phase class sync ---
-  useEffect(() => {
-    const phase = engine.state.phase;
-    const cls = phase === 'idle'
-      ? 'phase-idle'
-      : phase === 'round-complete'
-      ? 'phase-round-complete'
-      : 'phase-active';
-    container.classList.remove(
-      'phase-idle',
-      'phase-active',
-      'phase-round-complete',
-    );
-    container.classList.add(cls);
-  }, [engine.state.phase, container]);
+  usePhaseClass(container, engine.state.phase);
 
   // --- Tab state ---
   const [activeTab, setActiveTab] = useState<'practice' | 'progress'>(
@@ -362,57 +263,20 @@ export function IntervalMathMode(
     [engine.submitAnswer],
   );
 
-  // Round-complete derived values
-  const roundContext = useMemo(() => {
-    const s = engine.state;
-    const fluency = s.masteredCount + ' / ' + s.totalEnabledCount + ' fluent';
-    return practicingLabel + ' \u00B7 ' + fluency;
-  }, [
-    engine.state.masteredCount,
-    engine.state.totalEnabledCount,
-    practicingLabel,
-  ]);
+  // --- Round summary (context, correct, median, baseline, count) ---
+  const round = useRoundSummary(engine, learner, practicingLabel);
 
-  const roundCorrect = useMemo(() => {
-    const s = engine.state;
-    const dur = Math.round((s.roundDurationMs || 0) / 1000);
-    return s.roundCorrect + ' / ' + s.roundAnswered + ' correct \u00B7 ' +
-      dur + 's';
-  }, [
-    engine.state.roundCorrect,
-    engine.state.roundAnswered,
-    engine.state.roundDurationMs,
-  ]);
-
-  const roundMedian = useMemo(() => {
-    const times = engine.state.roundResponseTimes;
-    const median = computeMedian(times);
-    return median !== null
-      ? (median / 1000).toFixed(1) + 's median response time'
-      : '';
-  }, [engine.state.roundResponseTimes]);
-
-  // Stats selector adapter
-  const statsSelector = useMemo((): StatsSelector => ({
-    getAutomaticity: (id: string) => learner.selector.getAutomaticity(id),
-    getStats: (id: string) => learner.selector.getStats(id),
-  }), [learner.selector, engine.state.phase, statsMode]);
-
-  // Baseline info
-  const baselineText = learner.motorBaseline
-    ? 'Response time baseline: ' +
-      (learner.motorBaseline / 1000).toFixed(1) + 's'
-    : 'Response time baseline: 1s (default)';
-
-  // Answer count text
-  const answerCount = engine.state.roundAnswered;
-  const countText = answerCount +
-    (answerCount === 1 ? ' answer' : ' answers');
+  // --- Stats selector adapter ---
+  const statsSel = useStatsSelector(
+    learner.selector,
+    engine.state.phase,
+    statsMode,
+  );
 
   // --- Render ---
   return (
     <>
-      <ModeTopBar title='Interval Math' onBack={navigateHome} />
+      <ModeTopBar title='Semitone Math' onBack={navigateHome} />
       <TabbedIdle
         activeTab={activeTab}
         onTabSwitch={setActiveTab}
@@ -439,13 +303,13 @@ export function IntervalMathMode(
         }
         progressContent={
           <div>
-            <div class='baseline-info'>{baselineText}</div>
+            <div class='baseline-info'>{round.baselineText}</div>
             <div class='stats-controls'>
               <StatsToggle active={statsMode} onToggle={setStatsMode} />
             </div>
             <div class='stats-container'>
               <StatsGrid
-                selector={statsSelector}
+                selector={statsSel}
                 colLabels={GRID_COL_LABELS}
                 getItemId={getGridItemId}
                 statsMode={statsMode}
@@ -458,7 +322,7 @@ export function IntervalMathMode(
       <QuizSession
         timeLeft={engine.timerText}
         context={practicingLabel}
-        count={countText}
+        count={round.countText}
         fluent={engine.state.masteredCount}
         total={engine.state.totalEnabledCount}
         isWarning={engine.timerWarning}
@@ -477,10 +341,10 @@ export function IntervalMathMode(
           hint={engine.state.hintText || undefined}
         />
         <RoundComplete
-          context={roundContext}
+          context={round.roundContext}
           heading='Round complete'
-          correct={roundCorrect}
-          median={roundMedian}
+          correct={round.roundCorrect}
+          median={round.roundMedian}
           onContinue={engine.continueQuiz}
           onStop={engine.stop}
         />

@@ -11,29 +11,24 @@ import {
   useState,
 } from 'preact/hooks';
 import type { NoteFilter as NoteFilterType } from '../../types.ts';
-import {
-  displayNote,
-  NATURAL_NOTES,
-  NOTES,
-  pickRandomAccidental,
-  STRING_OFFSETS,
-} from '../../music-data.ts';
+import { displayNote, NOTES, pickRandomAccidental } from '../../music-data.ts';
 import {
   buildStatsLegend,
   getAutomaticityColor,
   getSpeedHeatmapColor,
 } from '../../stats-display.ts';
 import { fretboardSVG } from '../../html-helpers.ts';
-import { computeMedian } from '../../adaptive.ts';
 import { computePracticeSummary } from '../../mode-ui-state.ts';
 
 import { useLearnerModel } from '../../hooks/use-learner-model.ts';
 import { useScopeState } from '../../hooks/use-scope-state.ts';
 import type { QuizEngineConfig } from '../../hooks/use-quiz-engine.ts';
 import { useQuizEngine } from '../../hooks/use-quiz-engine.ts';
+import { usePhaseClass } from '../../hooks/use-phase-class.ts';
+import { useRoundSummary } from '../../hooks/use-round-summary.ts';
 
-import { NoteButtons } from '../buttons.tsx';
-import { NoteFilter } from '../scope.tsx';
+import { NoteButtons } from '../../ui/buttons.tsx';
+import { NoteFilter } from '../../ui/scope.tsx';
 import {
   ModeTopBar,
   PracticeCard,
@@ -41,38 +36,23 @@ import {
   QuizSession,
   RoundComplete,
   TabbedIdle,
-} from '../mode-screen.tsx';
-import { StatsToggle } from '../stats.tsx';
-import { FeedbackDisplay } from '../quiz-ui.tsx';
+} from '../../ui/mode-screen.tsx';
+import { StatsToggle } from '../../ui/stats.tsx';
+import { FeedbackDisplay } from '../../ui/quiz-ui.tsx';
+
+import {
+  ALL_ITEMS,
+  getEnabledNotes,
+  getNoteAtPosition,
+  getPositionsForNote,
+} from './logic.ts';
 
 // ---------------------------------------------------------------------------
-// Constants and helpers
+// UI constants and DOM helpers (not pure logic — kept in mode file)
 // ---------------------------------------------------------------------------
-
-const noteNames: string[] = NOTES.map((n) => n.name);
-const ALL_ITEMS = NOTES.map((n) => n.name);
 
 const FB_TAP_NEUTRAL = 'hsl(30, 4%, 90%)';
 const FB_TAP_CORRECT = 'hsl(90, 45%, 35%)';
-
-function getNoteAtPosition(string: number, fret: number): string {
-  const offset = STRING_OFFSETS[string];
-  return noteNames[(offset + fret) % 12];
-}
-
-function getPositionsForNote(
-  noteName: string,
-): { string: number; fret: number }[] {
-  const positions: { string: number; fret: number }[] = [];
-  for (let s = 0; s < 6; s++) {
-    for (let f = 0; f <= 12; f++) {
-      if (getNoteAtPosition(s, f) === noteName) {
-        positions.push({ string: s, fret: f });
-      }
-    }
-  }
-  return positions;
-}
 
 function setCircleFill(
   root: HTMLElement,
@@ -90,15 +70,6 @@ function clearAllCircles(root: HTMLElement): void {
   root.querySelectorAll<SVGElement>('.fb-pos').forEach((c) => {
     c.style.fill = '';
   });
-}
-
-function getEnabledNotes(filter: NoteFilterType): string[] {
-  if (filter === 'natural') return NATURAL_NOTES.slice();
-  if (filter === 'sharps-flats') {
-    return NOTES.filter((n) => !NATURAL_NOTES.includes(n.name))
-      .map((n) => n.name);
-  }
-  return NOTES.map((n) => n.name);
 }
 
 // ---------------------------------------------------------------------------
@@ -296,20 +267,16 @@ export function SpeedTapMode(
   engineSubmitRef.current = engine.submitAnswer;
 
   // --- Phase class sync ---
-  useEffect(() => {
-    const phase = engine.state.phase;
-    const cls = phase === 'idle'
-      ? 'phase-idle'
-      : phase === 'round-complete'
-      ? 'phase-round-complete'
-      : 'phase-active';
-    container.classList.remove(
-      'phase-idle',
-      'phase-active',
-      'phase-round-complete',
-    );
-    container.classList.add(cls);
-  }, [engine.state.phase, container]);
+  usePhaseClass(container, engine.state.phase);
+
+  // --- Round summary (context, correct, median, baseline, count) ---
+  const practicingLabel = useMemo(() => {
+    if (noteFilter === 'all') return 'all notes';
+    if (noteFilter === 'sharps-flats') return 'sharps & flats';
+    return 'natural notes';
+  }, [noteFilter]);
+
+  const round = useRoundSummary(engine, learner, practicingLabel);
 
   // --- Tab + stats state ---
   const [activeTab, setActiveTab] = useState<'practice' | 'progress'>(
@@ -323,12 +290,6 @@ export function SpeedTapMode(
     [noteFilter],
   );
   const sessionSummary = enabledNotes.length + ' notes \u00B7 60s';
-
-  const practicingLabel = useMemo(() => {
-    if (noteFilter === 'all') return 'all notes';
-    if (noteFilter === 'sharps-flats') return 'sharps & flats';
-    return 'natural notes';
-  }, [noteFilter]);
 
   const summary = useMemo(
     () =>
@@ -371,7 +332,7 @@ export function SpeedTapMode(
     });
   }, [engine, learner]);
 
-  // --- Stats rendering ---
+  // --- Stats rendering (custom — uses automaticity/speed heatmap, no StatsTable) ---
   const statsHTML = useMemo(() => {
     let html = '<table class="stats-table speed-tap-stats"><thead><tr>';
     for (let i = 0; i < NOTES.length; i++) {
@@ -396,45 +357,6 @@ export function SpeedTapMode(
     html += buildStatsLegend(statsMode, learner.motorBaseline ?? undefined);
     return html;
   }, [learner.selector, statsMode, engine.state.phase, learner.motorBaseline]);
-
-  // --- Round complete derived ---
-  const roundContext = useMemo(() => {
-    const s = engine.state;
-    return practicingLabel + ' \u00B7 ' + s.masteredCount + ' / ' +
-      s.totalEnabledCount + ' fluent';
-  }, [
-    engine.state.masteredCount,
-    engine.state.totalEnabledCount,
-    practicingLabel,
-  ]);
-
-  const roundCorrect = useMemo(() => {
-    const s = engine.state;
-    const dur = Math.round((s.roundDurationMs || 0) / 1000);
-    return s.roundCorrect + ' / ' + s.roundAnswered + ' correct \u00B7 ' +
-      dur + 's';
-  }, [
-    engine.state.roundCorrect,
-    engine.state.roundAnswered,
-    engine.state.roundDurationMs,
-  ]);
-
-  const roundMedian = useMemo(() => {
-    const times = engine.state.roundResponseTimes;
-    const median = computeMedian(times);
-    return median !== null
-      ? (median / 1000).toFixed(1) + 's median response time'
-      : '';
-  }, [engine.state.roundResponseTimes]);
-
-  const baselineText = learner.motorBaseline
-    ? 'Response time baseline: ' +
-      (learner.motorBaseline / 1000).toFixed(1) + 's'
-    : 'Response time baseline: 1s (default)';
-
-  const answerCount = engine.state.roundAnswered;
-  const countText = answerCount +
-    (answerCount === 1 ? ' answer' : ' answers');
 
   const promptText = currentDisplayName ? 'Tap all ' + currentDisplayName : '';
 
@@ -462,7 +384,7 @@ export function SpeedTapMode(
         }
         progressContent={
           <div>
-            <div class='baseline-info'>{baselineText}</div>
+            <div class='baseline-info'>{round.baselineText}</div>
             <div class='stats-controls'>
               <StatsToggle active={statsMode} onToggle={setStatsMode} />
             </div>
@@ -477,7 +399,7 @@ export function SpeedTapMode(
       <QuizSession
         timeLeft={engine.timerText}
         context={practicingLabel}
-        count={countText}
+        count={round.countText}
         fluent={engine.state.masteredCount}
         total={engine.state.totalEnabledCount}
         isWarning={engine.timerWarning}
@@ -504,10 +426,10 @@ export function SpeedTapMode(
           hint={engine.state.hintText || undefined}
         />
         <RoundComplete
-          context={roundContext}
+          context={round.roundContext}
           heading='Round complete'
-          correct={roundCorrect}
-          median={roundMedian}
+          correct={round.roundCorrect}
+          median={round.roundMedian}
           onContinue={engine.continueQuiz}
           onStop={engine.stop}
         />

@@ -12,17 +12,17 @@ import { GUITAR, UKULELE } from './music-data.ts';
 import { createNavigation } from './navigation.ts';
 import { createSettingsModal } from './settings.ts';
 import { refreshNoteButtonLabels } from './quiz-engine.ts';
-import type { ModeHandle } from './ui/modes/note-semitones-mode.tsx';
-import { NoteSemitonesMode } from './ui/modes/note-semitones-mode.tsx';
-import { IntervalSemitonesMode } from './ui/modes/interval-semitones-mode.tsx';
-import { SemitoneMathMode } from './ui/modes/semitone-math-mode.tsx';
-import { IntervalMathMode } from './ui/modes/interval-math-mode.tsx';
-import { KeySignaturesMode } from './ui/modes/key-signatures-mode.tsx';
-import { ScaleDegreesMode } from './ui/modes/scale-degrees-mode.tsx';
-import { DiatonicChordsMode } from './ui/modes/diatonic-chords-mode.tsx';
-import { ChordSpellingMode } from './ui/modes/chord-spelling-mode.tsx';
-import { FretboardMode } from './ui/modes/fretboard-mode.tsx';
-import { SpeedTapMode } from './ui/modes/speed-tap-mode.tsx';
+import type { ModeHandle } from './modes/note-semitones/note-semitones-mode.tsx';
+import { NoteSemitonesMode } from './modes/note-semitones/note-semitones-mode.tsx';
+import { IntervalSemitonesMode } from './modes/interval-semitones/interval-semitones-mode.tsx';
+import { SemitoneMathMode } from './modes/semitone-math/semitone-math-mode.tsx';
+import { IntervalMathMode } from './modes/interval-math/interval-math-mode.tsx';
+import { KeySignaturesMode } from './modes/key-signatures/key-signatures-mode.tsx';
+import { ScaleDegreesMode } from './modes/scale-degrees/scale-degrees-mode.tsx';
+import { DiatonicChordsMode } from './modes/diatonic-chords/diatonic-chords-mode.tsx';
+import { ChordSpellingMode } from './modes/chord-spelling/chord-spelling-mode.tsx';
+import { FretboardMode } from './modes/fretboard/fretboard-mode.tsx';
+import { SpeedTapMode } from './modes/speed-tap/speed-tap-mode.tsx';
 
 const nav = createNavigation();
 

@@ -1,37 +1,35 @@
-// Scale Degrees Preact mode: bidirectional key + degree <-> note name.
-// Forward: "5th of D major?" -> A, Reverse: "In D major, A is the ?" -> 5th.
-// 168 items (12 keys x 7 degrees x 2 dirs), grouped by degree.
+// Diatonic Chords Preact mode: bidirectional key + numeral <-> chord root.
+// Forward: "IV in Bb major?" -> Eb, Reverse: "Dm is what in C major?" -> ii.
+// 168 items (12 keys x 7 degrees x 2 dirs), grouped by chord importance.
 
 import {
   useCallback,
-  useEffect,
   useLayoutEffect,
   useMemo,
   useRef,
   useState,
 } from 'preact/hooks';
 import type { RecommendationResult } from '../../types.ts';
-import {
-  displayNote,
-  getScaleDegreeNote,
-  MAJOR_KEYS,
-  spelledNoteMatchesSemitone,
-} from '../../music-data.ts';
+import { displayNote, ROMAN_NUMERALS } from '../../music-data.ts';
 import { createAdaptiveKeyHandler } from '../../quiz-engine.ts';
 import { computeRecommendations } from '../../recommendations.ts';
 import {
   buildRecommendationText,
   computePracticeSummary,
 } from '../../mode-ui-state.ts';
-import { computeMedian } from '../../adaptive.ts';
 
 import { useLearnerModel } from '../../hooks/use-learner-model.ts';
 import { useScopeState } from '../../hooks/use-scope-state.ts';
 import type { QuizEngineConfig } from '../../hooks/use-quiz-engine.ts';
 import { useQuizEngine } from '../../hooks/use-quiz-engine.ts';
+import { usePhaseClass } from '../../hooks/use-phase-class.ts';
+import {
+  useRoundSummary,
+  useStatsSelector,
+} from '../../hooks/use-round-summary.ts';
 
-import { DegreeButtons, NoteButtons } from '../buttons.tsx';
-import { GroupToggles } from '../scope.tsx';
+import { NoteButtons, NumeralButtons } from '../../ui/buttons.tsx';
+import { GroupToggles } from '../../ui/scope.tsx';
 import {
   ModeTopBar,
   PracticeCard,
@@ -39,87 +37,21 @@ import {
   QuizSession,
   RoundComplete,
   TabbedIdle,
-} from '../mode-screen.tsx';
-import type { StatsSelector } from '../stats.tsx';
-import { StatsGrid, StatsToggle } from '../stats.tsx';
-import { FeedbackDisplay } from '../quiz-ui.tsx';
+} from '../../ui/mode-screen.tsx';
+import { StatsGrid, StatsToggle } from '../../ui/stats.tsx';
+import { FeedbackDisplay } from '../../ui/quiz-ui.tsx';
 
-// ---------------------------------------------------------------------------
-// Constants
-// ---------------------------------------------------------------------------
-
-const DEGREE_LABELS = ['1st', '2nd', '3rd', '4th', '5th', '6th', '7th'];
-
-const DEGREE_GROUPS = [
-  { degrees: [1, 5], label: '1st,5th' },
-  { degrees: [4], label: '4th' },
-  { degrees: [3, 7], label: '3rd,7th' },
-  { degrees: [2, 6], label: '2nd,6th' },
-];
-
-function getItemIdsForGroup(groupIndex: number): string[] {
-  const degrees = DEGREE_GROUPS[groupIndex].degrees;
-  const items: string[] = [];
-  for (const key of MAJOR_KEYS) {
-    for (const d of degrees) {
-      items.push(key.root + ':' + d + ':fwd');
-      items.push(key.root + ':' + d + ':rev');
-    }
-  }
-  return items;
-}
-
-const ALL_ITEMS: string[] = [];
-for (const key of MAJOR_KEYS) {
-  for (let d = 1; d <= 7; d++) {
-    ALL_ITEMS.push(key.root + ':' + d + ':fwd');
-    ALL_ITEMS.push(key.root + ':' + d + ':rev');
-  }
-}
-
-const ALL_GROUP_INDICES = DEGREE_GROUPS.map((_, i) => i);
-
-// Stats grid config: columns are degree labels, rows are keys
-const GRID_NOTES = MAJOR_KEYS.map((k) => ({
-  name: k.root,
-  displayName: k.root,
-}));
-
-type Question = {
-  keyRoot: string;
-  degree: number;
-  dir: 'fwd' | 'rev';
-  noteName: string;
-};
-
-function getQuestion(itemId: string): Question {
-  const parts = itemId.split(':');
-  const keyRoot = parts[0];
-  const degree = parseInt(parts[1]);
-  const dir = parts[2] as 'fwd' | 'rev';
-  const noteName = getScaleDegreeNote(keyRoot, degree);
-  return { keyRoot, degree, dir, noteName };
-}
-
-function checkAnswer(q: Question, input: string) {
-  if (q.dir === 'fwd') {
-    const correct = spelledNoteMatchesSemitone(q.noteName, input);
-    return { correct, correctAnswer: displayNote(q.noteName) };
-  }
-  const expectedDegree = String(q.degree);
-  return {
-    correct: input === expectedDegree,
-    correctAnswer: DEGREE_LABELS[q.degree - 1],
-  };
-}
-
-function getGridItemId(
-  keyRoot: string,
-  colIdx: number,
-): string[] {
-  const d = colIdx + 1;
-  return [keyRoot + ':' + d + ':fwd', keyRoot + ':' + d + ':rev'];
-}
+import {
+  ALL_GROUP_INDICES,
+  ALL_ITEMS,
+  checkAnswer,
+  CHORD_GROUPS,
+  getGridItemId,
+  getItemIdsForGroup,
+  getQuestion,
+  GRID_NOTES,
+  type Question,
+} from './logic.ts';
 
 // ---------------------------------------------------------------------------
 // Mode handle
@@ -134,24 +66,23 @@ export type ModeHandle = {
 // Component
 // ---------------------------------------------------------------------------
 
-export function ScaleDegreesMode(
+export function DiatonicChordsMode(
   { container, navigateHome, onMount }: {
     container: HTMLElement;
     navigateHome: () => void;
     onMount: (handle: ModeHandle) => void;
   },
 ) {
-  // --- Scope ---
   const [scope, scopeActions] = useScopeState({
     kind: 'groups',
-    groups: DEGREE_GROUPS.map((g, i) => ({
+    groups: CHORD_GROUPS.map((g, i) => ({
       index: i,
       label: g.label,
       itemIds: getItemIdsForGroup(i),
     })),
     defaultEnabled: [0],
-    storageKey: 'scaleDegrees_enabledGroups',
-    label: 'Degrees',
+    storageKey: 'diatonicChords_enabledGroups',
+    label: 'Chords',
     sortUnstarted: (a, b) => a.string - b.string,
   });
 
@@ -159,7 +90,7 @@ export function ScaleDegreesMode(
     ? scope.enabledGroups
     : new Set([0]);
 
-  const learner = useLearnerModel('scaleDegrees', ALL_ITEMS);
+  const learner = useLearnerModel('diatonicChords', ALL_ITEMS);
 
   const enabledItems = useMemo(() => {
     const items: string[] = [];
@@ -169,11 +100,9 @@ export function ScaleDegreesMode(
     return items;
   }, [enabledGroups]);
 
-  // --- Question state ---
   const [currentQ, setCurrentQ] = useState<Question | null>(null);
   const currentQRef = useRef<Question | null>(null);
 
-  // --- Key handler ---
   const engineSubmitRef = useRef<(input: string) => void>(() => {});
   const noteHandler = useMemo(
     () =>
@@ -184,7 +113,6 @@ export function ScaleDegreesMode(
     [],
   );
 
-  // --- Recommendations ---
   const recommendation = useMemo((): RecommendationResult => {
     return computeRecommendations(
       learner.selector,
@@ -198,7 +126,7 @@ export function ScaleDegreesMode(
   const recommendationText = useMemo(() => {
     return buildRecommendationText(
       recommendation,
-      (i: number) => DEGREE_GROUPS[i].label,
+      (i: number) => CHORD_GROUPS[i].label,
     );
   }, [recommendation]);
 
@@ -211,16 +139,15 @@ export function ScaleDegreesMode(
     }
   }, [recommendation, scopeActions]);
 
-  // --- Practicing label ---
   const practicingLabel = useMemo(() => {
-    if (enabledGroups.size === DEGREE_GROUPS.length) return 'all degrees';
-    const degrees = [...enabledGroups].sort((a, b) => a - b)
-      .flatMap((g) => DEGREE_GROUPS[g].degrees)
-      .sort((a, b) => a - b);
-    return degrees.map((d) => DEGREE_LABELS[d - 1]).join(', ') + ' degrees';
+    if (enabledGroups.size === CHORD_GROUPS.length) return 'all chords';
+    const numerals = [...enabledGroups].sort((a, b) => a - b)
+      .flatMap((g) => CHORD_GROUPS[g].degrees)
+      .sort((a, b) => a - b)
+      .map((d) => ROMAN_NUMERALS[d - 1]);
+    return numerals.join(', ') + ' chords';
   }, [enabledGroups]);
 
-  // --- Engine config ---
   const engineConfig = useMemo((): QuizEngineConfig => ({
     getEnabledItems: () => {
       const items: string[] = [];
@@ -251,10 +178,10 @@ export function ScaleDegreesMode(
       if (dir === 'fwd') {
         return noteHandler.handleKey(e);
       }
-      // Reverse: number keys 1-7 for degree
+      // Reverse: number keys 1-7 for roman numeral
       if (e.key >= '1' && e.key <= '7') {
         e.preventDefault();
-        engineSubmitRef.current(e.key);
+        engineSubmitRef.current(ROMAN_NUMERALS[parseInt(e.key) - 1]);
         return true;
       }
       return false;
@@ -267,32 +194,19 @@ export function ScaleDegreesMode(
       const groups = scope.kind === 'groups'
         ? scope.enabledGroups
         : new Set([0]);
-      if (groups.size === DEGREE_GROUPS.length) return 'all degrees';
-      const degrees = [...groups].sort((a, b) => a - b)
-        .flatMap((g) => DEGREE_GROUPS[g].degrees)
-        .sort((a, b) => a - b);
-      return degrees.map((d) => DEGREE_LABELS[d - 1]).join(', ') + ' degrees';
+      if (groups.size === CHORD_GROUPS.length) return 'all chords';
+      const numerals = [...groups].sort((a, b) => a - b)
+        .flatMap((g) => CHORD_GROUPS[g].degrees)
+        .sort((a, b) => a - b)
+        .map((d) => ROMAN_NUMERALS[d - 1]);
+      return numerals.join(', ') + ' chords';
     },
   }), [scope, noteHandler]);
 
   const engine = useQuizEngine(engineConfig, learner.selector);
   engineSubmitRef.current = engine.submitAnswer;
 
-  // --- Phase class sync ---
-  useEffect(() => {
-    const phase = engine.state.phase;
-    const cls = phase === 'idle'
-      ? 'phase-idle'
-      : phase === 'round-complete'
-      ? 'phase-round-complete'
-      : 'phase-active';
-    container.classList.remove(
-      'phase-idle',
-      'phase-active',
-      'phase-round-complete',
-    );
-    container.classList.add(cls);
-  }, [engine.state.phase, container]);
+  usePhaseClass(container, engine.state.phase);
 
   const [activeTab, setActiveTab] = useState<'practice' | 'progress'>(
     'practice',
@@ -336,71 +250,34 @@ export function ScaleDegreesMode(
     });
   }, [engine, learner, noteHandler]);
 
-  // --- Derived state ---
   const dir = currentQ?.dir ?? 'fwd';
   const promptText = currentQ
     ? (currentQ.dir === 'fwd'
-      ? DEGREE_LABELS[currentQ.degree - 1] + ' of ' +
+      ? currentQ.chord.numeral + ' in ' +
         displayNote(currentQ.keyRoot) + ' major'
-      : displayNote(currentQ.keyRoot) + ' major: ' +
-        displayNote(currentQ.noteName))
+      : displayNote(currentQ.rootNote) + currentQ.chord.qualityLabel +
+        ' in ' + displayNote(currentQ.keyRoot) + ' major')
     : '';
 
   const handleNoteAnswer = useCallback(
     (note: string) => engine.submitAnswer(note),
     [engine.submitAnswer],
   );
-  const handleDegreeAnswer = useCallback(
-    (degree: string) => engine.submitAnswer(degree),
+  const handleNumeralAnswer = useCallback(
+    (numeral: string) => engine.submitAnswer(numeral),
     [engine.submitAnswer],
   );
 
-  const roundContext = useMemo(() => {
-    const s = engine.state;
-    return practicingLabel + ' \u00B7 ' + s.masteredCount + ' / ' +
-      s.totalEnabledCount + ' fluent';
-  }, [
-    engine.state.masteredCount,
-    engine.state.totalEnabledCount,
-    practicingLabel,
-  ]);
-
-  const roundCorrect = useMemo(() => {
-    const s = engine.state;
-    const dur = Math.round((s.roundDurationMs || 0) / 1000);
-    return s.roundCorrect + ' / ' + s.roundAnswered + ' correct \u00B7 ' +
-      dur + 's';
-  }, [
-    engine.state.roundCorrect,
-    engine.state.roundAnswered,
-    engine.state.roundDurationMs,
-  ]);
-
-  const roundMedian = useMemo(() => {
-    const times = engine.state.roundResponseTimes;
-    const median = computeMedian(times);
-    return median !== null
-      ? (median / 1000).toFixed(1) + 's median response time'
-      : '';
-  }, [engine.state.roundResponseTimes]);
-
-  const statsSelector = useMemo((): StatsSelector => ({
-    getAutomaticity: (id: string) => learner.selector.getAutomaticity(id),
-    getStats: (id: string) => learner.selector.getStats(id),
-  }), [learner.selector, engine.state.phase, statsMode]);
-
-  const baselineText = learner.motorBaseline
-    ? 'Response time baseline: ' +
-      (learner.motorBaseline / 1000).toFixed(1) + 's'
-    : 'Response time baseline: 1s (default)';
-
-  const answerCount = engine.state.roundAnswered;
-  const countText = answerCount +
-    (answerCount === 1 ? ' answer' : ' answers');
+  const round = useRoundSummary(engine, learner, practicingLabel);
+  const statsSel = useStatsSelector(
+    learner.selector,
+    engine.state.phase,
+    statsMode,
+  );
 
   return (
     <>
-      <ModeTopBar title='Scale Degrees' onBack={navigateHome} />
+      <ModeTopBar title='Diatonic Chords' onBack={navigateHome} />
       <TabbedIdle
         activeTab={activeTab}
         onTabSwitch={setActiveTab}
@@ -417,7 +294,7 @@ export function ScaleDegreesMode(
               : undefined}
             scope={
               <GroupToggles
-                labels={DEGREE_GROUPS.map((g) => g.label)}
+                labels={CHORD_GROUPS.map((g) => g.label)}
                 active={enabledGroups}
                 recommended={recommendation.expandIndex ?? undefined}
                 onToggle={scopeActions.toggleGroup}
@@ -427,14 +304,14 @@ export function ScaleDegreesMode(
         }
         progressContent={
           <div>
-            <div class='baseline-info'>{baselineText}</div>
+            <div class='baseline-info'>{round.baselineText}</div>
             <div class='stats-controls'>
               <StatsToggle active={statsMode} onToggle={setStatsMode} />
             </div>
             <div class='stats-container'>
               <StatsGrid
-                selector={statsSelector}
-                colLabels={DEGREE_LABELS}
+                selector={statsSel}
+                colLabels={ROMAN_NUMERALS}
                 getItemId={getGridItemId}
                 statsMode={statsMode}
                 notes={GRID_NOTES}
@@ -447,7 +324,7 @@ export function ScaleDegreesMode(
       <QuizSession
         timeLeft={engine.timerText}
         context={practicingLabel}
-        count={countText}
+        count={round.countText}
         fluent={engine.state.masteredCount}
         total={engine.state.totalEnabledCount}
         isWarning={engine.timerWarning}
@@ -459,7 +336,10 @@ export function ScaleDegreesMode(
         lastQuestion={engine.state.roundTimerExpired ? 'Last question' : ''}
       >
         <NoteButtons hidden={dir === 'rev'} onAnswer={handleNoteAnswer} />
-        <DegreeButtons hidden={dir === 'fwd'} onAnswer={handleDegreeAnswer} />
+        <NumeralButtons
+          hidden={dir === 'fwd'}
+          onAnswer={handleNumeralAnswer}
+        />
         <FeedbackDisplay
           text={engine.state.feedbackText}
           className={engine.state.feedbackClass}
@@ -467,10 +347,10 @@ export function ScaleDegreesMode(
           hint={engine.state.hintText || undefined}
         />
         <RoundComplete
-          context={roundContext}
+          context={round.roundContext}
           heading='Round complete'
-          correct={roundCorrect}
-          median={roundMedian}
+          correct={round.roundCorrect}
+          median={round.roundMedian}
           onContinue={engine.continueQuiz}
           onStop={engine.stop}
         />

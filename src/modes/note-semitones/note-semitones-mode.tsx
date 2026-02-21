@@ -1,31 +1,27 @@
-// Note Semitones Preact mode: bidirectional note <-> semitone number.
-// Composes leaf + structural components with shared hooks.
-// Replaces createModeController() for this mode.
+// Note ↔ Semitones Preact mode component.
+// Composes shared hooks + UI components with mode-specific logic from logic.ts.
 
 import {
   useCallback,
-  useEffect,
   useLayoutEffect,
   useMemo,
   useRef,
   useState,
 } from 'preact/hooks';
-import type { StatsTableRow } from '../../types.ts';
-import {
-  displayNote,
-  noteMatchesInput,
-  NOTES,
-  pickRandomAccidental,
-} from '../../music-data.ts';
+import { displayNote } from '../../music-data.ts';
 import { createAdaptiveKeyHandler } from '../../quiz-engine.ts';
 import { computePracticeSummary } from '../../mode-ui-state.ts';
-import { computeMedian } from '../../adaptive.ts';
 
 import { useLearnerModel } from '../../hooks/use-learner-model.ts';
 import type { QuizEngineConfig } from '../../hooks/use-quiz-engine.ts';
 import { useQuizEngine } from '../../hooks/use-quiz-engine.ts';
+import { usePhaseClass } from '../../hooks/use-phase-class.ts';
+import {
+  useRoundSummary,
+  useStatsSelector,
+} from '../../hooks/use-round-summary.ts';
 
-import { NoteButtons, NumberButtons } from '../buttons.tsx';
+import { NoteButtons, NumberButtons } from '../../ui/buttons.tsx';
 import {
   ModeTopBar,
   PracticeCard,
@@ -33,58 +29,17 @@ import {
   QuizSession,
   RoundComplete,
   TabbedIdle,
-} from '../mode-screen.tsx';
-import type { StatsSelector } from '../stats.tsx';
-import { StatsTable, StatsToggle } from '../stats.tsx';
-import { FeedbackDisplay } from '../quiz-ui.tsx';
+} from '../../ui/mode-screen.tsx';
+import { StatsTable, StatsToggle } from '../../ui/stats.tsx';
+import { FeedbackDisplay } from '../../ui/quiz-ui.tsx';
 
-// ---------------------------------------------------------------------------
-// Constants
-// ---------------------------------------------------------------------------
-
-const ALL_ITEMS: string[] = [];
-for (const note of NOTES) {
-  ALL_ITEMS.push(note.name + ':fwd');
-  ALL_ITEMS.push(note.name + ':rev');
-}
-
-type Question = {
-  noteName: string;
-  noteNum: number;
-  dir: 'fwd' | 'rev';
-  accidentalChoice: string;
-};
-
-function getQuestion(itemId: string): Question {
-  const [noteName, dir] = itemId.split(':');
-  const note = NOTES.find((n) => n.name === noteName)!;
-  return {
-    noteName: note.name,
-    noteNum: note.num,
-    dir: dir as 'fwd' | 'rev',
-    accidentalChoice: pickRandomAccidental(note.displayName),
-  };
-}
-
-function checkAnswer(q: Question, input: string) {
-  if (q.dir === 'fwd') {
-    const correct = parseInt(input, 10) === q.noteNum;
-    return { correct, correctAnswer: String(q.noteNum) };
-  }
-  const note = NOTES.find((n) => n.name === q.noteName)!;
-  const correct = noteMatchesInput(note, input);
-  return { correct, correctAnswer: displayNote(q.accidentalChoice) };
-}
-
-function getStatsRows(): StatsTableRow[] {
-  return NOTES.map((note) => ({
-    label: displayNote(note.name),
-    sublabel: String(note.num),
-    _colHeader: 'Note',
-    fwdItemId: note.name + ':fwd',
-    revItemId: note.name + ':rev',
-  }));
-}
+import {
+  ALL_ITEMS,
+  checkAnswer,
+  getQuestion,
+  getStatsRows,
+  type Question,
+} from './logic.ts';
 
 // ---------------------------------------------------------------------------
 // Mode handle for navigation integration
@@ -198,21 +153,9 @@ export function NoteSemitonesMode(
   const engine = useQuizEngine(engineConfig, learner.selector);
   engineSubmitRef.current = engine.submitAnswer;
 
-  // --- Phase class sync ---
-  useEffect(() => {
-    const phase = engine.state.phase;
-    const cls = phase === 'idle'
-      ? 'phase-idle'
-      : phase === 'round-complete'
-      ? 'phase-round-complete'
-      : 'phase-active';
-    container.classList.remove(
-      'phase-idle',
-      'phase-active',
-      'phase-round-complete',
-    );
-    container.classList.add(cls);
-  }, [engine.state.phase, container]);
+  // --- Shared hooks ---
+  usePhaseClass(container, engine.state.phase);
+  const round = useRoundSummary(engine, learner, 'all items');
 
   // --- Tab state ---
   const [activeTab, setActiveTab] = useState<'practice' | 'progress'>(
@@ -241,8 +184,7 @@ export function NoteSemitonesMode(
     ],
   );
 
-  // --- Navigation handle (useLayoutEffect so handle is available before
-  //     nav.init() calls activate()) ---
+  // --- Navigation handle ---
   useLayoutEffect(() => {
     onMount({
       activate() {
@@ -274,48 +216,12 @@ export function NoteSemitonesMode(
     [engine.submitAnswer],
   );
 
-  // Round-complete derived values
-  const roundContext = useMemo(() => {
-    const s = engine.state;
-    const fluency = s.masteredCount + ' / ' + s.totalEnabledCount + ' fluent';
-    return 'all items \u00B7 ' + fluency;
-  }, [engine.state.masteredCount, engine.state.totalEnabledCount]);
-
-  const roundCorrect = useMemo(() => {
-    const s = engine.state;
-    const dur = Math.round((s.roundDurationMs || 0) / 1000);
-    return s.roundCorrect + ' / ' + s.roundAnswered + ' correct \u00B7 ' +
-      dur + 's';
-  }, [
-    engine.state.roundCorrect,
-    engine.state.roundAnswered,
-    engine.state.roundDurationMs,
-  ]);
-
-  const roundMedian = useMemo(() => {
-    const times = engine.state.roundResponseTimes;
-    const median = computeMedian(times);
-    return median !== null
-      ? (median / 1000).toFixed(1) + 's median response time'
-      : '';
-  }, [engine.state.roundResponseTimes]);
-
-  // Stats selector adapter
-  const statsSelector = useMemo((): StatsSelector => ({
-    getAutomaticity: (id: string) => learner.selector.getAutomaticity(id),
-    getStats: (id: string) => learner.selector.getStats(id),
-  }), [learner.selector, engine.state.phase, statsMode]);
-
-  // Baseline info
-  const baselineText = learner.motorBaseline
-    ? 'Response time baseline: ' +
-      (learner.motorBaseline / 1000).toFixed(1) + 's'
-    : 'Response time baseline: 1s (default)';
-
-  // Answer count text
-  const answerCount = engine.state.roundAnswered;
-  const countText = answerCount +
-    (answerCount === 1 ? ' answer' : ' answers');
+  // Update stats selector when mode changes
+  const statsSel = useStatsSelector(
+    learner.selector,
+    engine.state.phase,
+    statsMode,
+  );
 
   // --- Render ---
   return (
@@ -335,13 +241,13 @@ export function NoteSemitonesMode(
         }
         progressContent={
           <div>
-            <div class='baseline-info'>{baselineText}</div>
+            <div class='baseline-info'>{round.baselineText}</div>
             <div class='stats-controls'>
               <StatsToggle active={statsMode} onToggle={setStatsMode} />
             </div>
             <div class='stats-container'>
               <StatsTable
-                selector={statsSelector}
+                selector={statsSel}
                 rows={getStatsRows()}
                 fwdHeader='N\u2192#'
                 revHeader='#\u2192N'
@@ -355,7 +261,7 @@ export function NoteSemitonesMode(
       <QuizSession
         timeLeft={engine.timerText}
         context='all items'
-        count={countText}
+        count={round.countText}
         fluent={engine.state.masteredCount}
         total={engine.state.totalEnabledCount}
         isWarning={engine.timerWarning}
@@ -380,10 +286,10 @@ export function NoteSemitonesMode(
           hint={engine.state.hintText || undefined}
         />
         <RoundComplete
-          context={roundContext}
+          context={round.roundContext}
           heading='Round complete'
-          correct={roundCorrect}
-          median={roundMedian}
+          correct={round.roundCorrect}
+          median={round.roundMedian}
           onContinue={engine.continueQuiz}
           onStop={engine.stop}
         />

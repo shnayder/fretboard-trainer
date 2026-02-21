@@ -4,34 +4,32 @@
 
 import {
   useCallback,
-  useEffect,
   useLayoutEffect,
   useMemo,
   useRef,
   useState,
 } from 'preact/hooks';
-import type { RecommendationResult, StatsTableRow } from '../../types.ts';
-import {
-  displayNote,
-  keySignatureLabel,
-  MAJOR_KEYS,
-  spelledNoteMatchesSemitone,
-} from '../../music-data.ts';
+import type { RecommendationResult } from '../../types.ts';
+import { displayNote } from '../../music-data.ts';
 import { createAdaptiveKeyHandler } from '../../quiz-engine.ts';
 import { computeRecommendations } from '../../recommendations.ts';
 import {
   buildRecommendationText,
   computePracticeSummary,
 } from '../../mode-ui-state.ts';
-import { computeMedian } from '../../adaptive.ts';
 
 import { useLearnerModel } from '../../hooks/use-learner-model.ts';
 import { useScopeState } from '../../hooks/use-scope-state.ts';
 import type { QuizEngineConfig } from '../../hooks/use-quiz-engine.ts';
 import { useQuizEngine } from '../../hooks/use-quiz-engine.ts';
+import { usePhaseClass } from '../../hooks/use-phase-class.ts';
+import {
+  useRoundSummary,
+  useStatsSelector,
+} from '../../hooks/use-round-summary.ts';
 
-import { KeysigButtons, NoteButtons } from '../buttons.tsx';
-import { GroupToggles } from '../scope.tsx';
+import { KeysigButtons, NoteButtons } from '../../ui/buttons.tsx';
+import { GroupToggles } from '../../ui/scope.tsx';
 import {
   ModeTopBar,
   PracticeCard,
@@ -39,76 +37,20 @@ import {
   QuizSession,
   RoundComplete,
   TabbedIdle,
-} from '../mode-screen.tsx';
-import type { StatsSelector } from '../stats.tsx';
-import { StatsTable, StatsToggle } from '../stats.tsx';
-import { FeedbackDisplay } from '../quiz-ui.tsx';
+} from '../../ui/mode-screen.tsx';
+import { StatsTable, StatsToggle } from '../../ui/stats.tsx';
+import { FeedbackDisplay } from '../../ui/quiz-ui.tsx';
 
-// ---------------------------------------------------------------------------
-// Constants
-// ---------------------------------------------------------------------------
-
-const KEY_GROUPS = [
-  { keys: ['C', 'G', 'F'], label: 'C G F' },
-  { keys: ['D', 'Bb'], label: 'D B\u266D' },
-  { keys: ['A', 'Eb'], label: 'A E\u266D' },
-  { keys: ['E', 'Ab'], label: 'E A\u266D' },
-  { keys: ['B', 'Db', 'F#'], label: 'B D\u266D F\u266F' },
-];
-
-function getItemIdsForGroup(groupIndex: number): string[] {
-  const roots = KEY_GROUPS[groupIndex].keys;
-  const items: string[] = [];
-  for (const root of roots) {
-    items.push(root + ':fwd');
-    items.push(root + ':rev');
-  }
-  return items;
-}
-
-const ALL_ITEMS: string[] = [];
-for (const key of MAJOR_KEYS) {
-  ALL_ITEMS.push(key.root + ':fwd');
-  ALL_ITEMS.push(key.root + ':rev');
-}
-
-const ALL_GROUP_INDICES = KEY_GROUPS.map((_, i) => i);
-
-type Question = {
-  root: string;
-  dir: 'fwd' | 'rev';
-  sigLabel: string;
-};
-
-function getQuestion(itemId: string): Question {
-  const [rootName, dir] = itemId.split(':');
-  const key = MAJOR_KEYS.find((k) => k.root === rootName)!;
-  return {
-    root: key.root,
-    dir: dir as 'fwd' | 'rev',
-    sigLabel: keySignatureLabel(key),
-  };
-}
-
-function checkAnswer(q: Question, input: string) {
-  const key = MAJOR_KEYS.find((k) => k.root === q.root)!;
-  if (q.dir === 'fwd') {
-    const expected = keySignatureLabel(key);
-    return { correct: input === expected, correctAnswer: expected };
-  }
-  const correct = spelledNoteMatchesSemitone(q.root, input);
-  return { correct, correctAnswer: displayNote(q.root) };
-}
-
-function getStatsRows(): StatsTableRow[] {
-  return MAJOR_KEYS.map((key) => ({
-    label: displayNote(key.root) + ' major',
-    sublabel: keySignatureLabel(key),
-    _colHeader: 'Key',
-    fwdItemId: key.root + ':fwd',
-    revItemId: key.root + ':rev',
-  }));
-}
+import {
+  ALL_GROUP_INDICES,
+  ALL_ITEMS,
+  checkAnswer,
+  getItemIdsForGroup,
+  getQuestion,
+  getStatsRows,
+  KEY_GROUPS,
+  type Question,
+} from './logic.ts';
 
 // ---------------------------------------------------------------------------
 // Mode handle for navigation integration
@@ -311,26 +253,23 @@ export function KeySignaturesMode(
   engineSubmitRef.current = engine.submitAnswer;
 
   // --- Phase class sync ---
-  useEffect(() => {
-    const phase = engine.state.phase;
-    const cls = phase === 'idle'
-      ? 'phase-idle'
-      : phase === 'round-complete'
-      ? 'phase-round-complete'
-      : 'phase-active';
-    container.classList.remove(
-      'phase-idle',
-      'phase-active',
-      'phase-round-complete',
-    );
-    container.classList.add(cls);
-  }, [engine.state.phase, container]);
+  usePhaseClass(container, engine.state.phase);
 
   // --- Tab state ---
   const [activeTab, setActiveTab] = useState<'practice' | 'progress'>(
     'practice',
   );
   const [statsMode, setStatsMode] = useState('retention');
+
+  // --- Round summary ---
+  const round = useRoundSummary(engine, learner, practicingLabel);
+
+  // --- Stats selector ---
+  const statsSel = useStatsSelector(
+    learner.selector,
+    engine.state.phase,
+    statsMode,
+  );
 
   // --- Practice summary ---
   const sessionSummary = enabledItems.length + ' items \u00B7 60s';
@@ -393,53 +332,6 @@ export function KeySignaturesMode(
     [engine.submitAnswer],
   );
 
-  // Round-complete derived values
-  const roundContext = useMemo(() => {
-    const s = engine.state;
-    const fluency = s.masteredCount + ' / ' + s.totalEnabledCount + ' fluent';
-    return practicingLabel + ' \u00B7 ' + fluency;
-  }, [
-    engine.state.masteredCount,
-    engine.state.totalEnabledCount,
-    practicingLabel,
-  ]);
-
-  const roundCorrect = useMemo(() => {
-    const s = engine.state;
-    const dur = Math.round((s.roundDurationMs || 0) / 1000);
-    return s.roundCorrect + ' / ' + s.roundAnswered + ' correct \u00B7 ' +
-      dur + 's';
-  }, [
-    engine.state.roundCorrect,
-    engine.state.roundAnswered,
-    engine.state.roundDurationMs,
-  ]);
-
-  const roundMedian = useMemo(() => {
-    const times = engine.state.roundResponseTimes;
-    const median = computeMedian(times);
-    return median !== null
-      ? (median / 1000).toFixed(1) + 's median response time'
-      : '';
-  }, [engine.state.roundResponseTimes]);
-
-  // Stats selector adapter
-  const statsSelector = useMemo((): StatsSelector => ({
-    getAutomaticity: (id: string) => learner.selector.getAutomaticity(id),
-    getStats: (id: string) => learner.selector.getStats(id),
-  }), [learner.selector, engine.state.phase, statsMode]);
-
-  // Baseline info
-  const baselineText = learner.motorBaseline
-    ? 'Response time baseline: ' +
-      (learner.motorBaseline / 1000).toFixed(1) + 's'
-    : 'Response time baseline: 1s (default)';
-
-  // Answer count text
-  const answerCount = engine.state.roundAnswered;
-  const countText = answerCount +
-    (answerCount === 1 ? ' answer' : ' answers');
-
   // --- Render ---
   return (
     <>
@@ -470,13 +362,13 @@ export function KeySignaturesMode(
         }
         progressContent={
           <div>
-            <div class='baseline-info'>{baselineText}</div>
+            <div class='baseline-info'>{round.baselineText}</div>
             <div class='stats-controls'>
               <StatsToggle active={statsMode} onToggle={setStatsMode} />
             </div>
             <div class='stats-container'>
               <StatsTable
-                selector={statsSelector}
+                selector={statsSel}
                 rows={getStatsRows()}
                 fwdHeader='Key\u2192Sig'
                 revHeader='Sig\u2192Key'
@@ -490,7 +382,7 @@ export function KeySignaturesMode(
       <QuizSession
         timeLeft={engine.timerText}
         context={practicingLabel}
-        count={countText}
+        count={round.countText}
         fluent={engine.state.masteredCount}
         total={engine.state.totalEnabledCount}
         isWarning={engine.timerWarning}
@@ -510,10 +402,10 @@ export function KeySignaturesMode(
           hint={engine.state.hintText || undefined}
         />
         <RoundComplete
-          context={roundContext}
+          context={round.roundContext}
           heading='Round complete'
-          correct={roundCorrect}
-          median={roundMedian}
+          correct={round.roundCorrect}
+          median={round.roundMedian}
           onContinue={engine.continueQuiz}
           onStop={engine.stop}
         />

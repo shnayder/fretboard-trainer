@@ -5,41 +5,32 @@
 
 import {
   useCallback,
-  useEffect,
   useLayoutEffect,
   useMemo,
   useRef,
   useState,
 } from 'preact/hooks';
-import type {
-  ChordType,
-  RecommendationResult,
-  SequentialInputResult,
-  SequentialState,
-} from '../../types.ts';
-import {
-  CHORD_ROOTS,
-  CHORD_TYPES,
-  displayNote,
-  getChordTones,
-  spelledNoteMatchesInput,
-  spelledNoteMatchesSemitone,
-} from '../../music-data.ts';
+import type { RecommendationResult, SequentialState } from '../../types.ts';
+import { displayNote } from '../../music-data.ts';
 import { createAdaptiveKeyHandler } from '../../quiz-engine.ts';
 import { computeRecommendations } from '../../recommendations.ts';
 import {
   buildRecommendationText,
   computePracticeSummary,
 } from '../../mode-ui-state.ts';
-import { computeMedian } from '../../adaptive.ts';
 
 import { useLearnerModel } from '../../hooks/use-learner-model.ts';
 import { useScopeState } from '../../hooks/use-scope-state.ts';
 import type { QuizEngineConfig } from '../../hooks/use-quiz-engine.ts';
 import { useQuizEngine } from '../../hooks/use-quiz-engine.ts';
+import { usePhaseClass } from '../../hooks/use-phase-class.ts';
+import {
+  useRoundSummary,
+  useStatsSelector,
+} from '../../hooks/use-round-summary.ts';
 
-import { NoteButtons } from '../buttons.tsx';
-import { GroupToggles } from '../scope.tsx';
+import { NoteButtons } from '../../ui/buttons.tsx';
+import { GroupToggles } from '../../ui/scope.tsx';
 import {
   ModeTopBar,
   PracticeCard,
@@ -47,143 +38,24 @@ import {
   QuizSession,
   RoundComplete,
   TabbedIdle,
-} from '../mode-screen.tsx';
-import type { StatsSelector } from '../stats.tsx';
-import { StatsGrid, StatsToggle } from '../stats.tsx';
-import { FeedbackDisplay } from '../quiz-ui.tsx';
+} from '../../ui/mode-screen.tsx';
+import { StatsGrid, StatsToggle } from '../../ui/stats.tsx';
+import { FeedbackDisplay } from '../../ui/quiz-ui.tsx';
 
-// ---------------------------------------------------------------------------
-// Constants
-// ---------------------------------------------------------------------------
-
-function buildGroups(): { types: ChordType[]; label: string }[] {
-  let maxGroup = 0;
-  for (const ct of CHORD_TYPES) {
-    if (ct.group > maxGroup) maxGroup = ct.group;
-  }
-  const result: { types: ChordType[]; label: string }[] = [];
-  for (let g = 0; g <= maxGroup; g++) {
-    const types = CHORD_TYPES.filter((t) => t.group === g);
-    const label = types.map((t) => t.symbol || 'maj').join(', ');
-    result.push({ types, label });
-  }
-  return result;
-}
-
-const SPELLING_GROUPS = buildGroups();
-
-function getItemIdsForGroup(groupIndex: number): string[] {
-  const types = SPELLING_GROUPS[groupIndex].types;
-  const items: string[] = [];
-  for (const root of CHORD_ROOTS) {
-    for (const type of types) {
-      items.push(root + ':' + type.name);
-    }
-  }
-  return items;
-}
-
-const ALL_ITEMS: string[] = [];
-for (const root of CHORD_ROOTS) {
-  for (const type of CHORD_TYPES) {
-    ALL_ITEMS.push(root + ':' + type.name);
-  }
-}
-
-const ALL_GROUP_INDICES = SPELLING_GROUPS.map((_, i) => i);
-
-const GRID_NOTES = CHORD_ROOTS.map((r) => ({
-  name: r,
-  displayName: r,
-}));
-
-const GRID_COL_LABELS = CHORD_TYPES.map((t) => t.symbol || 'maj');
-
-// ---------------------------------------------------------------------------
-// Question + sequential logic
-// ---------------------------------------------------------------------------
-
-type Question = {
-  rootName: string;
-  chordType: ChordType;
-  tones: string[];
-};
-
-function parseItem(itemId: string): Question {
-  const colonIdx = itemId.indexOf(':');
-  const rootName = itemId.substring(0, colonIdx);
-  const typeName = itemId.substring(colonIdx + 1);
-  const chordType = CHORD_TYPES.find((t) => t.name === typeName)!;
-  const tones = getChordTones(rootName, chordType);
-  return { rootName, chordType, tones };
-}
-
-function initSequentialState(itemId: string): SequentialState {
-  const item = parseItem(itemId);
-  return { expectedCount: item.tones.length, entries: [] };
-}
-
-function handleInput(
-  itemId: string,
-  input: string,
-  state: SequentialState,
-): SequentialInputResult {
-  const item = parseItem(itemId);
-  const idx = state.entries.length;
-  if (idx >= item.tones.length) {
-    const allCorrect = state.entries.every((e) => e.correct);
-    return {
-      status: 'complete',
-      correct: allCorrect,
-      correctAnswer: item.tones.map(displayNote).join(' '),
-    };
-  }
-
-  const expected = item.tones[idx];
-  if (spelledNoteMatchesSemitone(expected, input)) {
-    input = expected;
-  }
-
-  const isCorrect = spelledNoteMatchesInput(expected, input);
-  const entries = [
-    ...state.entries,
-    {
-      input,
-      display: isCorrect ? displayNote(expected) : displayNote(input),
-      correct: isCorrect,
-    },
-  ];
-
-  const newState: SequentialState = {
-    expectedCount: item.tones.length,
-    entries,
-  };
-
-  if (entries.length === item.tones.length) {
-    const allCorrect = entries.every((e) => e.correct);
-    return {
-      status: 'complete',
-      correct: allCorrect,
-      correctAnswer: item.tones.map(displayNote).join(' '),
-    };
-  }
-
-  return { status: 'continue', state: newState };
-}
-
-function checkAnswer(itemId: string, input: string) {
-  const allCorrect = input === '__correct__';
-  const item = parseItem(itemId);
-  const correctAnswer = item.tones.map(displayNote).join(' ');
-  return { correct: allCorrect, correctAnswer };
-}
-
-function getGridItemId(
-  rootName: string,
-  colIdx: number,
-): string | string[] {
-  return rootName + ':' + CHORD_TYPES[colIdx].name;
-}
+import {
+  ALL_GROUP_INDICES,
+  ALL_ITEMS,
+  checkAnswer,
+  getGridItemId,
+  getItemIdsForGroup,
+  GRID_COL_LABELS,
+  GRID_NOTES,
+  handleInput,
+  initSequentialState,
+  parseItem,
+  type Question,
+  SPELLING_GROUPS,
+} from './logic.ts';
 
 // ---------------------------------------------------------------------------
 // ChordSlots component — shows sequential progress
@@ -384,20 +256,7 @@ export function ChordSpellingMode(
   engineSubmitRef.current = engine.submitAnswer;
 
   // --- Phase class sync ---
-  useEffect(() => {
-    const phase = engine.state.phase;
-    const cls = phase === 'idle'
-      ? 'phase-idle'
-      : phase === 'round-complete'
-      ? 'phase-round-complete'
-      : 'phase-active';
-    container.classList.remove(
-      'phase-idle',
-      'phase-active',
-      'phase-round-complete',
-    );
-    container.classList.add(cls);
-  }, [engine.state.phase, container]);
+  usePhaseClass(container, engine.state.phase);
 
   // --- Tab state ---
   const [activeTab, setActiveTab] = useState<'practice' | 'progress'>(
@@ -453,48 +312,12 @@ export function ChordSpellingMode(
     [handleSequentialInput],
   );
 
-  const roundContext = useMemo(() => {
-    const s = engine.state;
-    return practicingLabel + ' \u00B7 ' + s.masteredCount + ' / ' +
-      s.totalEnabledCount + ' fluent';
-  }, [
-    engine.state.masteredCount,
-    engine.state.totalEnabledCount,
-    practicingLabel,
-  ]);
-
-  const roundCorrect = useMemo(() => {
-    const s = engine.state;
-    const dur = Math.round((s.roundDurationMs || 0) / 1000);
-    return s.roundCorrect + ' / ' + s.roundAnswered + ' correct \u00B7 ' +
-      dur + 's';
-  }, [
-    engine.state.roundCorrect,
-    engine.state.roundAnswered,
-    engine.state.roundDurationMs,
-  ]);
-
-  const roundMedian = useMemo(() => {
-    const times = engine.state.roundResponseTimes;
-    const median = computeMedian(times);
-    return median !== null
-      ? (median / 1000).toFixed(1) + 's median response time'
-      : '';
-  }, [engine.state.roundResponseTimes]);
-
-  const statsSelector = useMemo((): StatsSelector => ({
-    getAutomaticity: (id: string) => learner.selector.getAutomaticity(id),
-    getStats: (id: string) => learner.selector.getStats(id),
-  }), [learner.selector, engine.state.phase, statsMode]);
-
-  const baselineText = learner.motorBaseline
-    ? 'Response time baseline: ' +
-      (learner.motorBaseline / 1000).toFixed(1) + 's'
-    : 'Response time baseline: 1s (default)';
-
-  const answerCount = engine.state.roundAnswered;
-  const countText = answerCount +
-    (answerCount === 1 ? ' answer' : ' answers');
+  const round = useRoundSummary(engine, learner, practicingLabel);
+  const statsSel = useStatsSelector(
+    learner.selector,
+    engine.state.phase,
+    statsMode,
+  );
 
   return (
     <>
@@ -525,13 +348,13 @@ export function ChordSpellingMode(
         }
         progressContent={
           <div>
-            <div class='baseline-info'>{baselineText}</div>
+            <div class='baseline-info'>{round.baselineText}</div>
             <div class='stats-controls'>
               <StatsToggle active={statsMode} onToggle={setStatsMode} />
             </div>
             <div class='stats-container'>
               <StatsGrid
-                selector={statsSelector}
+                selector={statsSel}
                 colLabels={GRID_COL_LABELS}
                 getItemId={getGridItemId}
                 statsMode={statsMode}
@@ -545,7 +368,7 @@ export function ChordSpellingMode(
       <QuizSession
         timeLeft={engine.timerText}
         context={practicingLabel}
-        count={countText}
+        count={round.countText}
         fluent={engine.state.masteredCount}
         total={engine.state.totalEnabledCount}
         isWarning={engine.timerWarning}
@@ -565,10 +388,10 @@ export function ChordSpellingMode(
           hint={engine.state.hintText || undefined}
         />
         <RoundComplete
-          context={roundContext}
+          context={round.roundContext}
           heading='Round complete'
-          correct={roundCorrect}
-          median={roundMedian}
+          correct={round.roundCorrect}
+          median={round.roundMedian}
           onContinue={engine.continueQuiz}
           onStop={engine.stop}
         />

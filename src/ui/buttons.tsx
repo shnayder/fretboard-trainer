@@ -209,10 +209,12 @@ export function IntervalButtons(
 // ---------------------------------------------------------------------------
 
 export function KeysigButtons(
-  { onAnswer }: { onAnswer?: (sig: string) => void },
+  { onAnswer, hidden }: { onAnswer?: (sig: string) => void; hidden?: boolean },
 ) {
+  const cls = 'answer-buttons answer-buttons-keysig' +
+    (hidden ? ' answer-group-hidden' : '');
   return (
-    <div class='answer-buttons answer-buttons-keysig'>
+    <div class={cls}>
       {KEYSIGS.map((s) => (
         <button
           type='button'

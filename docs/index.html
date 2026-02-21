@@ -1633,7 +1633,7 @@ button {
     </div>
     <div class="home-footer">
       <button class="home-settings-btn" type="button">Settings</button>
-      <span class="version">v7.8</span>
+      <span class="version">v7.9</span>
     </div>
   </div>
 
@@ -6820,17 +6820,17 @@ button {
       { length: instrument.stringCount },
       (_3, i3) => i3
     );
-    const ALL_ITEMS5 = [];
+    const ALL_ITEMS8 = [];
     for (const s3 of allStrings) {
       for (let f4 = 0; f4 < instrument.fretCount; f4++) {
-        ALL_ITEMS5.push(s3 + "-" + f4);
+        ALL_ITEMS8.push(s3 + "-" + f4);
       }
     }
     return {
       id: instrument.id,
       name: instrument.name,
       storageNamespace: instrument.storageNamespace,
-      allItemIds: ALL_ITEMS5,
+      allItemIds: ALL_ITEMS8,
       getEnabledItems(scope) {
         if (scope.kind !== "fretboard") {
           return fb.getFretboardEnabledItems(
@@ -7004,7 +7004,7 @@ button {
   var FB_TAP_NEUTRAL = "hsl(30, 4%, 90%)";
   var FB_TAP_CORRECT = "hsl(90, 45%, 35%)";
   function speedTapDefinition() {
-    const ALL_ITEMS5 = NOTES.map((n2) => n2.name);
+    const ALL_ITEMS8 = NOTES.map((n2) => n2.name);
     let currentNote = null;
     let targetPositions = [];
     let foundPositions = /* @__PURE__ */ new Set();
@@ -7021,7 +7021,7 @@ button {
       id: "speedTap",
       name: "Speed Tap",
       storageNamespace: "speedTap",
-      allItemIds: ALL_ITEMS5,
+      allItemIds: ALL_ITEMS8,
       getEnabledItems(scope) {
         const filter = scope.kind === "note-filter" ? scope.noteFilter : "natural";
         if (filter === "natural") return NATURAL_NOTES.slice();
@@ -7185,510 +7185,6 @@ button {
     };
   }
 
-  // src/modes/key-signatures.ts
-  var KEY_GROUPS = [
-    { keys: ["C", "G", "F"], label: "C G F" },
-    { keys: ["D", "Bb"], label: "D B\u266D" },
-    { keys: ["A", "Eb"], label: "A E\u266D" },
-    { keys: ["E", "Ab"], label: "E A\u266D" },
-    { keys: ["B", "Db", "F#"], label: "B D\u266D F\u266F" }
-  ];
-  function getItemIdsForGroup(groupIndex) {
-    const roots = KEY_GROUPS[groupIndex].keys;
-    const items = [];
-    for (const root of roots) {
-      items.push(root + ":fwd");
-      items.push(root + ":rev");
-    }
-    return items;
-  }
-  function keySignaturesDefinition() {
-    const ALL_ITEMS5 = [];
-    for (const key of MAJOR_KEYS) {
-      ALL_ITEMS5.push(key.root + ":fwd");
-      ALL_ITEMS5.push(key.root + ":rev");
-    }
-    const groups = KEY_GROUPS.map((g2, i3) => ({
-      index: i3,
-      label: g2.label,
-      itemIds: getItemIdsForGroup(i3)
-    }));
-    let currentQuestion = null;
-    return {
-      id: "keySignatures",
-      name: "Key Signatures",
-      storageNamespace: "keySignatures",
-      allItemIds: ALL_ITEMS5,
-      getEnabledItems(scope) {
-        if (scope.kind !== "groups") return ALL_ITEMS5;
-        const items = [];
-        for (const g2 of scope.enabledGroups) {
-          items.push(...getItemIdsForGroup(g2));
-        }
-        return items;
-      },
-      scopeSpec: {
-        kind: "groups",
-        groups,
-        defaultEnabled: [0, 1],
-        storageKey: "keySignatures_enabledGroups",
-        label: "Keys",
-        sortUnstarted: (a3, b) => a3.string - b.string
-      },
-      getQuestion(itemId) {
-        const [rootName, dir] = itemId.split(":");
-        const key = MAJOR_KEYS.find((k3) => k3.root === rootName);
-        currentQuestion = { key, dir };
-        return currentQuestion;
-      },
-      checkAnswer(_itemId, input) {
-        const q3 = currentQuestion;
-        if (q3.dir === "fwd") {
-          const expected = keySignatureLabel(q3.key);
-          return { correct: input === expected, correctAnswer: expected };
-        } else {
-          const correct = spelledNoteMatchesSemitone(q3.key.root, input);
-          return { correct, correctAnswer: displayNote(q3.key.root) };
-        }
-      },
-      prompt: {
-        kind: "text",
-        getText(q3) {
-          if (q3.dir === "fwd") {
-            return displayNote(q3.key.root) + " major";
-          } else {
-            return keySignatureLabel(q3.key) + " major";
-          }
-        }
-      },
-      response: {
-        kind: "bidirectional",
-        groups: [
-          {
-            id: "keysig",
-            html: "",
-            getButtonAnswer(btn) {
-              return btn.dataset.sig ?? null;
-            }
-          },
-          {
-            id: "notes",
-            html: "",
-            getButtonAnswer(btn) {
-              return btn.dataset.note ?? null;
-            }
-          }
-        ],
-        getActiveGroup(question) {
-          const q3 = question;
-          return q3.dir === "fwd" ? "keysig" : "notes";
-        },
-        createKeyHandler(submitAnswer, _getScope) {
-          let pendingSigDigit = null;
-          let pendingSigTimeout = null;
-          const noteHandler = createAdaptiveKeyHandler(
-            submitAnswer,
-            () => true
-          );
-          return {
-            handleKey(e3) {
-              if (currentQuestion?.dir === "rev") {
-                return noteHandler.handleKey(e3);
-              }
-              if (e3.key >= "0" && e3.key <= "7") {
-                e3.preventDefault();
-                if (pendingSigTimeout) clearTimeout(pendingSigTimeout);
-                pendingSigDigit = e3.key;
-                pendingSigTimeout = setTimeout(() => {
-                  if (pendingSigDigit === "0") {
-                    submitAnswer("0");
-                  }
-                  pendingSigDigit = null;
-                  pendingSigTimeout = null;
-                }, 600);
-                return true;
-              }
-              if (pendingSigDigit !== null && (e3.key === "#" || e3.key === "b")) {
-                e3.preventDefault();
-                clearTimeout(pendingSigTimeout);
-                const answer = pendingSigDigit + e3.key;
-                pendingSigDigit = null;
-                pendingSigTimeout = null;
-                submitAnswer(answer);
-                return true;
-              }
-              return false;
-            },
-            reset() {
-              if (pendingSigTimeout) clearTimeout(pendingSigTimeout);
-              pendingSigDigit = null;
-              pendingSigTimeout = null;
-              noteHandler.reset();
-            }
-          };
-        }
-      },
-      stats: {
-        kind: "table",
-        fwdHeader: "Key\u2192Sig",
-        revHeader: "Sig\u2192Key",
-        getRows() {
-          return MAJOR_KEYS.map((key) => ({
-            label: displayNote(key.root) + " major",
-            sublabel: keySignatureLabel(key),
-            _colHeader: "Key",
-            fwdItemId: key.root + ":fwd",
-            revItemId: key.root + ":rev"
-          }));
-        }
-      },
-      getPracticingLabel(scope) {
-        if (scope.kind !== "groups") return "all keys";
-        if (scope.enabledGroups.size === KEY_GROUPS.length) return "all keys";
-        const keys = [...scope.enabledGroups].sort((a3, b) => a3 - b).flatMap((g2) => KEY_GROUPS[g2].keys).map((k3) => displayNote(k3));
-        return keys.join(", ");
-      },
-      getSessionSummary(scope) {
-        const count = this.getEnabledItems(scope).length;
-        return count + " items \xB7 60s";
-      },
-      calibrationSpec: {
-        getButtons(container) {
-          return Array.from(container.querySelectorAll(".answer-btn-note"));
-        }
-      }
-    };
-  }
-
-  // src/modes/scale-degrees.ts
-  var DEGREE_LABELS = ["1st", "2nd", "3rd", "4th", "5th", "6th", "7th"];
-  var DEGREE_GROUPS = [
-    { degrees: [1, 5], label: "1st,5th" },
-    { degrees: [4], label: "4th" },
-    { degrees: [3, 7], label: "3rd,7th" },
-    { degrees: [2, 6], label: "2nd,6th" }
-  ];
-  function getItemIdsForGroup2(groupIndex) {
-    const degrees = DEGREE_GROUPS[groupIndex].degrees;
-    const items = [];
-    for (const key of MAJOR_KEYS) {
-      for (const d3 of degrees) {
-        items.push(key.root + ":" + d3 + ":fwd");
-        items.push(key.root + ":" + d3 + ":rev");
-      }
-    }
-    return items;
-  }
-  function scaleDegreesDefinition() {
-    const ALL_ITEMS5 = [];
-    for (const key of MAJOR_KEYS) {
-      for (let d3 = 1; d3 <= 7; d3++) {
-        ALL_ITEMS5.push(key.root + ":" + d3 + ":fwd");
-        ALL_ITEMS5.push(key.root + ":" + d3 + ":rev");
-      }
-    }
-    const groups = DEGREE_GROUPS.map((g2, i3) => ({
-      index: i3,
-      label: g2.label,
-      itemIds: getItemIdsForGroup2(i3)
-    }));
-    let currentQuestion = null;
-    return {
-      id: "scaleDegrees",
-      name: "Scale Degrees",
-      storageNamespace: "scaleDegrees",
-      allItemIds: ALL_ITEMS5,
-      getEnabledItems(scope) {
-        if (scope.kind !== "groups") return ALL_ITEMS5;
-        const items = [];
-        for (const g2 of scope.enabledGroups) {
-          items.push(...getItemIdsForGroup2(g2));
-        }
-        return items;
-      },
-      scopeSpec: {
-        kind: "groups",
-        groups,
-        defaultEnabled: [0],
-        storageKey: "scaleDegrees_enabledGroups",
-        label: "Degrees",
-        sortUnstarted: (a3, b) => a3.string - b.string
-      },
-      getQuestion(itemId) {
-        const parts = itemId.split(":");
-        const keyRoot = parts[0];
-        const degree = parseInt(parts[1]);
-        const dir = parts[2];
-        const key = MAJOR_KEYS.find((k3) => k3.root === keyRoot);
-        const noteName = getScaleDegreeNote(keyRoot, degree);
-        currentQuestion = { key, degree, dir, noteName };
-        return currentQuestion;
-      },
-      checkAnswer(_itemId, input) {
-        const q3 = currentQuestion;
-        if (q3.dir === "fwd") {
-          const correct = spelledNoteMatchesSemitone(q3.noteName, input);
-          return { correct, correctAnswer: displayNote(q3.noteName) };
-        } else {
-          const expectedDegree = String(q3.degree);
-          return {
-            correct: input === expectedDegree,
-            correctAnswer: DEGREE_LABELS[q3.degree - 1]
-          };
-        }
-      },
-      prompt: {
-        kind: "text",
-        getText(q3) {
-          if (q3.dir === "fwd") {
-            return DEGREE_LABELS[q3.degree - 1] + " of " + displayNote(q3.key.root) + " major";
-          } else {
-            return displayNote(q3.key.root) + " major: " + displayNote(q3.noteName);
-          }
-        }
-      },
-      response: {
-        kind: "bidirectional",
-        groups: [
-          {
-            id: "notes",
-            html: "",
-            getButtonAnswer(btn) {
-              return btn.dataset.note ?? null;
-            }
-          },
-          {
-            id: "degrees",
-            html: "",
-            getButtonAnswer(btn) {
-              return btn.dataset.degree ?? null;
-            }
-          }
-        ],
-        getActiveGroup(question) {
-          const q3 = question;
-          return q3.dir === "fwd" ? "notes" : "degrees";
-        },
-        createKeyHandler(submitAnswer, _getScope) {
-          const noteHandler = createAdaptiveKeyHandler(
-            submitAnswer,
-            () => true
-          );
-          return {
-            handleKey(e3) {
-              if (currentQuestion?.dir === "fwd") {
-                return noteHandler.handleKey(e3);
-              }
-              if (e3.key >= "1" && e3.key <= "7") {
-                e3.preventDefault();
-                submitAnswer(e3.key);
-                return true;
-              }
-              return false;
-            },
-            reset() {
-              noteHandler.reset();
-            }
-          };
-        }
-      },
-      stats: {
-        kind: "grid",
-        colLabels: DEGREE_LABELS,
-        notes: MAJOR_KEYS.map((k3) => ({
-          name: k3.root,
-          displayName: k3.root
-        })),
-        getItemId(keyRoot, colIdx) {
-          const d3 = colIdx + 1;
-          return [keyRoot + ":" + d3 + ":fwd", keyRoot + ":" + d3 + ":rev"];
-        }
-      },
-      getPracticingLabel(scope) {
-        if (scope.kind !== "groups") return "all degrees";
-        if (scope.enabledGroups.size === DEGREE_GROUPS.length) {
-          return "all degrees";
-        }
-        const degrees = [...scope.enabledGroups].sort((a3, b) => a3 - b).flatMap((g2) => DEGREE_GROUPS[g2].degrees).sort((a3, b) => a3 - b);
-        return degrees.map((d3) => DEGREE_LABELS[d3 - 1]).join(", ") + " degrees";
-      },
-      getSessionSummary(scope) {
-        const count = this.getEnabledItems(scope).length;
-        return count + " items \xB7 60s";
-      },
-      calibrationSpec: {
-        getButtons(container) {
-          return Array.from(container.querySelectorAll(".answer-btn-note"));
-        }
-      }
-    };
-  }
-
-  // src/modes/diatonic-chords.ts
-  var CHORD_GROUPS = [
-    { degrees: [1, 4, 5], label: "I,IV,V" },
-    { degrees: [2, 6], label: "ii,vi" },
-    { degrees: [3, 7], label: "iii,vii\xB0" }
-  ];
-  function getItemIdsForGroup3(groupIndex) {
-    const degrees = CHORD_GROUPS[groupIndex].degrees;
-    const items = [];
-    for (const key of MAJOR_KEYS) {
-      for (const d3 of degrees) {
-        items.push(key.root + ":" + d3 + ":fwd");
-        items.push(key.root + ":" + d3 + ":rev");
-      }
-    }
-    return items;
-  }
-  function diatonicChordsDefinition() {
-    const ALL_ITEMS5 = [];
-    for (const key of MAJOR_KEYS) {
-      for (let d3 = 1; d3 <= 7; d3++) {
-        ALL_ITEMS5.push(key.root + ":" + d3 + ":fwd");
-        ALL_ITEMS5.push(key.root + ":" + d3 + ":rev");
-      }
-    }
-    const groups = CHORD_GROUPS.map((g2, i3) => ({
-      index: i3,
-      label: g2.label,
-      itemIds: getItemIdsForGroup3(i3)
-    }));
-    let currentQuestion = null;
-    return {
-      id: "diatonicChords",
-      name: "Diatonic Chords",
-      storageNamespace: "diatonicChords",
-      allItemIds: ALL_ITEMS5,
-      getEnabledItems(scope) {
-        if (scope.kind !== "groups") return ALL_ITEMS5;
-        const items = [];
-        for (const g2 of scope.enabledGroups) {
-          items.push(...getItemIdsForGroup3(g2));
-        }
-        return items;
-      },
-      scopeSpec: {
-        kind: "groups",
-        groups,
-        defaultEnabled: [0],
-        storageKey: "diatonicChords_enabledGroups",
-        label: "Chords",
-        sortUnstarted: (a3, b) => a3.string - b.string
-      },
-      getQuestion(itemId) {
-        const parts = itemId.split(":");
-        const keyRoot = parts[0];
-        const degree = parseInt(parts[1]);
-        const dir = parts[2];
-        const key = MAJOR_KEYS.find((k3) => k3.root === keyRoot);
-        const chord = DIATONIC_CHORDS[degree - 1];
-        const rootNote = getScaleDegreeNote(keyRoot, degree);
-        currentQuestion = { key, degree, chord, dir, rootNote };
-        return currentQuestion;
-      },
-      checkAnswer(_itemId, input) {
-        const q3 = currentQuestion;
-        if (q3.dir === "fwd") {
-          const correct = spelledNoteMatchesSemitone(q3.rootNote, input);
-          const fullAnswer = displayNote(q3.rootNote) + " " + q3.chord.quality;
-          return { correct, correctAnswer: fullAnswer };
-        } else {
-          const expectedNumeral = q3.chord.numeral;
-          return {
-            correct: input === expectedNumeral,
-            correctAnswer: expectedNumeral
-          };
-        }
-      },
-      prompt: {
-        kind: "text",
-        getText(q3) {
-          if (q3.dir === "fwd") {
-            return q3.chord.numeral + " in " + displayNote(q3.key.root) + " major";
-          } else {
-            const chordName = displayNote(q3.rootNote) + q3.chord.qualityLabel;
-            return chordName + " in " + displayNote(q3.key.root) + " major";
-          }
-        }
-      },
-      response: {
-        kind: "bidirectional",
-        groups: [
-          {
-            id: "notes",
-            html: "",
-            getButtonAnswer(btn) {
-              return btn.dataset.note ?? null;
-            }
-          },
-          {
-            id: "numerals",
-            html: "",
-            getButtonAnswer(btn) {
-              return btn.dataset.numeral ?? null;
-            }
-          }
-        ],
-        getActiveGroup(question) {
-          const q3 = question;
-          return q3.dir === "fwd" ? "notes" : "numerals";
-        },
-        createKeyHandler(submitAnswer, _getScope) {
-          const noteHandler = createAdaptiveKeyHandler(
-            submitAnswer,
-            () => true
-          );
-          return {
-            handleKey(e3) {
-              if (currentQuestion?.dir === "fwd") {
-                return noteHandler.handleKey(e3);
-              }
-              if (e3.key >= "1" && e3.key <= "7") {
-                e3.preventDefault();
-                submitAnswer(ROMAN_NUMERALS[parseInt(e3.key) - 1]);
-                return true;
-              }
-              return false;
-            },
-            reset() {
-              noteHandler.reset();
-            }
-          };
-        }
-      },
-      stats: {
-        kind: "grid",
-        colLabels: ROMAN_NUMERALS,
-        notes: MAJOR_KEYS.map((k3) => ({
-          name: k3.root,
-          displayName: k3.root
-        })),
-        getItemId(keyRoot, colIdx) {
-          const d3 = colIdx + 1;
-          return [keyRoot + ":" + d3 + ":fwd", keyRoot + ":" + d3 + ":rev"];
-        }
-      },
-      getPracticingLabel(scope) {
-        if (scope.kind !== "groups") return "all chords";
-        if (scope.enabledGroups.size === CHORD_GROUPS.length) {
-          return "all chords";
-        }
-        const numerals = [...scope.enabledGroups].sort((a3, b) => a3 - b).flatMap((g2) => CHORD_GROUPS[g2].degrees).sort((a3, b) => a3 - b).map((d3) => ROMAN_NUMERALS[d3 - 1]);
-        return numerals.join(", ") + " chords";
-      },
-      getSessionSummary(scope) {
-        const count = this.getEnabledItems(scope).length;
-        return count + " items \xB7 60s";
-      },
-      calibrationSpec: {
-        getButtons(container) {
-          return Array.from(container.querySelectorAll(".answer-btn-note"));
-        }
-      }
-    };
-  }
-
   // src/modes/chord-spelling.ts
   function buildGroups() {
     let maxGroup = 0;
@@ -7704,7 +7200,7 @@ button {
     return result;
   }
   var SPELLING_GROUPS = buildGroups();
-  function getItemIdsForGroup4(groupIndex) {
+  function getItemIdsForGroup(groupIndex) {
     const types = SPELLING_GROUPS[groupIndex].types;
     const items = [];
     for (const root of CHORD_ROOTS) {
@@ -7715,27 +7211,27 @@ button {
     return items;
   }
   function chordSpellingDefinition() {
-    const ALL_ITEMS5 = [];
+    const ALL_ITEMS8 = [];
     for (const root of CHORD_ROOTS) {
       for (const type of CHORD_TYPES) {
-        ALL_ITEMS5.push(root + ":" + type.name);
+        ALL_ITEMS8.push(root + ":" + type.name);
       }
     }
     const groups = SPELLING_GROUPS.map((g2, i3) => ({
       index: i3,
       label: g2.label,
-      itemIds: getItemIdsForGroup4(i3)
+      itemIds: getItemIdsForGroup(i3)
     }));
     return {
       id: "chordSpelling",
       name: "Chord Spelling",
       storageNamespace: "chordSpelling",
-      allItemIds: ALL_ITEMS5,
+      allItemIds: ALL_ITEMS8,
       getEnabledItems(scope) {
-        if (scope.kind !== "groups") return ALL_ITEMS5;
+        if (scope.kind !== "groups") return ALL_ITEMS8;
         const items = [];
         for (const g2 of scope.enabledGroups) {
-          items.push(...getItemIdsForGroup4(g2));
+          items.push(...getItemIdsForGroup(g2));
         }
         return items;
       },
@@ -8511,6 +8007,33 @@ button {
     "M7",
     "P8"
   ];
+  var KEYSIGS = [
+    "0",
+    "1#",
+    "2#",
+    "3#",
+    "4#",
+    "5#",
+    "6#",
+    "7#",
+    "1b",
+    "2b",
+    "3b",
+    "4b",
+    "5b",
+    "6b",
+    "7b"
+  ];
+  var DEGREES = [
+    ["1", "1st"],
+    ["2", "2nd"],
+    ["3", "3rd"],
+    ["4", "4th"],
+    ["5", "5th"],
+    ["6", "6th"],
+    ["7", "7th"]
+  ];
+  var NUMERALS = ["I", "ii", "iii", "IV", "V", "vi", "vii\xB0"];
   function NoteButtons({ onAnswer, hidden, useFlats }) {
     const cls = "answer-buttons answer-buttons-notes" + (hidden ? " answer-group-hidden" : "");
     return /* @__PURE__ */ u3("div", { class: cls, children: ALL_NOTES.map((n2) => {
@@ -8562,6 +8085,48 @@ button {
         children: iv
       },
       iv
+    )) });
+  }
+  function KeysigButtons({ onAnswer, hidden }) {
+    const cls = "answer-buttons answer-buttons-keysig" + (hidden ? " answer-group-hidden" : "");
+    return /* @__PURE__ */ u3("div", { class: cls, children: KEYSIGS.map((s3) => /* @__PURE__ */ u3(
+      "button",
+      {
+        type: "button",
+        class: "answer-btn answer-btn-keysig",
+        "data-sig": s3,
+        onClick: onAnswer ? () => onAnswer(s3) : void 0,
+        children: s3
+      },
+      s3
+    )) });
+  }
+  function DegreeButtons({ onAnswer, hidden }) {
+    const cls = "answer-buttons answer-buttons-degrees" + (hidden ? " answer-group-hidden" : "");
+    return /* @__PURE__ */ u3("div", { class: cls, children: DEGREES.map(([val, label]) => /* @__PURE__ */ u3(
+      "button",
+      {
+        type: "button",
+        class: "answer-btn answer-btn-degree",
+        "data-degree": val,
+        onClick: onAnswer ? () => onAnswer(val) : void 0,
+        children: label
+      },
+      val
+    )) });
+  }
+  function NumeralButtons({ onAnswer, hidden }) {
+    const cls = "answer-buttons answer-buttons-numerals" + (hidden ? " answer-group-hidden" : "");
+    return /* @__PURE__ */ u3("div", { class: cls, children: NUMERALS.map((n2) => /* @__PURE__ */ u3(
+      "button",
+      {
+        type: "button",
+        class: "answer-btn answer-btn-numeral",
+        "data-numeral": n2,
+        onClick: onAnswer ? () => onAnswer(n2) : void 0,
+        children: n2
+      },
+      n2
     )) });
   }
 
@@ -9567,7 +9132,7 @@ button {
     { distances: [9, 10], label: "\xB19\u201310" },
     { distances: [11], label: "\xB111" }
   ];
-  function getItemIdsForGroup5(groupIndex) {
+  function getItemIdsForGroup2(groupIndex) {
     const distances = DISTANCE_GROUPS[groupIndex].distances;
     const items = [];
     for (const note of NOTES) {
@@ -9626,7 +9191,7 @@ button {
       groups: DISTANCE_GROUPS.map((g2, i3) => ({
         index: i3,
         label: g2.label,
-        itemIds: getItemIdsForGroup5(i3)
+        itemIds: getItemIdsForGroup2(i3)
       })),
       defaultEnabled: [0],
       storageKey: "semitoneMath_enabledGroups",
@@ -9638,7 +9203,7 @@ button {
     const enabledItems = T2(() => {
       const items = [];
       for (const g2 of enabledGroups) {
-        items.push(...getItemIdsForGroup5(g2));
+        items.push(...getItemIdsForGroup2(g2));
       }
       return items;
     }, [enabledGroups]);
@@ -9657,7 +9222,7 @@ button {
       return computeRecommendations(
         learner.selector,
         ALL_GROUP_INDICES,
-        getItemIdsForGroup5,
+        getItemIdsForGroup2,
         { expansionThreshold: 0.7 },
         { sortUnstarted: (a3, b) => a3.string - b.string }
       );
@@ -9686,7 +9251,7 @@ button {
         const items = [];
         const groups = scope.kind === "groups" ? scope.enabledGroups : /* @__PURE__ */ new Set([0]);
         for (const g2 of groups) {
-          items.push(...getItemIdsForGroup5(g2));
+          items.push(...getItemIdsForGroup2(g2));
         }
         return items;
       },
@@ -9901,7 +9466,7 @@ button {
     { distances: [9, 10], label: "M6 m7" },
     { distances: [11], label: "M7" }
   ];
-  function getItemIdsForGroup6(groupIndex) {
+  function getItemIdsForGroup3(groupIndex) {
     const distances = DISTANCE_GROUPS2[groupIndex].distances;
     const intervals = MATH_INTERVALS.filter((i3) => distances.includes(i3.num));
     const items = [];
@@ -9962,7 +9527,7 @@ button {
       groups: DISTANCE_GROUPS2.map((g2, i3) => ({
         index: i3,
         label: g2.label,
-        itemIds: getItemIdsForGroup6(i3)
+        itemIds: getItemIdsForGroup3(i3)
       })),
       defaultEnabled: [0],
       storageKey: "intervalMath_enabledGroups",
@@ -9974,7 +9539,7 @@ button {
     const enabledItems = T2(() => {
       const items = [];
       for (const g2 of enabledGroups) {
-        items.push(...getItemIdsForGroup6(g2));
+        items.push(...getItemIdsForGroup3(g2));
       }
       return items;
     }, [enabledGroups]);
@@ -9993,7 +9558,7 @@ button {
       return computeRecommendations(
         learner.selector,
         ALL_GROUP_INDICES2,
-        getItemIdsForGroup6,
+        getItemIdsForGroup3,
         { expansionThreshold: 0.7 },
         { sortUnstarted: (a3, b) => a3.string - b.string }
       );
@@ -10022,7 +9587,7 @@ button {
         const items = [];
         const groups = scope.kind === "groups" ? scope.enabledGroups : /* @__PURE__ */ new Set([0]);
         for (const g2 of groups) {
-          items.push(...getItemIdsForGroup6(g2));
+          items.push(...getItemIdsForGroup3(g2));
         }
         return items;
       },
@@ -10227,6 +9792,1051 @@ button {
     ] });
   }
 
+  // src/ui/modes/key-signatures-mode.tsx
+  var KEY_GROUPS = [
+    { keys: ["C", "G", "F"], label: "C G F" },
+    { keys: ["D", "Bb"], label: "D B\u266D" },
+    { keys: ["A", "Eb"], label: "A E\u266D" },
+    { keys: ["E", "Ab"], label: "E A\u266D" },
+    { keys: ["B", "Db", "F#"], label: "B D\u266D F\u266F" }
+  ];
+  function getItemIdsForGroup4(groupIndex) {
+    const roots = KEY_GROUPS[groupIndex].keys;
+    const items = [];
+    for (const root of roots) {
+      items.push(root + ":fwd");
+      items.push(root + ":rev");
+    }
+    return items;
+  }
+  var ALL_ITEMS5 = [];
+  for (const key of MAJOR_KEYS) {
+    ALL_ITEMS5.push(key.root + ":fwd");
+    ALL_ITEMS5.push(key.root + ":rev");
+  }
+  var ALL_GROUP_INDICES3 = KEY_GROUPS.map((_3, i3) => i3);
+  function getQuestion5(itemId) {
+    const [rootName, dir] = itemId.split(":");
+    const key = MAJOR_KEYS.find((k3) => k3.root === rootName);
+    return {
+      root: key.root,
+      dir,
+      sigLabel: keySignatureLabel(key)
+    };
+  }
+  function checkAnswer5(q3, input) {
+    const key = MAJOR_KEYS.find((k3) => k3.root === q3.root);
+    if (q3.dir === "fwd") {
+      const expected = keySignatureLabel(key);
+      return { correct: input === expected, correctAnswer: expected };
+    }
+    const correct = spelledNoteMatchesSemitone(q3.root, input);
+    return { correct, correctAnswer: displayNote(q3.root) };
+  }
+  function getStatsRows3() {
+    return MAJOR_KEYS.map((key) => ({
+      label: displayNote(key.root) + " major",
+      sublabel: keySignatureLabel(key),
+      _colHeader: "Key",
+      fwdItemId: key.root + ":fwd",
+      revItemId: key.root + ":rev"
+    }));
+  }
+  function KeySignaturesMode({ container, navigateHome, onMount }) {
+    const [scope, scopeActions] = useScopeState({
+      kind: "groups",
+      groups: KEY_GROUPS.map((g2, i3) => ({
+        index: i3,
+        label: g2.label,
+        itemIds: getItemIdsForGroup4(i3)
+      })),
+      defaultEnabled: [0, 1],
+      storageKey: "keySignatures_enabledGroups",
+      label: "Keys",
+      sortUnstarted: (a3, b) => a3.string - b.string
+    });
+    const enabledGroups = scope.kind === "groups" ? scope.enabledGroups : /* @__PURE__ */ new Set([0, 1]);
+    const learner = useLearnerModel("keySignatures", ALL_ITEMS5);
+    const enabledItems = T2(() => {
+      const items = [];
+      for (const g2 of enabledGroups) {
+        items.push(...getItemIdsForGroup4(g2));
+      }
+      return items;
+    }, [enabledGroups]);
+    const [currentQ, setCurrentQ] = d2(null);
+    const currentQRef = A2(null);
+    const pendingSigDigitRef = A2(null);
+    const pendingSigTimeoutRef = A2(
+      null
+    );
+    const engineSubmitRef = A2(() => {
+    });
+    const noteHandler = T2(
+      () => createAdaptiveKeyHandler(
+        (note) => engineSubmitRef.current(note),
+        () => true
+      ),
+      []
+    );
+    const recommendation = T2(() => {
+      return computeRecommendations(
+        learner.selector,
+        ALL_GROUP_INDICES3,
+        getItemIdsForGroup4,
+        { expansionThreshold: 0.7 },
+        { sortUnstarted: (a3, b) => a3.string - b.string }
+      );
+    }, [learner.selector]);
+    const recommendationText = T2(() => {
+      return buildRecommendationText(
+        recommendation,
+        (i3) => KEY_GROUPS[i3].label
+      );
+    }, [recommendation]);
+    const applyRecommendation = q2(() => {
+      if (recommendation.enabled) {
+        scopeActions.setScope({
+          kind: "groups",
+          enabledGroups: recommendation.enabled
+        });
+      }
+    }, [recommendation, scopeActions]);
+    const practicingLabel = T2(() => {
+      if (enabledGroups.size === KEY_GROUPS.length) return "all keys";
+      const keys = [...enabledGroups].sort((a3, b) => a3 - b).flatMap((g2) => KEY_GROUPS[g2].keys).map((k3) => displayNote(k3));
+      return keys.join(", ");
+    }, [enabledGroups]);
+    const engineConfig = T2(() => ({
+      getEnabledItems: () => {
+        const items = [];
+        const groups = scope.kind === "groups" ? scope.enabledGroups : /* @__PURE__ */ new Set([0, 1]);
+        for (const g2 of groups) {
+          items.push(...getItemIdsForGroup4(g2));
+        }
+        return items;
+      },
+      checkAnswer: (_itemId, input) => {
+        const q3 = currentQRef.current;
+        return checkAnswer5(q3, input);
+      },
+      onPresent: (itemId) => {
+        const q3 = getQuestion5(itemId);
+        currentQRef.current = q3;
+        setCurrentQ(q3);
+      },
+      handleKey: (e3, ctx) => {
+        const dir2 = currentQRef.current?.dir;
+        if (dir2 === "rev") {
+          return noteHandler.handleKey(e3);
+        }
+        if (e3.key >= "0" && e3.key <= "7") {
+          e3.preventDefault();
+          if (pendingSigTimeoutRef.current) {
+            clearTimeout(pendingSigTimeoutRef.current);
+          }
+          pendingSigDigitRef.current = e3.key;
+          pendingSigTimeoutRef.current = setTimeout(() => {
+            if (pendingSigDigitRef.current === "0") {
+              ctx.submitAnswer("0");
+            }
+            pendingSigDigitRef.current = null;
+            pendingSigTimeoutRef.current = null;
+          }, 600);
+          return true;
+        }
+        if (pendingSigDigitRef.current !== null && (e3.key === "#" || e3.key === "b")) {
+          e3.preventDefault();
+          clearTimeout(pendingSigTimeoutRef.current);
+          const answer = pendingSigDigitRef.current + e3.key;
+          pendingSigDigitRef.current = null;
+          pendingSigTimeoutRef.current = null;
+          ctx.submitAnswer(answer);
+          return true;
+        }
+        return false;
+      },
+      onStart: () => {
+        noteHandler.reset();
+        if (pendingSigTimeoutRef.current) {
+          clearTimeout(pendingSigTimeoutRef.current);
+        }
+        pendingSigDigitRef.current = null;
+      },
+      onStop: () => {
+        noteHandler.reset();
+        if (pendingSigTimeoutRef.current) {
+          clearTimeout(pendingSigTimeoutRef.current);
+        }
+        pendingSigDigitRef.current = null;
+      },
+      getPracticingLabel: () => {
+        const groups = scope.kind === "groups" ? scope.enabledGroups : /* @__PURE__ */ new Set([0, 1]);
+        if (groups.size === KEY_GROUPS.length) return "all keys";
+        const keys = [...groups].sort((a3, b) => a3 - b).flatMap((g2) => KEY_GROUPS[g2].keys).map((k3) => displayNote(k3));
+        return keys.join(", ");
+      }
+    }), [scope, noteHandler]);
+    const engine = useQuizEngine(engineConfig, learner.selector);
+    engineSubmitRef.current = engine.submitAnswer;
+    y2(() => {
+      const phase = engine.state.phase;
+      const cls = phase === "idle" ? "phase-idle" : phase === "round-complete" ? "phase-round-complete" : "phase-active";
+      container.classList.remove(
+        "phase-idle",
+        "phase-active",
+        "phase-round-complete"
+      );
+      container.classList.add(cls);
+    }, [engine.state.phase, container]);
+    const [activeTab, setActiveTab] = d2(
+      "practice"
+    );
+    const [statsMode, setStatsMode] = d2("retention");
+    const sessionSummary = enabledItems.length + " items \xB7 60s";
+    const summary = T2(
+      () => computePracticeSummary({
+        allItemIds: ALL_ITEMS5,
+        selector: learner.selector,
+        itemNoun: "items",
+        recommendation,
+        recommendationText,
+        sessionSummary,
+        masteryText: engine.state.masteryText,
+        showMastery: engine.state.showMastery
+      }),
+      [
+        learner.selector,
+        recommendation,
+        recommendationText,
+        sessionSummary,
+        engine.state.masteryText,
+        engine.state.showMastery,
+        engine.state.phase
+      ]
+    );
+    _2(() => {
+      onMount({
+        activate() {
+          learner.syncBaseline();
+          engine.updateIdleMessage();
+        },
+        deactivate() {
+          if (engine.state.phase !== "idle") engine.stop();
+          noteHandler.reset();
+          if (pendingSigTimeoutRef.current) {
+            clearTimeout(pendingSigTimeoutRef.current);
+          }
+          pendingSigDigitRef.current = null;
+        }
+      });
+    }, [engine, learner, noteHandler]);
+    const dir = currentQ?.dir ?? "fwd";
+    const promptText = currentQ ? currentQ.dir === "fwd" ? displayNote(currentQ.root) + " major" : currentQ.sigLabel + " major" : "";
+    const handleSigAnswer = q2(
+      (sig) => engine.submitAnswer(sig),
+      [engine.submitAnswer]
+    );
+    const handleNoteAnswer = q2(
+      (note) => engine.submitAnswer(note),
+      [engine.submitAnswer]
+    );
+    const roundContext = T2(() => {
+      const s3 = engine.state;
+      const fluency = s3.masteredCount + " / " + s3.totalEnabledCount + " fluent";
+      return practicingLabel + " \xB7 " + fluency;
+    }, [
+      engine.state.masteredCount,
+      engine.state.totalEnabledCount,
+      practicingLabel
+    ]);
+    const roundCorrect = T2(() => {
+      const s3 = engine.state;
+      const dur = Math.round((s3.roundDurationMs || 0) / 1e3);
+      return s3.roundCorrect + " / " + s3.roundAnswered + " correct \xB7 " + dur + "s";
+    }, [
+      engine.state.roundCorrect,
+      engine.state.roundAnswered,
+      engine.state.roundDurationMs
+    ]);
+    const roundMedian = T2(() => {
+      const times = engine.state.roundResponseTimes;
+      const median = computeMedian(times);
+      return median !== null ? (median / 1e3).toFixed(1) + "s median response time" : "";
+    }, [engine.state.roundResponseTimes]);
+    const statsSelector = T2(() => ({
+      getAutomaticity: (id) => learner.selector.getAutomaticity(id),
+      getStats: (id) => learner.selector.getStats(id)
+    }), [learner.selector, engine.state.phase, statsMode]);
+    const baselineText = learner.motorBaseline ? "Response time baseline: " + (learner.motorBaseline / 1e3).toFixed(1) + "s" : "Response time baseline: 1s (default)";
+    const answerCount = engine.state.roundAnswered;
+    const countText = answerCount + (answerCount === 1 ? " answer" : " answers");
+    return /* @__PURE__ */ u3(k, { children: [
+      /* @__PURE__ */ u3(ModeTopBar, { title: "Key Signatures", onBack: navigateHome }),
+      /* @__PURE__ */ u3(
+        TabbedIdle,
+        {
+          activeTab,
+          onTabSwitch: setActiveTab,
+          practiceContent: /* @__PURE__ */ u3(
+            PracticeCard,
+            {
+              statusLabel: summary.statusLabel,
+              statusDetail: summary.statusDetail,
+              recommendation: summary.recommendationText || void 0,
+              mastery: summary.showMastery ? summary.masteryText : void 0,
+              sessionSummary,
+              onStart: engine.start,
+              onApplyRecommendation: summary.showRecommendationButton ? applyRecommendation : void 0,
+              scope: /* @__PURE__ */ u3(
+                GroupToggles,
+                {
+                  labels: KEY_GROUPS.map((g2) => g2.label),
+                  active: enabledGroups,
+                  recommended: recommendation.expandIndex ?? void 0,
+                  onToggle: scopeActions.toggleGroup
+                }
+              )
+            }
+          ),
+          progressContent: /* @__PURE__ */ u3("div", { children: [
+            /* @__PURE__ */ u3("div", { class: "baseline-info", children: baselineText }),
+            /* @__PURE__ */ u3("div", { class: "stats-controls", children: /* @__PURE__ */ u3(StatsToggle, { active: statsMode, onToggle: setStatsMode }) }),
+            /* @__PURE__ */ u3("div", { class: "stats-container", children: /* @__PURE__ */ u3(
+              StatsTable,
+              {
+                selector: statsSelector,
+                rows: getStatsRows3(),
+                fwdHeader: "Key\\u2192Sig",
+                revHeader: "Sig\\u2192Key",
+                statsMode,
+                baseline: learner.motorBaseline ?? void 0
+              }
+            ) })
+          ] })
+        }
+      ),
+      /* @__PURE__ */ u3(
+        QuizSession,
+        {
+          timeLeft: engine.timerText,
+          context: practicingLabel,
+          count: countText,
+          fluent: engine.state.masteredCount,
+          total: engine.state.totalEnabledCount,
+          isWarning: engine.timerWarning,
+          isLastQuestion: engine.timerLastQuestion,
+          onClose: engine.stop
+        }
+      ),
+      /* @__PURE__ */ u3(
+        QuizArea,
+        {
+          prompt: promptText,
+          lastQuestion: engine.state.roundTimerExpired ? "Last question" : "",
+          children: [
+            /* @__PURE__ */ u3(KeysigButtons, { hidden: dir === "rev", onAnswer: handleSigAnswer }),
+            /* @__PURE__ */ u3(NoteButtons, { hidden: dir === "fwd", onAnswer: handleNoteAnswer }),
+            /* @__PURE__ */ u3(
+              FeedbackDisplay,
+              {
+                text: engine.state.feedbackText,
+                className: engine.state.feedbackClass,
+                time: engine.state.timeDisplayText || void 0,
+                hint: engine.state.hintText || void 0
+              }
+            ),
+            /* @__PURE__ */ u3(
+              RoundComplete,
+              {
+                context: roundContext,
+                heading: "Round complete",
+                correct: roundCorrect,
+                median: roundMedian,
+                onContinue: engine.continueQuiz,
+                onStop: engine.stop
+              }
+            )
+          ]
+        }
+      )
+    ] });
+  }
+
+  // src/ui/modes/scale-degrees-mode.tsx
+  var DEGREE_LABELS = ["1st", "2nd", "3rd", "4th", "5th", "6th", "7th"];
+  var DEGREE_GROUPS = [
+    { degrees: [1, 5], label: "1st,5th" },
+    { degrees: [4], label: "4th" },
+    { degrees: [3, 7], label: "3rd,7th" },
+    { degrees: [2, 6], label: "2nd,6th" }
+  ];
+  function getItemIdsForGroup5(groupIndex) {
+    const degrees = DEGREE_GROUPS[groupIndex].degrees;
+    const items = [];
+    for (const key of MAJOR_KEYS) {
+      for (const d3 of degrees) {
+        items.push(key.root + ":" + d3 + ":fwd");
+        items.push(key.root + ":" + d3 + ":rev");
+      }
+    }
+    return items;
+  }
+  var ALL_ITEMS6 = [];
+  for (const key of MAJOR_KEYS) {
+    for (let d3 = 1; d3 <= 7; d3++) {
+      ALL_ITEMS6.push(key.root + ":" + d3 + ":fwd");
+      ALL_ITEMS6.push(key.root + ":" + d3 + ":rev");
+    }
+  }
+  var ALL_GROUP_INDICES4 = DEGREE_GROUPS.map((_3, i3) => i3);
+  var GRID_NOTES = MAJOR_KEYS.map((k3) => ({
+    name: k3.root,
+    displayName: k3.root
+  }));
+  function getQuestion6(itemId) {
+    const parts = itemId.split(":");
+    const keyRoot = parts[0];
+    const degree = parseInt(parts[1]);
+    const dir = parts[2];
+    const noteName = getScaleDegreeNote(keyRoot, degree);
+    return { keyRoot, degree, dir, noteName };
+  }
+  function checkAnswer6(q3, input) {
+    if (q3.dir === "fwd") {
+      const correct = spelledNoteMatchesSemitone(q3.noteName, input);
+      return { correct, correctAnswer: displayNote(q3.noteName) };
+    }
+    const expectedDegree = String(q3.degree);
+    return {
+      correct: input === expectedDegree,
+      correctAnswer: DEGREE_LABELS[q3.degree - 1]
+    };
+  }
+  function getGridItemId3(keyRoot, colIdx) {
+    const d3 = colIdx + 1;
+    return [keyRoot + ":" + d3 + ":fwd", keyRoot + ":" + d3 + ":rev"];
+  }
+  function ScaleDegreesMode({ container, navigateHome, onMount }) {
+    const [scope, scopeActions] = useScopeState({
+      kind: "groups",
+      groups: DEGREE_GROUPS.map((g2, i3) => ({
+        index: i3,
+        label: g2.label,
+        itemIds: getItemIdsForGroup5(i3)
+      })),
+      defaultEnabled: [0],
+      storageKey: "scaleDegrees_enabledGroups",
+      label: "Degrees",
+      sortUnstarted: (a3, b) => a3.string - b.string
+    });
+    const enabledGroups = scope.kind === "groups" ? scope.enabledGroups : /* @__PURE__ */ new Set([0]);
+    const learner = useLearnerModel("scaleDegrees", ALL_ITEMS6);
+    const enabledItems = T2(() => {
+      const items = [];
+      for (const g2 of enabledGroups) {
+        items.push(...getItemIdsForGroup5(g2));
+      }
+      return items;
+    }, [enabledGroups]);
+    const [currentQ, setCurrentQ] = d2(null);
+    const currentQRef = A2(null);
+    const engineSubmitRef = A2(() => {
+    });
+    const noteHandler = T2(
+      () => createAdaptiveKeyHandler(
+        (note) => engineSubmitRef.current(note),
+        () => true
+      ),
+      []
+    );
+    const recommendation = T2(() => {
+      return computeRecommendations(
+        learner.selector,
+        ALL_GROUP_INDICES4,
+        getItemIdsForGroup5,
+        { expansionThreshold: 0.7 },
+        { sortUnstarted: (a3, b) => a3.string - b.string }
+      );
+    }, [learner.selector]);
+    const recommendationText = T2(() => {
+      return buildRecommendationText(
+        recommendation,
+        (i3) => DEGREE_GROUPS[i3].label
+      );
+    }, [recommendation]);
+    const applyRecommendation = q2(() => {
+      if (recommendation.enabled) {
+        scopeActions.setScope({
+          kind: "groups",
+          enabledGroups: recommendation.enabled
+        });
+      }
+    }, [recommendation, scopeActions]);
+    const practicingLabel = T2(() => {
+      if (enabledGroups.size === DEGREE_GROUPS.length) return "all degrees";
+      const degrees = [...enabledGroups].sort((a3, b) => a3 - b).flatMap((g2) => DEGREE_GROUPS[g2].degrees).sort((a3, b) => a3 - b);
+      return degrees.map((d3) => DEGREE_LABELS[d3 - 1]).join(", ") + " degrees";
+    }, [enabledGroups]);
+    const engineConfig = T2(() => ({
+      getEnabledItems: () => {
+        const items = [];
+        const groups = scope.kind === "groups" ? scope.enabledGroups : /* @__PURE__ */ new Set([0]);
+        for (const g2 of groups) {
+          items.push(...getItemIdsForGroup5(g2));
+        }
+        return items;
+      },
+      checkAnswer: (_itemId, input) => {
+        return checkAnswer6(currentQRef.current, input);
+      },
+      onPresent: (itemId) => {
+        const q3 = getQuestion6(itemId);
+        currentQRef.current = q3;
+        setCurrentQ(q3);
+      },
+      handleKey: (e3, _ctx) => {
+        const dir2 = currentQRef.current?.dir;
+        if (dir2 === "fwd") {
+          return noteHandler.handleKey(e3);
+        }
+        if (e3.key >= "1" && e3.key <= "7") {
+          e3.preventDefault();
+          engineSubmitRef.current(e3.key);
+          return true;
+        }
+        return false;
+      },
+      onStart: () => noteHandler.reset(),
+      onStop: () => noteHandler.reset(),
+      getPracticingLabel: () => {
+        const groups = scope.kind === "groups" ? scope.enabledGroups : /* @__PURE__ */ new Set([0]);
+        if (groups.size === DEGREE_GROUPS.length) return "all degrees";
+        const degrees = [...groups].sort((a3, b) => a3 - b).flatMap((g2) => DEGREE_GROUPS[g2].degrees).sort((a3, b) => a3 - b);
+        return degrees.map((d3) => DEGREE_LABELS[d3 - 1]).join(", ") + " degrees";
+      }
+    }), [scope, noteHandler]);
+    const engine = useQuizEngine(engineConfig, learner.selector);
+    engineSubmitRef.current = engine.submitAnswer;
+    y2(() => {
+      const phase = engine.state.phase;
+      const cls = phase === "idle" ? "phase-idle" : phase === "round-complete" ? "phase-round-complete" : "phase-active";
+      container.classList.remove(
+        "phase-idle",
+        "phase-active",
+        "phase-round-complete"
+      );
+      container.classList.add(cls);
+    }, [engine.state.phase, container]);
+    const [activeTab, setActiveTab] = d2(
+      "practice"
+    );
+    const [statsMode, setStatsMode] = d2("retention");
+    const sessionSummary = enabledItems.length + " items \xB7 60s";
+    const summary = T2(
+      () => computePracticeSummary({
+        allItemIds: ALL_ITEMS6,
+        selector: learner.selector,
+        itemNoun: "items",
+        recommendation,
+        recommendationText,
+        sessionSummary,
+        masteryText: engine.state.masteryText,
+        showMastery: engine.state.showMastery
+      }),
+      [
+        learner.selector,
+        recommendation,
+        recommendationText,
+        sessionSummary,
+        engine.state.masteryText,
+        engine.state.showMastery,
+        engine.state.phase
+      ]
+    );
+    _2(() => {
+      onMount({
+        activate() {
+          learner.syncBaseline();
+          engine.updateIdleMessage();
+        },
+        deactivate() {
+          if (engine.state.phase !== "idle") engine.stop();
+          noteHandler.reset();
+        }
+      });
+    }, [engine, learner, noteHandler]);
+    const dir = currentQ?.dir ?? "fwd";
+    const promptText = currentQ ? currentQ.dir === "fwd" ? DEGREE_LABELS[currentQ.degree - 1] + " of " + displayNote(currentQ.keyRoot) + " major" : displayNote(currentQ.keyRoot) + " major: " + displayNote(currentQ.noteName) : "";
+    const handleNoteAnswer = q2(
+      (note) => engine.submitAnswer(note),
+      [engine.submitAnswer]
+    );
+    const handleDegreeAnswer = q2(
+      (degree) => engine.submitAnswer(degree),
+      [engine.submitAnswer]
+    );
+    const roundContext = T2(() => {
+      const s3 = engine.state;
+      return practicingLabel + " \xB7 " + s3.masteredCount + " / " + s3.totalEnabledCount + " fluent";
+    }, [
+      engine.state.masteredCount,
+      engine.state.totalEnabledCount,
+      practicingLabel
+    ]);
+    const roundCorrect = T2(() => {
+      const s3 = engine.state;
+      const dur = Math.round((s3.roundDurationMs || 0) / 1e3);
+      return s3.roundCorrect + " / " + s3.roundAnswered + " correct \xB7 " + dur + "s";
+    }, [
+      engine.state.roundCorrect,
+      engine.state.roundAnswered,
+      engine.state.roundDurationMs
+    ]);
+    const roundMedian = T2(() => {
+      const times = engine.state.roundResponseTimes;
+      const median = computeMedian(times);
+      return median !== null ? (median / 1e3).toFixed(1) + "s median response time" : "";
+    }, [engine.state.roundResponseTimes]);
+    const statsSelector = T2(() => ({
+      getAutomaticity: (id) => learner.selector.getAutomaticity(id),
+      getStats: (id) => learner.selector.getStats(id)
+    }), [learner.selector, engine.state.phase, statsMode]);
+    const baselineText = learner.motorBaseline ? "Response time baseline: " + (learner.motorBaseline / 1e3).toFixed(1) + "s" : "Response time baseline: 1s (default)";
+    const answerCount = engine.state.roundAnswered;
+    const countText = answerCount + (answerCount === 1 ? " answer" : " answers");
+    return /* @__PURE__ */ u3(k, { children: [
+      /* @__PURE__ */ u3(ModeTopBar, { title: "Scale Degrees", onBack: navigateHome }),
+      /* @__PURE__ */ u3(
+        TabbedIdle,
+        {
+          activeTab,
+          onTabSwitch: setActiveTab,
+          practiceContent: /* @__PURE__ */ u3(
+            PracticeCard,
+            {
+              statusLabel: summary.statusLabel,
+              statusDetail: summary.statusDetail,
+              recommendation: summary.recommendationText || void 0,
+              mastery: summary.showMastery ? summary.masteryText : void 0,
+              sessionSummary,
+              onStart: engine.start,
+              onApplyRecommendation: summary.showRecommendationButton ? applyRecommendation : void 0,
+              scope: /* @__PURE__ */ u3(
+                GroupToggles,
+                {
+                  labels: DEGREE_GROUPS.map((g2) => g2.label),
+                  active: enabledGroups,
+                  recommended: recommendation.expandIndex ?? void 0,
+                  onToggle: scopeActions.toggleGroup
+                }
+              )
+            }
+          ),
+          progressContent: /* @__PURE__ */ u3("div", { children: [
+            /* @__PURE__ */ u3("div", { class: "baseline-info", children: baselineText }),
+            /* @__PURE__ */ u3("div", { class: "stats-controls", children: /* @__PURE__ */ u3(StatsToggle, { active: statsMode, onToggle: setStatsMode }) }),
+            /* @__PURE__ */ u3("div", { class: "stats-container", children: /* @__PURE__ */ u3(
+              StatsGrid,
+              {
+                selector: statsSelector,
+                colLabels: DEGREE_LABELS,
+                getItemId: getGridItemId3,
+                statsMode,
+                notes: GRID_NOTES,
+                baseline: learner.motorBaseline ?? void 0
+              }
+            ) })
+          ] })
+        }
+      ),
+      /* @__PURE__ */ u3(
+        QuizSession,
+        {
+          timeLeft: engine.timerText,
+          context: practicingLabel,
+          count: countText,
+          fluent: engine.state.masteredCount,
+          total: engine.state.totalEnabledCount,
+          isWarning: engine.timerWarning,
+          isLastQuestion: engine.timerLastQuestion,
+          onClose: engine.stop
+        }
+      ),
+      /* @__PURE__ */ u3(
+        QuizArea,
+        {
+          prompt: promptText,
+          lastQuestion: engine.state.roundTimerExpired ? "Last question" : "",
+          children: [
+            /* @__PURE__ */ u3(NoteButtons, { hidden: dir === "rev", onAnswer: handleNoteAnswer }),
+            /* @__PURE__ */ u3(DegreeButtons, { hidden: dir === "fwd", onAnswer: handleDegreeAnswer }),
+            /* @__PURE__ */ u3(
+              FeedbackDisplay,
+              {
+                text: engine.state.feedbackText,
+                className: engine.state.feedbackClass,
+                time: engine.state.timeDisplayText || void 0,
+                hint: engine.state.hintText || void 0
+              }
+            ),
+            /* @__PURE__ */ u3(
+              RoundComplete,
+              {
+                context: roundContext,
+                heading: "Round complete",
+                correct: roundCorrect,
+                median: roundMedian,
+                onContinue: engine.continueQuiz,
+                onStop: engine.stop
+              }
+            )
+          ]
+        }
+      )
+    ] });
+  }
+
+  // src/ui/modes/diatonic-chords-mode.tsx
+  var CHORD_GROUPS = [
+    { degrees: [1, 4, 5], label: "I,IV,V" },
+    { degrees: [2, 6], label: "ii,vi" },
+    { degrees: [3, 7], label: "iii,vii\xB0" }
+  ];
+  function getItemIdsForGroup6(groupIndex) {
+    const degrees = CHORD_GROUPS[groupIndex].degrees;
+    const items = [];
+    for (const key of MAJOR_KEYS) {
+      for (const d3 of degrees) {
+        items.push(key.root + ":" + d3 + ":fwd");
+        items.push(key.root + ":" + d3 + ":rev");
+      }
+    }
+    return items;
+  }
+  var ALL_ITEMS7 = [];
+  for (const key of MAJOR_KEYS) {
+    for (let d3 = 1; d3 <= 7; d3++) {
+      ALL_ITEMS7.push(key.root + ":" + d3 + ":fwd");
+      ALL_ITEMS7.push(key.root + ":" + d3 + ":rev");
+    }
+  }
+  var ALL_GROUP_INDICES5 = CHORD_GROUPS.map((_3, i3) => i3);
+  var GRID_NOTES2 = MAJOR_KEYS.map((k3) => ({
+    name: k3.root,
+    displayName: k3.root
+  }));
+  function getQuestion7(itemId) {
+    const parts = itemId.split(":");
+    const keyRoot = parts[0];
+    const degree = parseInt(parts[1]);
+    const dir = parts[2];
+    const chord = DIATONIC_CHORDS[degree - 1];
+    const rootNote = getScaleDegreeNote(keyRoot, degree);
+    return { keyRoot, degree, chord, dir, rootNote };
+  }
+  function checkAnswer7(q3, input) {
+    if (q3.dir === "fwd") {
+      const correct = spelledNoteMatchesSemitone(q3.rootNote, input);
+      const fullAnswer = displayNote(q3.rootNote) + " " + q3.chord.quality;
+      return { correct, correctAnswer: fullAnswer };
+    }
+    const expectedNumeral = q3.chord.numeral;
+    return {
+      correct: input === expectedNumeral,
+      correctAnswer: expectedNumeral
+    };
+  }
+  function getGridItemId4(keyRoot, colIdx) {
+    const d3 = colIdx + 1;
+    return [keyRoot + ":" + d3 + ":fwd", keyRoot + ":" + d3 + ":rev"];
+  }
+  function DiatonicChordsMode({ container, navigateHome, onMount }) {
+    const [scope, scopeActions] = useScopeState({
+      kind: "groups",
+      groups: CHORD_GROUPS.map((g2, i3) => ({
+        index: i3,
+        label: g2.label,
+        itemIds: getItemIdsForGroup6(i3)
+      })),
+      defaultEnabled: [0],
+      storageKey: "diatonicChords_enabledGroups",
+      label: "Chords",
+      sortUnstarted: (a3, b) => a3.string - b.string
+    });
+    const enabledGroups = scope.kind === "groups" ? scope.enabledGroups : /* @__PURE__ */ new Set([0]);
+    const learner = useLearnerModel("diatonicChords", ALL_ITEMS7);
+    const enabledItems = T2(() => {
+      const items = [];
+      for (const g2 of enabledGroups) {
+        items.push(...getItemIdsForGroup6(g2));
+      }
+      return items;
+    }, [enabledGroups]);
+    const [currentQ, setCurrentQ] = d2(null);
+    const currentQRef = A2(null);
+    const engineSubmitRef = A2(() => {
+    });
+    const noteHandler = T2(
+      () => createAdaptiveKeyHandler(
+        (note) => engineSubmitRef.current(note),
+        () => true
+      ),
+      []
+    );
+    const recommendation = T2(() => {
+      return computeRecommendations(
+        learner.selector,
+        ALL_GROUP_INDICES5,
+        getItemIdsForGroup6,
+        { expansionThreshold: 0.7 },
+        { sortUnstarted: (a3, b) => a3.string - b.string }
+      );
+    }, [learner.selector]);
+    const recommendationText = T2(() => {
+      return buildRecommendationText(
+        recommendation,
+        (i3) => CHORD_GROUPS[i3].label
+      );
+    }, [recommendation]);
+    const applyRecommendation = q2(() => {
+      if (recommendation.enabled) {
+        scopeActions.setScope({
+          kind: "groups",
+          enabledGroups: recommendation.enabled
+        });
+      }
+    }, [recommendation, scopeActions]);
+    const practicingLabel = T2(() => {
+      if (enabledGroups.size === CHORD_GROUPS.length) return "all chords";
+      const numerals = [...enabledGroups].sort((a3, b) => a3 - b).flatMap((g2) => CHORD_GROUPS[g2].degrees).sort((a3, b) => a3 - b).map((d3) => ROMAN_NUMERALS[d3 - 1]);
+      return numerals.join(", ") + " chords";
+    }, [enabledGroups]);
+    const engineConfig = T2(() => ({
+      getEnabledItems: () => {
+        const items = [];
+        const groups = scope.kind === "groups" ? scope.enabledGroups : /* @__PURE__ */ new Set([0]);
+        for (const g2 of groups) {
+          items.push(...getItemIdsForGroup6(g2));
+        }
+        return items;
+      },
+      checkAnswer: (_itemId, input) => {
+        return checkAnswer7(currentQRef.current, input);
+      },
+      onPresent: (itemId) => {
+        const q3 = getQuestion7(itemId);
+        currentQRef.current = q3;
+        setCurrentQ(q3);
+      },
+      handleKey: (e3, _ctx) => {
+        const dir2 = currentQRef.current?.dir;
+        if (dir2 === "fwd") {
+          return noteHandler.handleKey(e3);
+        }
+        if (e3.key >= "1" && e3.key <= "7") {
+          e3.preventDefault();
+          engineSubmitRef.current(ROMAN_NUMERALS[parseInt(e3.key) - 1]);
+          return true;
+        }
+        return false;
+      },
+      onStart: () => noteHandler.reset(),
+      onStop: () => noteHandler.reset(),
+      getPracticingLabel: () => {
+        const groups = scope.kind === "groups" ? scope.enabledGroups : /* @__PURE__ */ new Set([0]);
+        if (groups.size === CHORD_GROUPS.length) return "all chords";
+        const numerals = [...groups].sort((a3, b) => a3 - b).flatMap((g2) => CHORD_GROUPS[g2].degrees).sort((a3, b) => a3 - b).map((d3) => ROMAN_NUMERALS[d3 - 1]);
+        return numerals.join(", ") + " chords";
+      }
+    }), [scope, noteHandler]);
+    const engine = useQuizEngine(engineConfig, learner.selector);
+    engineSubmitRef.current = engine.submitAnswer;
+    y2(() => {
+      const phase = engine.state.phase;
+      const cls = phase === "idle" ? "phase-idle" : phase === "round-complete" ? "phase-round-complete" : "phase-active";
+      container.classList.remove(
+        "phase-idle",
+        "phase-active",
+        "phase-round-complete"
+      );
+      container.classList.add(cls);
+    }, [engine.state.phase, container]);
+    const [activeTab, setActiveTab] = d2(
+      "practice"
+    );
+    const [statsMode, setStatsMode] = d2("retention");
+    const sessionSummary = enabledItems.length + " items \xB7 60s";
+    const summary = T2(
+      () => computePracticeSummary({
+        allItemIds: ALL_ITEMS7,
+        selector: learner.selector,
+        itemNoun: "items",
+        recommendation,
+        recommendationText,
+        sessionSummary,
+        masteryText: engine.state.masteryText,
+        showMastery: engine.state.showMastery
+      }),
+      [
+        learner.selector,
+        recommendation,
+        recommendationText,
+        sessionSummary,
+        engine.state.masteryText,
+        engine.state.showMastery,
+        engine.state.phase
+      ]
+    );
+    _2(() => {
+      onMount({
+        activate() {
+          learner.syncBaseline();
+          engine.updateIdleMessage();
+        },
+        deactivate() {
+          if (engine.state.phase !== "idle") engine.stop();
+          noteHandler.reset();
+        }
+      });
+    }, [engine, learner, noteHandler]);
+    const dir = currentQ?.dir ?? "fwd";
+    const promptText = currentQ ? currentQ.dir === "fwd" ? currentQ.chord.numeral + " in " + displayNote(currentQ.keyRoot) + " major" : displayNote(currentQ.rootNote) + currentQ.chord.qualityLabel + " in " + displayNote(currentQ.keyRoot) + " major" : "";
+    const handleNoteAnswer = q2(
+      (note) => engine.submitAnswer(note),
+      [engine.submitAnswer]
+    );
+    const handleNumeralAnswer = q2(
+      (numeral) => engine.submitAnswer(numeral),
+      [engine.submitAnswer]
+    );
+    const roundContext = T2(() => {
+      const s3 = engine.state;
+      return practicingLabel + " \xB7 " + s3.masteredCount + " / " + s3.totalEnabledCount + " fluent";
+    }, [
+      engine.state.masteredCount,
+      engine.state.totalEnabledCount,
+      practicingLabel
+    ]);
+    const roundCorrect = T2(() => {
+      const s3 = engine.state;
+      const dur = Math.round((s3.roundDurationMs || 0) / 1e3);
+      return s3.roundCorrect + " / " + s3.roundAnswered + " correct \xB7 " + dur + "s";
+    }, [
+      engine.state.roundCorrect,
+      engine.state.roundAnswered,
+      engine.state.roundDurationMs
+    ]);
+    const roundMedian = T2(() => {
+      const times = engine.state.roundResponseTimes;
+      const median = computeMedian(times);
+      return median !== null ? (median / 1e3).toFixed(1) + "s median response time" : "";
+    }, [engine.state.roundResponseTimes]);
+    const statsSelector = T2(() => ({
+      getAutomaticity: (id) => learner.selector.getAutomaticity(id),
+      getStats: (id) => learner.selector.getStats(id)
+    }), [learner.selector, engine.state.phase, statsMode]);
+    const baselineText = learner.motorBaseline ? "Response time baseline: " + (learner.motorBaseline / 1e3).toFixed(1) + "s" : "Response time baseline: 1s (default)";
+    const answerCount = engine.state.roundAnswered;
+    const countText = answerCount + (answerCount === 1 ? " answer" : " answers");
+    return /* @__PURE__ */ u3(k, { children: [
+      /* @__PURE__ */ u3(ModeTopBar, { title: "Diatonic Chords", onBack: navigateHome }),
+      /* @__PURE__ */ u3(
+        TabbedIdle,
+        {
+          activeTab,
+          onTabSwitch: setActiveTab,
+          practiceContent: /* @__PURE__ */ u3(
+            PracticeCard,
+            {
+              statusLabel: summary.statusLabel,
+              statusDetail: summary.statusDetail,
+              recommendation: summary.recommendationText || void 0,
+              mastery: summary.showMastery ? summary.masteryText : void 0,
+              sessionSummary,
+              onStart: engine.start,
+              onApplyRecommendation: summary.showRecommendationButton ? applyRecommendation : void 0,
+              scope: /* @__PURE__ */ u3(
+                GroupToggles,
+                {
+                  labels: CHORD_GROUPS.map((g2) => g2.label),
+                  active: enabledGroups,
+                  recommended: recommendation.expandIndex ?? void 0,
+                  onToggle: scopeActions.toggleGroup
+                }
+              )
+            }
+          ),
+          progressContent: /* @__PURE__ */ u3("div", { children: [
+            /* @__PURE__ */ u3("div", { class: "baseline-info", children: baselineText }),
+            /* @__PURE__ */ u3("div", { class: "stats-controls", children: /* @__PURE__ */ u3(StatsToggle, { active: statsMode, onToggle: setStatsMode }) }),
+            /* @__PURE__ */ u3("div", { class: "stats-container", children: /* @__PURE__ */ u3(
+              StatsGrid,
+              {
+                selector: statsSelector,
+                colLabels: ROMAN_NUMERALS,
+                getItemId: getGridItemId4,
+                statsMode,
+                notes: GRID_NOTES2,
+                baseline: learner.motorBaseline ?? void 0
+              }
+            ) })
+          ] })
+        }
+      ),
+      /* @__PURE__ */ u3(
+        QuizSession,
+        {
+          timeLeft: engine.timerText,
+          context: practicingLabel,
+          count: countText,
+          fluent: engine.state.masteredCount,
+          total: engine.state.totalEnabledCount,
+          isWarning: engine.timerWarning,
+          isLastQuestion: engine.timerLastQuestion,
+          onClose: engine.stop
+        }
+      ),
+      /* @__PURE__ */ u3(
+        QuizArea,
+        {
+          prompt: promptText,
+          lastQuestion: engine.state.roundTimerExpired ? "Last question" : "",
+          children: [
+            /* @__PURE__ */ u3(NoteButtons, { hidden: dir === "rev", onAnswer: handleNoteAnswer }),
+            /* @__PURE__ */ u3(
+              NumeralButtons,
+              {
+                hidden: dir === "fwd",
+                onAnswer: handleNumeralAnswer
+              }
+            ),
+            /* @__PURE__ */ u3(
+              FeedbackDisplay,
+              {
+                text: engine.state.feedbackText,
+                className: engine.state.feedbackClass,
+                time: engine.state.timeDisplayText || void 0,
+                hint: engine.state.hintText || void 0
+              }
+            ),
+            /* @__PURE__ */ u3(
+              RoundComplete,
+              {
+                context: roundContext,
+                heading: "Round complete",
+                correct: roundCorrect,
+                median: roundMedian,
+                onContinue: engine.continueQuiz,
+                onStop: engine.stop
+              }
+            )
+          ]
+        }
+      )
+    ] });
+  }
+
   // src/app.ts
   var nav = createNavigation();
   var allControllers = [
@@ -10242,17 +10852,6 @@ button {
     },
     { id: "speedTap", name: "Speed Tap", def: speedTapDefinition() },
     {
-      id: "keySignatures",
-      name: "Key Signatures",
-      def: keySignaturesDefinition()
-    },
-    { id: "scaleDegrees", name: "Scale Degrees", def: scaleDegreesDefinition() },
-    {
-      id: "diatonicChords",
-      name: "Diatonic Chords",
-      def: diatonicChordsDefinition()
-    },
-    {
       id: "chordSpelling",
       name: "Chord Spelling",
       def: chordSpellingDefinition()
@@ -10267,14 +10866,14 @@ button {
     });
     return ctrl;
   });
-  {
+  function registerPreactMode(id, name, Component) {
     let handle = null;
-    const container = document.getElementById("mode-noteSemitones");
-    nav.registerMode("noteSemitones", {
-      name: "Note \u2194 Semitones",
+    const container = document.getElementById("mode-" + id);
+    nav.registerMode(id, {
+      name,
       init() {
         J(
-          _(NoteSemitonesMode, {
+          _(Component, {
             container,
             navigateHome: () => nav.navigateHome(),
             onMount: (h3) => {
@@ -10292,81 +10891,17 @@ button {
       }
     });
   }
-  {
-    let handle = null;
-    const container = document.getElementById("mode-intervalSemitones");
-    nav.registerMode("intervalSemitones", {
-      name: "Interval \u2194 Semitones",
-      init() {
-        J(
-          _(IntervalSemitonesMode, {
-            container,
-            navigateHome: () => nav.navigateHome(),
-            onMount: (h3) => {
-              handle = h3;
-            }
-          }),
-          container
-        );
-      },
-      activate() {
-        handle?.activate();
-      },
-      deactivate() {
-        handle?.deactivate();
-      }
-    });
-  }
-  {
-    let handle = null;
-    const container = document.getElementById("mode-semitoneMath");
-    nav.registerMode("semitoneMath", {
-      name: "Semitone Math",
-      init() {
-        J(
-          _(SemitoneMathMode, {
-            container,
-            navigateHome: () => nav.navigateHome(),
-            onMount: (h3) => {
-              handle = h3;
-            }
-          }),
-          container
-        );
-      },
-      activate() {
-        handle?.activate();
-      },
-      deactivate() {
-        handle?.deactivate();
-      }
-    });
-  }
-  {
-    let handle = null;
-    const container = document.getElementById("mode-intervalMath");
-    nav.registerMode("intervalMath", {
-      name: "Interval Math",
-      init() {
-        J(
-          _(IntervalMathMode, {
-            container,
-            navigateHome: () => nav.navigateHome(),
-            onMount: (h3) => {
-              handle = h3;
-            }
-          }),
-          container
-        );
-      },
-      activate() {
-        handle?.activate();
-      },
-      deactivate() {
-        handle?.deactivate();
-      }
-    });
-  }
+  registerPreactMode("noteSemitones", "Note \u2194 Semitones", NoteSemitonesMode);
+  registerPreactMode(
+    "intervalSemitones",
+    "Interval \u2194 Semitones",
+    IntervalSemitonesMode
+  );
+  registerPreactMode("semitoneMath", "Semitone Math", SemitoneMathMode);
+  registerPreactMode("intervalMath", "Interval Math", IntervalMathMode);
+  registerPreactMode("keySignatures", "Key Signatures", KeySignaturesMode);
+  registerPreactMode("scaleDegrees", "Scale Degrees", ScaleDegreesMode);
+  registerPreactMode("diatonicChords", "Diatonic Chords", DiatonicChordsMode);
   nav.init();
   var settings = createSettingsModal({
     onNotationChange() {

@@ -21,7 +21,7 @@ import {
 // Version — single source of truth
 // ---------------------------------------------------------------------------
 
-export const VERSION = 'v7.8';
+export const VERSION = 'v7.9';
 
 // ---------------------------------------------------------------------------
 // Shared HTML fragments

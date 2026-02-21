@@ -1633,7 +1633,7 @@ button {
     </div>
     <div class="home-footer">
       <button class="home-settings-btn" type="button">Settings</button>
-      <span class="version">v7.12</span>
+      <span class="version">v8.0</span>
     </div>
   </div>
 
@@ -4136,522 +4136,6 @@ button {
     return { open, close };
   }
 
-  // src/quiz-engine-state.ts
-  function initialEngineState() {
-    return {
-      phase: "idle",
-      // 'idle' | 'active' | 'round-complete' | 'calibration-intro' | 'calibrating' | 'calibration-results'
-      currentItemId: null,
-      answered: false,
-      questionStartTime: null,
-      // Session tracking
-      questionCount: 0,
-      quizStartTime: null,
-      // Round tracking
-      roundNumber: 0,
-      roundAnswered: 0,
-      roundCorrect: 0,
-      roundTimerExpired: false,
-      roundResponseTimes: [],
-      roundDurationMs: 0,
-      // Progress tracking
-      masteredCount: 0,
-      totalEnabledCount: 0,
-      // Feedback
-      feedbackText: "",
-      feedbackClass: "feedback",
-      timeDisplayText: "",
-      hintText: "",
-      // Mastery message
-      masteryText: "",
-      showMastery: false,
-      // Calibration
-      calibrationBaseline: null,
-      // UI visibility
-      quizActive: false,
-      answersEnabled: false
-    };
-  }
-  function engineStart(state) {
-    return {
-      ...state,
-      phase: "active",
-      questionCount: 0,
-      quizStartTime: Date.now(),
-      quizActive: true,
-      showMastery: false,
-      roundNumber: 1,
-      roundAnswered: 0,
-      roundCorrect: 0,
-      roundTimerExpired: false,
-      roundResponseTimes: []
-    };
-  }
-  function engineNextQuestion(state, nextItemId, nowMs) {
-    return {
-      ...state,
-      currentItemId: nextItemId,
-      answered: false,
-      questionStartTime: nowMs,
-      questionCount: state.questionCount + 1,
-      feedbackText: "",
-      feedbackClass: "feedback",
-      timeDisplayText: "",
-      hintText: "",
-      answersEnabled: true
-    };
-  }
-  function engineSubmitAnswer(state, isCorrect, correctAnswer) {
-    return {
-      ...state,
-      answered: true,
-      answersEnabled: false,
-      feedbackText: isCorrect ? "Correct!" : "Incorrect \u2014 " + correctAnswer,
-      feedbackClass: isCorrect ? "feedback correct" : "feedback incorrect",
-      timeDisplayText: "",
-      hintText: "Tap anywhere or press Space for next",
-      roundAnswered: state.roundAnswered + 1,
-      roundCorrect: state.roundCorrect + (isCorrect ? 1 : 0)
-    };
-  }
-  function engineRoundTimerExpired(state) {
-    return {
-      ...state,
-      roundTimerExpired: true
-    };
-  }
-  function engineRoundComplete(state) {
-    return {
-      ...state,
-      phase: "round-complete",
-      answered: false,
-      answersEnabled: false,
-      currentItemId: null,
-      feedbackText: "",
-      feedbackClass: "feedback",
-      hintText: ""
-    };
-  }
-  function engineContinueRound(state) {
-    return {
-      ...state,
-      phase: "active",
-      roundNumber: state.roundNumber + 1,
-      roundAnswered: 0,
-      roundCorrect: 0,
-      roundTimerExpired: false,
-      roundResponseTimes: []
-    };
-  }
-  function engineStop(_state) {
-    return initialEngineState();
-  }
-  function engineUpdateIdleMessage(state, allMastered, needsReview) {
-    if (state.phase !== "idle") return state;
-    if (allMastered) {
-      return {
-        ...state,
-        masteryText: "Looks like you\u2019ve got this!",
-        showMastery: true
-      };
-    }
-    if (needsReview) {
-      return { ...state, masteryText: "Time to review?", showMastery: true };
-    }
-    return { ...state, masteryText: "", showMastery: false };
-  }
-  function engineUpdateMasteryAfterAnswer(state, allMastered) {
-    if (allMastered) {
-      return {
-        ...state,
-        masteryText: "Looks like you\u2019ve got this!",
-        showMastery: true
-      };
-    }
-    return { ...state, showMastery: false };
-  }
-  function engineUpdateProgress(state, masteredCount, totalEnabledCount) {
-    return { ...state, masteredCount, totalEnabledCount };
-  }
-  function engineRouteKey(state, key) {
-    if (state.phase === "idle") return { action: "ignore" };
-    if (key === "Escape") return { action: "stop" };
-    if (state.phase === "round-complete") {
-      if (key === " " || key === "Enter") return { action: "continue" };
-      return { action: "ignore" };
-    }
-    if (state.phase !== "active") return { action: "ignore" };
-    if ((key === " " || key === "Enter") && state.answered) {
-      return { action: "next" };
-    }
-    if (!state.answered) return { action: "delegate" };
-    return { action: "ignore" };
-  }
-
-  // src/adaptive.ts
-  var DEFAULT_CONFIG = {
-    minTime: 1e3,
-    unseenBoost: 3,
-    ewmaAlpha: 0.3,
-    maxStoredTimes: 10,
-    maxResponseTime: 9e3,
-    // Forgetting model
-    initialStability: 4,
-    // hours — half-life after first correct answer
-    maxStability: 336,
-    // hours (14 days) — stability ceiling
-    stabilityGrowthBase: 2,
-    // multiplier on each correct answer
-    stabilityDecayOnWrong: 0.3,
-    // multiplier on wrong answer
-    recallThreshold: 0.5,
-    // P(recall) below this = "due"
-    expansionThreshold: 0.7,
-    // fraction of seen items that must be retained before suggesting new strings
-    speedBonusMax: 1.5,
-    // fast answers grow stability up to this extra factor
-    selfCorrectionThreshold: 1500,
-    // ms — response time below this triggers self-correction
-    automaticityTarget: 3e3,
-    // ms — response time at which speedScore ≈ 0.5
-    automaticityThreshold: 0.8
-    // automaticity above this = "automatic" (matches stats heatmap)
-  };
-  function computeEwma(oldEwma, newTime, alpha) {
-    return alpha * newTime + (1 - alpha) * oldEwma;
-  }
-  function computeRecall(stabilityHours, elapsedHours) {
-    if (stabilityHours == null || elapsedHours == null) return null;
-    if (stabilityHours <= 0) return 0;
-    if (elapsedHours <= 0) return 1;
-    return Math.pow(2, -elapsedHours / stabilityHours);
-  }
-  function computeSpeedScore(ewmaMs, cfg, responseCount = 1) {
-    if (ewmaMs == null) return null;
-    const effectiveTarget = cfg.automaticityTarget * responseCount;
-    const effectiveMin = cfg.minTime * responseCount;
-    const k3 = Math.LN2 / (effectiveTarget - effectiveMin);
-    return Math.exp(-k3 * Math.max(0, ewmaMs - effectiveMin));
-  }
-  function computeAutomaticity(recall, speedScore) {
-    if (recall == null || speedScore == null) return null;
-    return recall * speedScore;
-  }
-  function computeAutomaticityForDisplay(recall, speedScore, hasSeen) {
-    const value = computeAutomaticity(recall, speedScore);
-    if (value == null && hasSeen) return 0;
-    return value;
-  }
-  function updateStability(oldStability, responseTimeMs, elapsedHours, cfg) {
-    if (oldStability == null) {
-      return cfg.initialStability;
-    }
-    const range = cfg.maxResponseTime - cfg.minTime;
-    const clamped = Math.max(
-      cfg.minTime,
-      Math.min(responseTimeMs, cfg.maxResponseTime)
-    );
-    const t3 = range > 0 ? (cfg.maxResponseTime - clamped) / range : 0.5;
-    const speedFactor = 0.5 + t3 * (cfg.speedBonusMax - 0.5);
-    let newStability = oldStability * cfg.stabilityGrowthBase * speedFactor;
-    if (elapsedHours !== null && elapsedHours > 0 && responseTimeMs < cfg.selfCorrectionThreshold) {
-      newStability = Math.max(newStability, elapsedHours * 1.5);
-    }
-    return Math.min(newStability, cfg.maxStability);
-  }
-  function computeStabilityAfterWrong(oldStability, cfg) {
-    if (oldStability == null) return cfg.initialStability;
-    return Math.max(
-      cfg.initialStability,
-      oldStability * cfg.stabilityDecayOnWrong
-    );
-  }
-  function computeWeight(stats, cfg) {
-    if (!stats) {
-      return cfg.unseenBoost;
-    }
-    const speedWeight = Math.max(stats.ewma, cfg.minTime) / cfg.minTime;
-    if (stats.stability != null && stats.lastCorrectAt != null) {
-      const elapsedHours = (Date.now() - stats.lastCorrectAt) / 36e5;
-      const recall = computeRecall(stats.stability, elapsedHours);
-      const recallWeight = recall != null ? 1 + (1 - recall) : 1;
-      return speedWeight * recallWeight;
-    }
-    return speedWeight;
-  }
-  function selectWeighted(items, weights, rand) {
-    const totalWeight = weights.reduce((sum, w3) => sum + w3, 0);
-    if (totalWeight === 0) {
-      return items[Math.floor(rand * items.length)];
-    }
-    let remaining = rand * totalWeight;
-    for (let i3 = 0; i3 < items.length; i3++) {
-      remaining -= weights[i3];
-      if (remaining <= 0) return items[i3];
-    }
-    return items[items.length - 1];
-  }
-  function deriveScaledConfig(motorBaseline, baseCfg = DEFAULT_CONFIG) {
-    const scale = motorBaseline / 1e3;
-    return {
-      ...baseCfg,
-      minTime: Math.round(baseCfg.minTime * scale),
-      automaticityTarget: Math.round(baseCfg.automaticityTarget * scale),
-      selfCorrectionThreshold: Math.round(
-        baseCfg.selfCorrectionThreshold * scale
-      ),
-      maxResponseTime: Math.round(baseCfg.maxResponseTime * scale)
-    };
-  }
-  function computeMedian(values) {
-    if (values.length === 0) return null;
-    const sorted = [...values].sort((a3, b) => a3 - b);
-    const mid = Math.floor(sorted.length / 2);
-    if (sorted.length % 2 === 1) return sorted[mid];
-    return (sorted[mid - 1] + sorted[mid]) / 2;
-  }
-  function createAdaptiveSelector(storage, cfg = DEFAULT_CONFIG, randomFn = Math.random, responseCountFn = null) {
-    function getResponseCount(itemId) {
-      return responseCountFn ? responseCountFn(itemId) : 1;
-    }
-    function scaledConfig(itemId) {
-      const rc = getResponseCount(itemId);
-      if (rc <= 1) return cfg;
-      return {
-        ...cfg,
-        minTime: cfg.minTime * rc,
-        automaticityTarget: cfg.automaticityTarget * rc,
-        maxResponseTime: cfg.maxResponseTime * rc,
-        selfCorrectionThreshold: cfg.selfCorrectionThreshold * rc
-      };
-    }
-    function recordResponse(itemId, timeMs, correct = true) {
-      const itemCfg = scaledConfig(itemId);
-      const clamped = Math.min(timeMs, itemCfg.maxResponseTime);
-      const existing = storage.getStats(itemId);
-      const now = Date.now();
-      if (correct) {
-        const elapsedHours = existing && existing.lastCorrectAt ? (now - existing.lastCorrectAt) / 36e5 : null;
-        if (existing) {
-          const newEwma = computeEwma(existing.ewma, clamped, cfg.ewmaAlpha);
-          const newTimes = [...existing.recentTimes, clamped].slice(
-            -cfg.maxStoredTimes
-          );
-          const newStability = updateStability(
-            existing.stability ?? null,
-            clamped,
-            elapsedHours,
-            itemCfg
-          );
-          storage.saveStats(itemId, {
-            recentTimes: newTimes,
-            ewma: newEwma,
-            sampleCount: existing.sampleCount + 1,
-            lastSeen: now,
-            stability: newStability,
-            lastCorrectAt: now
-          });
-        } else {
-          storage.saveStats(itemId, {
-            recentTimes: [clamped],
-            ewma: clamped,
-            sampleCount: 1,
-            lastSeen: now,
-            stability: cfg.initialStability,
-            lastCorrectAt: now
-          });
-        }
-      } else {
-        if (existing) {
-          const newStability = computeStabilityAfterWrong(
-            existing.stability ?? null,
-            cfg
-          );
-          storage.saveStats(itemId, {
-            ...existing,
-            lastSeen: now,
-            stability: newStability
-          });
-        } else {
-          storage.saveStats(itemId, {
-            recentTimes: [],
-            ewma: itemCfg.maxResponseTime,
-            sampleCount: 0,
-            lastSeen: now,
-            stability: cfg.initialStability,
-            lastCorrectAt: null
-          });
-        }
-      }
-    }
-    function getWeight(itemId) {
-      return computeWeight(storage.getStats(itemId), scaledConfig(itemId));
-    }
-    function getStats(itemId) {
-      return storage.getStats(itemId);
-    }
-    function selectNext(validItems) {
-      if (validItems.length === 0) {
-        throw new Error("validItems cannot be empty");
-      }
-      if (validItems.length === 1) {
-        storage.setLastSelected(validItems[0]);
-        return validItems[0];
-      }
-      const lastSelected = storage.getLastSelected();
-      const weights = validItems.map(
-        (id) => id === lastSelected ? 0 : getWeight(id)
-      );
-      const selected = selectWeighted(validItems, weights, randomFn());
-      storage.setLastSelected(selected);
-      return selected;
-    }
-    function getRecall(itemId) {
-      const stats = storage.getStats(itemId);
-      if (!stats || stats.stability == null || stats.lastCorrectAt == null) {
-        return null;
-      }
-      const elapsedHours = (Date.now() - stats.lastCorrectAt) / 36e5;
-      return computeRecall(stats.stability, elapsedHours);
-    }
-    function getAutomaticity(itemId) {
-      const stats = storage.getStats(itemId);
-      if (!stats) return null;
-      const recall = getRecall(itemId);
-      const speed = computeSpeedScore(stats.ewma, scaledConfig(itemId));
-      return computeAutomaticityForDisplay(recall, speed, true);
-    }
-    function getStringRecommendations(stringIndices, getItemIds) {
-      const results = stringIndices.map((s3) => {
-        const items = getItemIds(s3);
-        let dueCount = 0;
-        let unseenCount = 0;
-        let masteredCount = 0;
-        for (const id of items) {
-          const recall = getRecall(id);
-          if (recall === null) {
-            unseenCount++;
-          } else if (recall < cfg.recallThreshold) {
-            dueCount++;
-          } else {
-            masteredCount++;
-          }
-        }
-        return {
-          string: s3,
-          dueCount,
-          unseenCount,
-          masteredCount,
-          totalCount: items.length
-        };
-      });
-      results.sort(
-        (a3, b) => b.dueCount + b.unseenCount - (a3.dueCount + a3.unseenCount)
-      );
-      return results;
-    }
-    function checkAllMastered(items) {
-      for (const id of items) {
-        const recall = getRecall(id);
-        if (recall === null || recall < cfg.recallThreshold) return false;
-      }
-      return items.length > 0;
-    }
-    function checkAllAutomatic(items) {
-      for (const id of items) {
-        const auto = getAutomaticity(id);
-        if (auto === null || auto <= cfg.automaticityThreshold) return false;
-      }
-      return items.length > 0;
-    }
-    function checkNeedsReview(items) {
-      if (items.length === 0) return false;
-      let hasDueItem = false;
-      for (const id of items) {
-        const stats = storage.getStats(id);
-        if (!stats || stats.lastCorrectAt == null || stats.sampleCount < 2) {
-          return false;
-        }
-        const rc = getResponseCount(id);
-        const speed = computeSpeedScore(stats.ewma, cfg, rc);
-        if (speed == null || speed < 0.5) return false;
-        const recall = getRecall(id);
-        if (recall !== null && recall < cfg.recallThreshold) hasDueItem = true;
-      }
-      return hasDueItem;
-    }
-    function updateConfig(newCfg) {
-      cfg = { ...cfg, ...newCfg };
-    }
-    function getConfig() {
-      return cfg;
-    }
-    return {
-      recordResponse,
-      selectNext,
-      getStats,
-      getWeight,
-      getRecall,
-      getAutomaticity,
-      getStringRecommendations,
-      checkAllMastered,
-      checkAllAutomatic,
-      checkNeedsReview,
-      updateConfig,
-      getConfig
-    };
-  }
-  function createLocalStorageAdapter(namespace) {
-    const cache = {};
-    const mkKey = (itemId) => `adaptive_${namespace}_${itemId}`;
-    const dlKey = (itemId) => `deadline_${namespace}_${itemId}`;
-    const lastKey = `adaptive_${namespace}_lastSelected`;
-    return {
-      getStats(itemId) {
-        const k3 = mkKey(itemId);
-        if (!(k3 in cache)) {
-          const data = localStorage.getItem(k3);
-          try {
-            cache[k3] = data ? JSON.parse(data) : null;
-          } catch {
-            cache[k3] = null;
-          }
-        }
-        return cache[k3];
-      },
-      saveStats(itemId, stats) {
-        const k3 = mkKey(itemId);
-        cache[k3] = stats;
-        localStorage.setItem(k3, JSON.stringify(stats));
-      },
-      getLastSelected() {
-        return localStorage.getItem(lastKey);
-      },
-      setLastSelected(itemId) {
-        localStorage.setItem(lastKey, itemId);
-      },
-      getDeadline(itemId) {
-        const k3 = dlKey(itemId);
-        if (!(k3 in cache)) {
-          const data = localStorage.getItem(k3);
-          cache[k3] = data ? Number(data) : null;
-        }
-        return cache[k3];
-      },
-      saveDeadline(itemId, deadline) {
-        const k3 = dlKey(itemId);
-        cache[k3] = deadline;
-        localStorage.setItem(k3, String(deadline));
-      },
-      /** Pre-populate cache to avoid localStorage reads during gameplay. */
-      preload(itemIds) {
-        for (const itemId of itemIds) {
-          this.getStats(itemId);
-        }
-      }
-    };
-  }
-
   // src/quiz-engine.ts
   function createNoteKeyHandler(submitAnswer, allowAccidentals = () => true) {
     let pendingNote = null;
@@ -5043,6 +4527,370 @@ button {
     };
   }
 
+  // src/adaptive.ts
+  var DEFAULT_CONFIG = {
+    minTime: 1e3,
+    unseenBoost: 3,
+    ewmaAlpha: 0.3,
+    maxStoredTimes: 10,
+    maxResponseTime: 9e3,
+    // Forgetting model
+    initialStability: 4,
+    // hours — half-life after first correct answer
+    maxStability: 336,
+    // hours (14 days) — stability ceiling
+    stabilityGrowthBase: 2,
+    // multiplier on each correct answer
+    stabilityDecayOnWrong: 0.3,
+    // multiplier on wrong answer
+    recallThreshold: 0.5,
+    // P(recall) below this = "due"
+    expansionThreshold: 0.7,
+    // fraction of seen items that must be retained before suggesting new strings
+    speedBonusMax: 1.5,
+    // fast answers grow stability up to this extra factor
+    selfCorrectionThreshold: 1500,
+    // ms — response time below this triggers self-correction
+    automaticityTarget: 3e3,
+    // ms — response time at which speedScore ≈ 0.5
+    automaticityThreshold: 0.8
+    // automaticity above this = "automatic" (matches stats heatmap)
+  };
+  function computeEwma(oldEwma, newTime, alpha) {
+    return alpha * newTime + (1 - alpha) * oldEwma;
+  }
+  function computeRecall(stabilityHours, elapsedHours) {
+    if (stabilityHours == null || elapsedHours == null) return null;
+    if (stabilityHours <= 0) return 0;
+    if (elapsedHours <= 0) return 1;
+    return Math.pow(2, -elapsedHours / stabilityHours);
+  }
+  function computeSpeedScore(ewmaMs, cfg, responseCount = 1) {
+    if (ewmaMs == null) return null;
+    const effectiveTarget = cfg.automaticityTarget * responseCount;
+    const effectiveMin = cfg.minTime * responseCount;
+    const k3 = Math.LN2 / (effectiveTarget - effectiveMin);
+    return Math.exp(-k3 * Math.max(0, ewmaMs - effectiveMin));
+  }
+  function computeAutomaticity(recall, speedScore) {
+    if (recall == null || speedScore == null) return null;
+    return recall * speedScore;
+  }
+  function computeAutomaticityForDisplay(recall, speedScore, hasSeen) {
+    const value = computeAutomaticity(recall, speedScore);
+    if (value == null && hasSeen) return 0;
+    return value;
+  }
+  function updateStability(oldStability, responseTimeMs, elapsedHours, cfg) {
+    if (oldStability == null) {
+      return cfg.initialStability;
+    }
+    const range = cfg.maxResponseTime - cfg.minTime;
+    const clamped = Math.max(
+      cfg.minTime,
+      Math.min(responseTimeMs, cfg.maxResponseTime)
+    );
+    const t3 = range > 0 ? (cfg.maxResponseTime - clamped) / range : 0.5;
+    const speedFactor = 0.5 + t3 * (cfg.speedBonusMax - 0.5);
+    let newStability = oldStability * cfg.stabilityGrowthBase * speedFactor;
+    if (elapsedHours !== null && elapsedHours > 0 && responseTimeMs < cfg.selfCorrectionThreshold) {
+      newStability = Math.max(newStability, elapsedHours * 1.5);
+    }
+    return Math.min(newStability, cfg.maxStability);
+  }
+  function computeStabilityAfterWrong(oldStability, cfg) {
+    if (oldStability == null) return cfg.initialStability;
+    return Math.max(
+      cfg.initialStability,
+      oldStability * cfg.stabilityDecayOnWrong
+    );
+  }
+  function computeWeight(stats, cfg) {
+    if (!stats) {
+      return cfg.unseenBoost;
+    }
+    const speedWeight = Math.max(stats.ewma, cfg.minTime) / cfg.minTime;
+    if (stats.stability != null && stats.lastCorrectAt != null) {
+      const elapsedHours = (Date.now() - stats.lastCorrectAt) / 36e5;
+      const recall = computeRecall(stats.stability, elapsedHours);
+      const recallWeight = recall != null ? 1 + (1 - recall) : 1;
+      return speedWeight * recallWeight;
+    }
+    return speedWeight;
+  }
+  function selectWeighted(items, weights, rand) {
+    const totalWeight = weights.reduce((sum, w3) => sum + w3, 0);
+    if (totalWeight === 0) {
+      return items[Math.floor(rand * items.length)];
+    }
+    let remaining = rand * totalWeight;
+    for (let i3 = 0; i3 < items.length; i3++) {
+      remaining -= weights[i3];
+      if (remaining <= 0) return items[i3];
+    }
+    return items[items.length - 1];
+  }
+  function deriveScaledConfig(motorBaseline, baseCfg = DEFAULT_CONFIG) {
+    const scale = motorBaseline / 1e3;
+    return {
+      ...baseCfg,
+      minTime: Math.round(baseCfg.minTime * scale),
+      automaticityTarget: Math.round(baseCfg.automaticityTarget * scale),
+      selfCorrectionThreshold: Math.round(
+        baseCfg.selfCorrectionThreshold * scale
+      ),
+      maxResponseTime: Math.round(baseCfg.maxResponseTime * scale)
+    };
+  }
+  function computeMedian(values) {
+    if (values.length === 0) return null;
+    const sorted = [...values].sort((a3, b) => a3 - b);
+    const mid = Math.floor(sorted.length / 2);
+    if (sorted.length % 2 === 1) return sorted[mid];
+    return (sorted[mid - 1] + sorted[mid]) / 2;
+  }
+  function createAdaptiveSelector(storage, cfg = DEFAULT_CONFIG, randomFn = Math.random, responseCountFn = null) {
+    function getResponseCount(itemId) {
+      return responseCountFn ? responseCountFn(itemId) : 1;
+    }
+    function scaledConfig(itemId) {
+      const rc = getResponseCount(itemId);
+      if (rc <= 1) return cfg;
+      return {
+        ...cfg,
+        minTime: cfg.minTime * rc,
+        automaticityTarget: cfg.automaticityTarget * rc,
+        maxResponseTime: cfg.maxResponseTime * rc,
+        selfCorrectionThreshold: cfg.selfCorrectionThreshold * rc
+      };
+    }
+    function recordResponse(itemId, timeMs, correct = true) {
+      const itemCfg = scaledConfig(itemId);
+      const clamped = Math.min(timeMs, itemCfg.maxResponseTime);
+      const existing = storage.getStats(itemId);
+      const now = Date.now();
+      if (correct) {
+        const elapsedHours = existing && existing.lastCorrectAt ? (now - existing.lastCorrectAt) / 36e5 : null;
+        if (existing) {
+          const newEwma = computeEwma(existing.ewma, clamped, cfg.ewmaAlpha);
+          const newTimes = [...existing.recentTimes, clamped].slice(
+            -cfg.maxStoredTimes
+          );
+          const newStability = updateStability(
+            existing.stability ?? null,
+            clamped,
+            elapsedHours,
+            itemCfg
+          );
+          storage.saveStats(itemId, {
+            recentTimes: newTimes,
+            ewma: newEwma,
+            sampleCount: existing.sampleCount + 1,
+            lastSeen: now,
+            stability: newStability,
+            lastCorrectAt: now
+          });
+        } else {
+          storage.saveStats(itemId, {
+            recentTimes: [clamped],
+            ewma: clamped,
+            sampleCount: 1,
+            lastSeen: now,
+            stability: cfg.initialStability,
+            lastCorrectAt: now
+          });
+        }
+      } else {
+        if (existing) {
+          const newStability = computeStabilityAfterWrong(
+            existing.stability ?? null,
+            cfg
+          );
+          storage.saveStats(itemId, {
+            ...existing,
+            lastSeen: now,
+            stability: newStability
+          });
+        } else {
+          storage.saveStats(itemId, {
+            recentTimes: [],
+            ewma: itemCfg.maxResponseTime,
+            sampleCount: 0,
+            lastSeen: now,
+            stability: cfg.initialStability,
+            lastCorrectAt: null
+          });
+        }
+      }
+    }
+    function getWeight(itemId) {
+      return computeWeight(storage.getStats(itemId), scaledConfig(itemId));
+    }
+    function getStats(itemId) {
+      return storage.getStats(itemId);
+    }
+    function selectNext(validItems) {
+      if (validItems.length === 0) {
+        throw new Error("validItems cannot be empty");
+      }
+      if (validItems.length === 1) {
+        storage.setLastSelected(validItems[0]);
+        return validItems[0];
+      }
+      const lastSelected = storage.getLastSelected();
+      const weights = validItems.map(
+        (id) => id === lastSelected ? 0 : getWeight(id)
+      );
+      const selected = selectWeighted(validItems, weights, randomFn());
+      storage.setLastSelected(selected);
+      return selected;
+    }
+    function getRecall(itemId) {
+      const stats = storage.getStats(itemId);
+      if (!stats || stats.stability == null || stats.lastCorrectAt == null) {
+        return null;
+      }
+      const elapsedHours = (Date.now() - stats.lastCorrectAt) / 36e5;
+      return computeRecall(stats.stability, elapsedHours);
+    }
+    function getAutomaticity(itemId) {
+      const stats = storage.getStats(itemId);
+      if (!stats) return null;
+      const recall = getRecall(itemId);
+      const speed = computeSpeedScore(stats.ewma, scaledConfig(itemId));
+      return computeAutomaticityForDisplay(recall, speed, true);
+    }
+    function getStringRecommendations(stringIndices, getItemIds) {
+      const results = stringIndices.map((s3) => {
+        const items = getItemIds(s3);
+        let dueCount = 0;
+        let unseenCount = 0;
+        let masteredCount = 0;
+        for (const id of items) {
+          const recall = getRecall(id);
+          if (recall === null) {
+            unseenCount++;
+          } else if (recall < cfg.recallThreshold) {
+            dueCount++;
+          } else {
+            masteredCount++;
+          }
+        }
+        return {
+          string: s3,
+          dueCount,
+          unseenCount,
+          masteredCount,
+          totalCount: items.length
+        };
+      });
+      results.sort(
+        (a3, b) => b.dueCount + b.unseenCount - (a3.dueCount + a3.unseenCount)
+      );
+      return results;
+    }
+    function checkAllMastered(items) {
+      for (const id of items) {
+        const recall = getRecall(id);
+        if (recall === null || recall < cfg.recallThreshold) return false;
+      }
+      return items.length > 0;
+    }
+    function checkAllAutomatic(items) {
+      for (const id of items) {
+        const auto = getAutomaticity(id);
+        if (auto === null || auto <= cfg.automaticityThreshold) return false;
+      }
+      return items.length > 0;
+    }
+    function checkNeedsReview(items) {
+      if (items.length === 0) return false;
+      let hasDueItem = false;
+      for (const id of items) {
+        const stats = storage.getStats(id);
+        if (!stats || stats.lastCorrectAt == null || stats.sampleCount < 2) {
+          return false;
+        }
+        const rc = getResponseCount(id);
+        const speed = computeSpeedScore(stats.ewma, cfg, rc);
+        if (speed == null || speed < 0.5) return false;
+        const recall = getRecall(id);
+        if (recall !== null && recall < cfg.recallThreshold) hasDueItem = true;
+      }
+      return hasDueItem;
+    }
+    function updateConfig(newCfg) {
+      cfg = { ...cfg, ...newCfg };
+    }
+    function getConfig() {
+      return cfg;
+    }
+    return {
+      recordResponse,
+      selectNext,
+      getStats,
+      getWeight,
+      getRecall,
+      getAutomaticity,
+      getStringRecommendations,
+      checkAllMastered,
+      checkAllAutomatic,
+      checkNeedsReview,
+      updateConfig,
+      getConfig
+    };
+  }
+  function createLocalStorageAdapter(namespace) {
+    const cache = {};
+    const mkKey = (itemId) => `adaptive_${namespace}_${itemId}`;
+    const dlKey = (itemId) => `deadline_${namespace}_${itemId}`;
+    const lastKey = `adaptive_${namespace}_lastSelected`;
+    return {
+      getStats(itemId) {
+        const k3 = mkKey(itemId);
+        if (!(k3 in cache)) {
+          const data = localStorage.getItem(k3);
+          try {
+            cache[k3] = data ? JSON.parse(data) : null;
+          } catch {
+            cache[k3] = null;
+          }
+        }
+        return cache[k3];
+      },
+      saveStats(itemId, stats) {
+        const k3 = mkKey(itemId);
+        cache[k3] = stats;
+        localStorage.setItem(k3, JSON.stringify(stats));
+      },
+      getLastSelected() {
+        return localStorage.getItem(lastKey);
+      },
+      setLastSelected(itemId) {
+        localStorage.setItem(lastKey, itemId);
+      },
+      getDeadline(itemId) {
+        const k3 = dlKey(itemId);
+        if (!(k3 in cache)) {
+          const data = localStorage.getItem(k3);
+          cache[k3] = data ? Number(data) : null;
+        }
+        return cache[k3];
+      },
+      saveDeadline(itemId, deadline) {
+        const k3 = dlKey(itemId);
+        cache[k3] = deadline;
+        localStorage.setItem(k3, String(deadline));
+      },
+      /** Pre-populate cache to avoid localStorage reads during gameplay. */
+      preload(itemIds) {
+        for (const itemId of itemIds) {
+          this.getStats(itemId);
+        }
+      }
+    };
+  }
+
   // src/hooks/use-learner-model.ts
   function useLearnerModel(namespace, allItemIds, provider = "button", responseCountFn) {
     const storageRef = A2(null);
@@ -5106,6 +4954,158 @@ button {
         }
       }
     };
+  }
+
+  // src/quiz-engine-state.ts
+  function initialEngineState() {
+    return {
+      phase: "idle",
+      // 'idle' | 'active' | 'round-complete' | 'calibration-intro' | 'calibrating' | 'calibration-results'
+      currentItemId: null,
+      answered: false,
+      questionStartTime: null,
+      // Session tracking
+      questionCount: 0,
+      quizStartTime: null,
+      // Round tracking
+      roundNumber: 0,
+      roundAnswered: 0,
+      roundCorrect: 0,
+      roundTimerExpired: false,
+      roundResponseTimes: [],
+      roundDurationMs: 0,
+      // Progress tracking
+      masteredCount: 0,
+      totalEnabledCount: 0,
+      // Feedback
+      feedbackText: "",
+      feedbackClass: "feedback",
+      timeDisplayText: "",
+      hintText: "",
+      // Mastery message
+      masteryText: "",
+      showMastery: false,
+      // Calibration
+      calibrationBaseline: null,
+      // UI visibility
+      quizActive: false,
+      answersEnabled: false
+    };
+  }
+  function engineStart(state) {
+    return {
+      ...state,
+      phase: "active",
+      questionCount: 0,
+      quizStartTime: Date.now(),
+      quizActive: true,
+      showMastery: false,
+      roundNumber: 1,
+      roundAnswered: 0,
+      roundCorrect: 0,
+      roundTimerExpired: false,
+      roundResponseTimes: []
+    };
+  }
+  function engineNextQuestion(state, nextItemId, nowMs) {
+    return {
+      ...state,
+      currentItemId: nextItemId,
+      answered: false,
+      questionStartTime: nowMs,
+      questionCount: state.questionCount + 1,
+      feedbackText: "",
+      feedbackClass: "feedback",
+      timeDisplayText: "",
+      hintText: "",
+      answersEnabled: true
+    };
+  }
+  function engineSubmitAnswer(state, isCorrect, correctAnswer) {
+    return {
+      ...state,
+      answered: true,
+      answersEnabled: false,
+      feedbackText: isCorrect ? "Correct!" : "Incorrect \u2014 " + correctAnswer,
+      feedbackClass: isCorrect ? "feedback correct" : "feedback incorrect",
+      timeDisplayText: "",
+      hintText: "Tap anywhere or press Space for next",
+      roundAnswered: state.roundAnswered + 1,
+      roundCorrect: state.roundCorrect + (isCorrect ? 1 : 0)
+    };
+  }
+  function engineRoundTimerExpired(state) {
+    return {
+      ...state,
+      roundTimerExpired: true
+    };
+  }
+  function engineRoundComplete(state) {
+    return {
+      ...state,
+      phase: "round-complete",
+      answered: false,
+      answersEnabled: false,
+      currentItemId: null,
+      feedbackText: "",
+      feedbackClass: "feedback",
+      hintText: ""
+    };
+  }
+  function engineContinueRound(state) {
+    return {
+      ...state,
+      phase: "active",
+      roundNumber: state.roundNumber + 1,
+      roundAnswered: 0,
+      roundCorrect: 0,
+      roundTimerExpired: false,
+      roundResponseTimes: []
+    };
+  }
+  function engineStop(_state) {
+    return initialEngineState();
+  }
+  function engineUpdateIdleMessage(state, allMastered, needsReview) {
+    if (state.phase !== "idle") return state;
+    if (allMastered) {
+      return {
+        ...state,
+        masteryText: "Looks like you\u2019ve got this!",
+        showMastery: true
+      };
+    }
+    if (needsReview) {
+      return { ...state, masteryText: "Time to review?", showMastery: true };
+    }
+    return { ...state, masteryText: "", showMastery: false };
+  }
+  function engineUpdateMasteryAfterAnswer(state, allMastered) {
+    if (allMastered) {
+      return {
+        ...state,
+        masteryText: "Looks like you\u2019ve got this!",
+        showMastery: true
+      };
+    }
+    return { ...state, showMastery: false };
+  }
+  function engineUpdateProgress(state, masteredCount, totalEnabledCount) {
+    return { ...state, masteredCount, totalEnabledCount };
+  }
+  function engineRouteKey(state, key) {
+    if (state.phase === "idle") return { action: "ignore" };
+    if (key === "Escape") return { action: "stop" };
+    if (state.phase === "round-complete") {
+      if (key === " " || key === "Enter") return { action: "continue" };
+      return { action: "ignore" };
+    }
+    if (state.phase !== "active") return { action: "ignore" };
+    if ((key === " " || key === "Enter") && state.answered) {
+      return { action: "next" };
+    }
+    if (!state.answered) return { action: "delegate" };
+    return { action: "ignore" };
   }
 
   // src/hooks/use-quiz-engine.ts

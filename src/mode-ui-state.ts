@@ -3,10 +3,8 @@
 
 import type {
   AdaptiveSelector,
-  ModeDefinition,
   PracticeSummaryState,
   RecommendationResult,
-  ScopeState,
 } from './types.ts';
 
 // ---------------------------------------------------------------------------
@@ -139,30 +137,4 @@ export function computePracticeSummary(opts: {
     showMastery: opts.showMastery,
     enabledItemCount: total,
   };
-}
-
-/**
- * Compute practice summary from a ModeDefinition + engine state.
- * Convenience wrapper that pulls values from the definition and engine.
- */
-export function computePracticeSummaryForMode(
-  def: ModeDefinition,
-  scope: ScopeState,
-  selector: AdaptiveSelector,
-  recommendation: RecommendationResult | null,
-  recommendationText: string,
-  masteryText: string,
-  showMastery: boolean,
-): PracticeSummaryState {
-  const itemNoun = def.scopeSpec.kind === 'fretboard' ? 'positions' : 'items';
-  return computePracticeSummary({
-    allItemIds: def.allItemIds,
-    selector,
-    itemNoun,
-    recommendation,
-    recommendationText,
-    sessionSummary: def.getSessionSummary(scope),
-    masteryText,
-    showMastery,
-  });
 }

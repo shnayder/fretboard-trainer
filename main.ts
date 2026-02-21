@@ -26,7 +26,12 @@ function resolve(rel: string): string {
 async function bundleJS(): Promise<string> {
   const entryPoint = resolve('./src/app.ts');
   const cmd = new Deno.Command('npx', {
-    args: ['esbuild', '--bundle', '--format=iife', entryPoint],
+    args: [
+      'esbuild',
+      '--bundle',
+      '--format=iife',
+      entryPoint,
+    ],
     stdout: 'piped',
     stderr: 'piped',
   });

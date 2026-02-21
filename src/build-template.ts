@@ -21,7 +21,7 @@ import {
 // Version — single source of truth
 // ---------------------------------------------------------------------------
 
-export const VERSION = 'v6.17';
+export const VERSION = 'v7.1';
 
 // ---------------------------------------------------------------------------
 // Shared HTML fragments
@@ -263,9 +263,10 @@ export function assembleHTML(css: string, js: string): string {
   </style>
 </head>
 <body>
-  <!-- Home screen -->
+  <div id="app">
 ${HOME_SCREEN_HTML}
 ${modeScreens()}
+  </div>
 
   <script>
 ${js}

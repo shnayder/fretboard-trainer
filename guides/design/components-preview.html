@@ -2459,6 +2459,198 @@ button {
     return /* @__PURE__ */ u2("div", { class: cls, children: /* @__PURE__ */ u2("div", { class: "quiz-countdown-fill", style: { width: `${pct}%` } }) });
   }
 
+  // src/ui/mode-screen.tsx
+  function ModeScreen({ id, phase, children }) {
+    return /* @__PURE__ */ u2("div", { class: `mode-screen phase-${phase}`, id: `mode-${id}`, children });
+  }
+  function ModeTopBar({ title, onBack }) {
+    return /* @__PURE__ */ u2("div", { class: "mode-top-bar", children: [
+      /* @__PURE__ */ u2(
+        "button",
+        {
+          type: "button",
+          class: "mode-back-btn",
+          "aria-label": "Back to home",
+          onClick: onBack,
+          children: "\u2190"
+        }
+      ),
+      /* @__PURE__ */ u2("h1", { class: "mode-title", children: title })
+    ] });
+  }
+  function TabbedIdle({ activeTab, onTabSwitch, practiceContent, progressContent }) {
+    return /* @__PURE__ */ u2(k, { children: [
+      /* @__PURE__ */ u2("div", { class: "mode-tabs", children: [
+        /* @__PURE__ */ u2(
+          "button",
+          {
+            type: "button",
+            class: "mode-tab" + (activeTab === "practice" ? " active" : ""),
+            "data-tab": "practice",
+            onClick: () => onTabSwitch("practice"),
+            children: "Practice"
+          }
+        ),
+        /* @__PURE__ */ u2(
+          "button",
+          {
+            type: "button",
+            class: "mode-tab" + (activeTab === "progress" ? " active" : ""),
+            "data-tab": "progress",
+            onClick: () => onTabSwitch("progress"),
+            children: "Progress"
+          }
+        )
+      ] }),
+      /* @__PURE__ */ u2(
+        "div",
+        {
+          class: "tab-content tab-practice" + (activeTab === "practice" ? " active" : ""),
+          children: practiceContent
+        }
+      ),
+      /* @__PURE__ */ u2(
+        "div",
+        {
+          class: "tab-content tab-progress" + (activeTab === "progress" ? " active" : ""),
+          children: progressContent
+        }
+      )
+    ] });
+  }
+  function PracticeCard({
+    statusLabel,
+    statusDetail,
+    recommendation,
+    mastery,
+    scope,
+    sessionSummary,
+    onStart,
+    onApplyRecommendation
+  }) {
+    const recBlock = recommendation ? /* @__PURE__ */ u2("div", { class: "practice-recommendation", children: [
+      /* @__PURE__ */ u2("span", { class: "practice-rec-text", children: recommendation }),
+      onApplyRecommendation ? /* @__PURE__ */ u2(
+        "button",
+        {
+          type: "button",
+          class: "practice-rec-btn",
+          onClick: onApplyRecommendation,
+          children: "Use suggestion"
+        }
+      ) : null
+    ] }) : null;
+    const masteryBlock = mastery ? /* @__PURE__ */ u2("div", { class: "mastery-message visible", children: mastery }) : null;
+    const statusExtra = !scope ? /* @__PURE__ */ u2(k, { children: [
+      recBlock,
+      masteryBlock
+    ] }) : null;
+    const scopeZone = scope ? /* @__PURE__ */ u2("div", { class: "practice-zone practice-zone-scope", children: [
+      recBlock,
+      /* @__PURE__ */ u2("div", { class: "practice-scope", children: /* @__PURE__ */ u2("div", { class: "settings-row", children: scope }) }),
+      masteryBlock
+    ] }) : null;
+    return /* @__PURE__ */ u2("div", { class: "practice-card", children: [
+      /* @__PURE__ */ u2("div", { class: "practice-zone practice-zone-status", children: [
+        /* @__PURE__ */ u2("div", { class: "practice-status", children: [
+          /* @__PURE__ */ u2("span", { class: "practice-status-label", children: statusLabel || "" }),
+          /* @__PURE__ */ u2("span", { class: "practice-status-detail", children: statusDetail || "" })
+        ] }),
+        statusExtra
+      ] }),
+      scopeZone,
+      /* @__PURE__ */ u2("div", { class: "practice-zone practice-zone-action", children: /* @__PURE__ */ u2(StartButton, { summary: sessionSummary, onStart }) })
+    ] });
+  }
+  function Recommendation({ text, onApply }) {
+    return /* @__PURE__ */ u2("div", { class: "practice-recommendation", children: [
+      /* @__PURE__ */ u2("span", { class: "practice-rec-text", children: text }),
+      onApply ? /* @__PURE__ */ u2("button", { type: "button", class: "practice-rec-btn", onClick: onApply, children: "Use suggestion" }) : null
+    ] });
+  }
+  function StartButton({ summary, onStart }) {
+    return /* @__PURE__ */ u2(k, { children: [
+      summary ? /* @__PURE__ */ u2("div", { class: "session-summary-text", children: summary }) : null,
+      /* @__PURE__ */ u2("button", { type: "button", class: "start-btn", onClick: onStart, children: "Start Quiz" })
+    ] });
+  }
+  function QuizSession({
+    timeLeft,
+    context,
+    count,
+    fluent,
+    total,
+    isWarning,
+    isLastQuestion,
+    onClose
+  }) {
+    const pct = total ? Math.round((fluent || 0) / total * 100) : 0;
+    return /* @__PURE__ */ u2("div", { class: "quiz-session", children: [
+      /* @__PURE__ */ u2("div", { class: "quiz-countdown-row", children: [
+        /* @__PURE__ */ u2(
+          "div",
+          {
+            class: "quiz-countdown-bar" + (isWarning ? " round-timer-warning" : "") + (isLastQuestion ? " last-question" : ""),
+            children: /* @__PURE__ */ u2("div", { class: "quiz-countdown-fill" })
+          }
+        ),
+        /* @__PURE__ */ u2("span", { class: "quiz-info-time", children: timeLeft || "" })
+      ] }),
+      /* @__PURE__ */ u2(SessionInfo, { context, count }),
+      /* @__PURE__ */ u2(
+        "button",
+        {
+          type: "button",
+          class: "quiz-header-close",
+          "aria-label": "Stop quiz",
+          onClick: onClose,
+          children: "\xD7"
+        }
+      ),
+      /* @__PURE__ */ u2("div", { class: "progress-bar", children: [
+        /* @__PURE__ */ u2("div", { class: "progress-fill", style: { width: `${pct}%` } }),
+        /* @__PURE__ */ u2("div", { class: "progress-text", children: fluent != null && total != null ? `${fluent} / ${total} fluent` : "" })
+      ] })
+    ] });
+  }
+  function SessionInfo({ context, count }) {
+    return /* @__PURE__ */ u2("div", { class: "quiz-session-info", children: [
+      /* @__PURE__ */ u2("span", { class: "quiz-info-context", children: context || "" }),
+      /* @__PURE__ */ u2("span", { class: "quiz-info-count", children: count || "" })
+    ] });
+  }
+  function QuizArea({ prompt, lastQuestion, children }) {
+    return /* @__PURE__ */ u2("div", { class: "quiz-area", children: [
+      /* @__PURE__ */ u2("div", { class: "quiz-prompt-row", children: [
+        /* @__PURE__ */ u2("div", { class: "quiz-prompt", children: prompt || "" }),
+        /* @__PURE__ */ u2("div", { class: "quiz-last-question", children: lastQuestion || "" })
+      ] }),
+      children
+    ] });
+  }
+  function RoundComplete({ context, heading, correct, median, onContinue, onStop }) {
+    return /* @__PURE__ */ u2("div", { class: "round-complete", children: [
+      /* @__PURE__ */ u2("div", { class: "round-complete-context", children: context || "" }),
+      /* @__PURE__ */ u2("div", { class: "round-complete-heading", children: heading || "" }),
+      /* @__PURE__ */ u2("div", { class: "round-complete-stats", children: [
+        /* @__PURE__ */ u2("div", { class: "round-stat-line round-stat-correct", children: correct || "" }),
+        /* @__PURE__ */ u2("div", { class: "round-stat-line round-stat-median", children: median || "" })
+      ] }),
+      /* @__PURE__ */ u2("div", { class: "round-complete-actions", children: [
+        /* @__PURE__ */ u2(
+          "button",
+          {
+            type: "button",
+            class: "round-complete-continue",
+            onClick: onContinue,
+            children: "Keep Going"
+          }
+        ),
+        /* @__PURE__ */ u2("button", { type: "button", class: "round-complete-stop", onClick: onStop, children: "Stop" })
+      ] })
+    ] });
+  }
+
   // src/ui/preview.tsx
   function Section({ title, children }) {
     return /* @__PURE__ */ u2("section", { class: "preview-section", children: [
@@ -2581,7 +2773,135 @@ button {
       ) }),
       /* @__PURE__ */ u2(Section, { title: "Countdown Bar (75%)", children: /* @__PURE__ */ u2(CountdownBar, { pct: 75 }) }),
       /* @__PURE__ */ u2(Section, { title: "Countdown Bar \u2014 Warning (15%)", children: /* @__PURE__ */ u2(CountdownBar, { pct: 15, warning: true }) }),
-      /* @__PURE__ */ u2(Section, { title: "Countdown Bar \u2014 Last Question", children: /* @__PURE__ */ u2(CountdownBar, { pct: 50, lastQuestion: true }) })
+      /* @__PURE__ */ u2(Section, { title: "Countdown Bar \u2014 Last Question", children: /* @__PURE__ */ u2(CountdownBar, { pct: 50, lastQuestion: true }) }),
+      /* @__PURE__ */ u2("h2", { children: "Structural Components" }),
+      /* @__PURE__ */ u2(Section, { title: "ModeTopBar", children: /* @__PURE__ */ u2(ModeTopBar, { title: "Semitone Math" }) }),
+      /* @__PURE__ */ u2(Section, { title: "StartButton + Session Summary", children: /* @__PURE__ */ u2(StartButton, { summary: "8 questions in 60 seconds" }) }),
+      /* @__PURE__ */ u2(Section, { title: "Recommendation", children: /* @__PURE__ */ u2(
+        Recommendation,
+        {
+          text: "Suggestion: solidify +1 to +3 \u2014 3 slow items",
+          onApply: () => {
+          }
+        }
+      ) }),
+      /* @__PURE__ */ u2(Section, { title: "SessionInfo", children: /* @__PURE__ */ u2(SessionInfo, { context: "Natural notes, A string", count: "5 of 12" }) }),
+      /* @__PURE__ */ u2(Section, { title: "QuizSession (header)", children: /* @__PURE__ */ u2(
+        QuizSession,
+        {
+          timeLeft: "42s",
+          context: "Natural notes",
+          count: "5 of 12",
+          fluent: 6,
+          total: 14,
+          isWarning: false
+        }
+      ) }),
+      /* @__PURE__ */ u2(Section, { title: "QuizArea", children: /* @__PURE__ */ u2(QuizArea, { prompt: "C + 5 = ?", lastQuestion: "", children: [
+        /* @__PURE__ */ u2(NoteButtons, {}),
+        /* @__PURE__ */ u2(FeedbackDisplay, { text: "", className: "feedback" })
+      ] }) }),
+      /* @__PURE__ */ u2(Section, { title: "RoundComplete", children: /* @__PURE__ */ u2(
+        RoundComplete,
+        {
+          context: "Round 1 complete",
+          heading: "Great job!",
+          correct: "8 correct (80%)",
+          median: "Median: 425ms"
+        }
+      ) }),
+      /* @__PURE__ */ u2(Section, { title: "PracticeCard (no scope)", children: /* @__PURE__ */ u2(
+        PracticeCard,
+        {
+          statusLabel: "Overall: Strong",
+          statusDetail: "12 of 14 fluent",
+          recommendation: "Suggestion: start A string \u2014 5 new items",
+          sessionSummary: "8 questions in 60 seconds",
+          onApplyRecommendation: () => {
+          }
+        }
+      ) }),
+      /* @__PURE__ */ u2(Section, { title: "PracticeCard (with scope toggles)", children: /* @__PURE__ */ u2(
+        PracticeCard,
+        {
+          statusLabel: "Strings: E, A",
+          statusDetail: "24 of 26 fluent",
+          recommendation: "Suggestion: start D string",
+          sessionSummary: "12 questions in 60 seconds",
+          onApplyRecommendation: () => {
+          },
+          scope: /* @__PURE__ */ u2(k, { children: [
+            /* @__PURE__ */ u2(
+              StringToggles,
+              {
+                stringNames: ["E", "A", "D", "G", "B", "e"],
+                active: /* @__PURE__ */ new Set([0, 1]),
+                recommended: 2,
+                onToggle: () => {
+                }
+              }
+            ),
+            /* @__PURE__ */ u2(NoteFilter, { mode: "natural", onChange: () => {
+            } })
+          ] })
+        }
+      ) }),
+      /* @__PURE__ */ u2(Section, { title: "TabbedIdle", children: /* @__PURE__ */ u2(
+        TabbedIdle,
+        {
+          activeTab: "practice",
+          onTabSwitch: () => {
+          },
+          practiceContent: /* @__PURE__ */ u2(
+            PracticeCard,
+            {
+              statusLabel: "Ready to start",
+              sessionSummary: "8 questions in 60 seconds"
+            }
+          ),
+          progressContent: /* @__PURE__ */ u2("div", { children: [
+            /* @__PURE__ */ u2(StatsToggle, { active: "retention", onToggle: () => {
+            } }),
+            /* @__PURE__ */ u2(
+              StatsGrid,
+              {
+                selector: sel,
+                colLabels: ["+1", "+2", "+3"],
+                getItemId: (name, ci) => `${name}+${ci + 1}`,
+                statsMode: "retention"
+              }
+            )
+          ] })
+        }
+      ) }),
+      /* @__PURE__ */ u2(Section, { title: "ModeScreen (idle, composed)", children: /* @__PURE__ */ u2(ModeScreen, { id: "preview-demo", phase: "idle", children: [
+        /* @__PURE__ */ u2(ModeTopBar, { title: "Demo Mode" }),
+        /* @__PURE__ */ u2(
+          TabbedIdle,
+          {
+            activeTab: "practice",
+            onTabSwitch: () => {
+            },
+            practiceContent: /* @__PURE__ */ u2(
+              PracticeCard,
+              {
+                statusLabel: "Overall: Good",
+                statusDetail: "8 of 12 fluent",
+                sessionSummary: "8 questions in 60 seconds"
+              }
+            ),
+            progressContent: /* @__PURE__ */ u2(
+              StatsGrid,
+              {
+                selector: sel,
+                colLabels: ["+1", "+2"],
+                getItemId: (name, ci) => `${name}+${ci + 1}`,
+                statsMode: "retention"
+              }
+            )
+          }
+        )
+      ] }) })
     ] });
   }
   var root = document.getElementById("preview-root");

@@ -7,11 +7,11 @@ declare global {
   }
 }
 
+import { h, render } from 'preact';
 import { GUITAR, UKULELE } from './music-data.ts';
 import { createModeController } from './mode-controller.ts';
 import { fretboardDefinition } from './modes/fretboard.ts';
 import { speedTapDefinition } from './modes/speed-tap.ts';
-import { noteSemitonesDefinition } from './modes/note-semitones.ts';
 import { intervalSemitonesDefinition } from './modes/interval-semitones.ts';
 import { semitoneMathDefinition } from './modes/semitone-math.ts';
 import { intervalMathDefinition } from './modes/interval-math.ts';
@@ -22,10 +22,14 @@ import { chordSpellingDefinition } from './modes/chord-spelling.ts';
 import { createNavigation } from './navigation.ts';
 import { createSettingsModal } from './settings.ts';
 import { refreshNoteButtonLabels } from './quiz-engine.ts';
+import type { ModeHandle } from './ui/modes/note-semitones-mode.tsx';
+import { NoteSemitonesMode } from './ui/modes/note-semitones-mode.tsx';
 
 const nav = createNavigation();
 
 // --- All mode controllers ---
+
+// --- ModeController-based modes ---
 
 const allControllers = [
   {
@@ -39,11 +43,6 @@ const allControllers = [
     def: fretboardDefinition(UKULELE),
   },
   { id: 'speedTap', name: 'Speed Tap', def: speedTapDefinition() },
-  {
-    id: 'noteSemitones',
-    name: 'Note \u2194 Semitones',
-    def: noteSemitonesDefinition(),
-  },
   {
     id: 'intervalSemitones',
     name: 'Interval \u2194 Semitones',
@@ -77,6 +76,34 @@ const allControllers = [
   });
   return ctrl;
 });
+
+// --- Preact-based modes ---
+
+{
+  let handle: ModeHandle | null = null;
+  const container = document.getElementById('mode-noteSemitones')!;
+  nav.registerMode('noteSemitones', {
+    name: 'Note \u2194 Semitones',
+    init() {
+      render(
+        h(NoteSemitonesMode, {
+          container,
+          navigateHome: () => nav.navigateHome(),
+          onMount: (h: ModeHandle) => {
+            handle = h;
+          },
+        }),
+        container,
+      );
+    },
+    activate() {
+      handle?.activate();
+    },
+    deactivate() {
+      handle?.deactivate();
+    },
+  });
+}
 
 nav.init();
 

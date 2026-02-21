@@ -21,7 +21,7 @@ import {
 // Version — single source of truth
 // ---------------------------------------------------------------------------
 
-export const VERSION = 'v7.0';
+export const VERSION = 'v7.1';
 
 // ---------------------------------------------------------------------------
 // Shared HTML fragments
@@ -94,7 +94,7 @@ export const HOME_SCREEN_HTML = `  <div class="home-screen" id="home-screen">
 // Mode screen HTML — each mode's unique content
 // ---------------------------------------------------------------------------
 
-function _modeScreens(): string {
+function modeScreens(): string {
   return `
   <!-- Guitar Fretboard mode -->
 ${
@@ -263,7 +263,10 @@ export function assembleHTML(css: string, js: string): string {
   </style>
 </head>
 <body>
-  <div id="app"></div>
+  <div id="app">
+${HOME_SCREEN_HTML}
+${modeScreens()}
+  </div>
 
   <script>
 ${js}

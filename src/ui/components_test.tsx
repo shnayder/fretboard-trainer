@@ -1,4 +1,4 @@
-// Render-to-string tests for Preact leaf components.
+// Render-to-string tests for Preact components (leaf + structural).
 // Verifies DOM structure and CSS class names match existing build-time HTML.
 
 import { describe, it } from 'node:test';
@@ -19,6 +19,18 @@ import type { StatsSelector } from './stats.tsx';
 import { StatsGrid, StatsToggle } from './stats.tsx';
 import { GroupToggles, NoteFilter, StringToggles } from './scope.tsx';
 import { CountdownBar, FeedbackDisplay, TextPrompt } from './quiz-ui.tsx';
+import {
+  ModeScreen,
+  ModeTopBar,
+  PracticeCard,
+  QuizArea,
+  QuizSession,
+  Recommendation,
+  RoundComplete,
+  SessionInfo,
+  StartButton,
+  TabbedIdle,
+} from './mode-screen.tsx';
 
 // ---------------------------------------------------------------------------
 // Helper
@@ -298,5 +310,254 @@ describe('CountdownBar', () => {
   it('adds last-question class', () => {
     const html = render(<CountdownBar pct={50} lastQuestion />);
     assert.ok(html.includes('last-question'));
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Structural components
+// ---------------------------------------------------------------------------
+
+describe('ModeScreen', () => {
+  it('renders with phase class and id', () => {
+    const html = render(
+      <ModeScreen id='test' phase='idle'>
+        <div>content</div>
+      </ModeScreen>,
+    );
+    assert.ok(html.includes('mode-screen phase-idle'));
+    assert.ok(html.includes('id="mode-test"'));
+  });
+
+  it('changes phase class', () => {
+    const html = render(
+      <ModeScreen id='test' phase='active'>
+        <div />
+      </ModeScreen>,
+    );
+    assert.ok(html.includes('mode-screen phase-active'));
+  });
+});
+
+describe('ModeTopBar', () => {
+  it('renders back button and title', () => {
+    const html = render(<ModeTopBar title='Semitone Math' />);
+    assert.ok(html.includes('mode-top-bar'));
+    assert.ok(html.includes('mode-back-btn'));
+    assert.ok(html.includes('mode-title'));
+    assert.ok(html.includes('Semitone Math'));
+    assert.ok(html.includes('\u2190'));
+  });
+});
+
+describe('TabbedIdle', () => {
+  it('renders tabs with practice active', () => {
+    const html = render(
+      <TabbedIdle
+        activeTab='practice'
+        onTabSwitch={() => {}}
+        practiceContent={<div class='test-practice'>P</div>}
+        progressContent={<div class='test-progress'>G</div>}
+      />,
+    );
+    assert.ok(html.includes('mode-tabs'));
+    // Practice tab button has active class
+    assert.ok(html.includes('mode-tab active'));
+    // Practice content has active class
+    assert.ok(html.includes('tab-practice active'));
+    // Progress content does NOT have active class
+    assert.ok(!html.includes('tab-progress active'));
+  });
+
+  it('renders tabs with progress active', () => {
+    const html = render(
+      <TabbedIdle
+        activeTab='progress'
+        onTabSwitch={() => {}}
+        practiceContent={<div>P</div>}
+        progressContent={<div>G</div>}
+      />,
+    );
+    assert.ok(html.includes('tab-progress active'));
+    assert.ok(!html.includes('tab-practice active'));
+  });
+});
+
+describe('PracticeCard', () => {
+  it('renders status zone with label and detail', () => {
+    const html = render(
+      <PracticeCard
+        statusLabel='Overall: Strong'
+        statusDetail='12 of 14 fluent'
+        sessionSummary='8 questions in 60 seconds'
+      />,
+    );
+    assert.ok(html.includes('practice-card'));
+    assert.ok(html.includes('practice-zone-status'));
+    assert.ok(html.includes('practice-status-label'));
+    assert.ok(html.includes('Overall: Strong'));
+    assert.ok(html.includes('12 of 14 fluent'));
+    assert.ok(html.includes('practice-zone-action'));
+    assert.ok(html.includes('start-btn'));
+  });
+
+  it('shows recommendation inline when no scope', () => {
+    const html = render(
+      <PracticeCard
+        recommendation='Suggestion: start A string'
+        onApplyRecommendation={() => {}}
+      />,
+    );
+    assert.ok(html.includes('practice-recommendation'));
+    assert.ok(html.includes('practice-rec-text'));
+    assert.ok(html.includes('practice-rec-btn'));
+    // No scope zone
+    assert.ok(!html.includes('practice-zone-scope'));
+  });
+
+  it('moves recommendation to scope zone when scope provided', () => {
+    const html = render(
+      <PracticeCard
+        recommendation='Suggestion: start D string'
+        onApplyRecommendation={() => {}}
+        scope={<div class='mock-scope' />}
+      />,
+    );
+    assert.ok(html.includes('practice-zone-scope'));
+    assert.ok(html.includes('practice-scope'));
+    assert.ok(html.includes('mock-scope'));
+    assert.ok(html.includes('practice-rec-text'));
+  });
+
+  it('shows mastery message', () => {
+    const html = render(
+      <PracticeCard mastery="Looks like you've got this!" />,
+    );
+    assert.ok(html.includes('mastery-message'));
+    assert.ok(html.includes("Looks like you've got this!"));
+  });
+});
+
+describe('Recommendation', () => {
+  it('renders text and button', () => {
+    const html = render(
+      <Recommendation text='Suggestion: solidify +1' onApply={() => {}} />,
+    );
+    assert.ok(html.includes('practice-recommendation'));
+    assert.ok(html.includes('Suggestion: solidify +1'));
+    assert.ok(html.includes('practice-rec-btn'));
+  });
+
+  it('omits button when no onApply', () => {
+    const html = render(<Recommendation text='Suggestion: test' />);
+    assert.ok(!html.includes('practice-rec-btn'));
+  });
+});
+
+describe('StartButton', () => {
+  it('renders button and summary text', () => {
+    const html = render(
+      <StartButton summary='8 questions in 60 seconds' />,
+    );
+    assert.ok(html.includes('start-btn'));
+    assert.ok(html.includes('Start Quiz'));
+    assert.ok(html.includes('session-summary-text'));
+    assert.ok(html.includes('8 questions in 60 seconds'));
+  });
+
+  it('omits summary when not provided', () => {
+    const html = render(<StartButton />);
+    assert.ok(html.includes('start-btn'));
+    assert.ok(!html.includes('session-summary-text'));
+  });
+});
+
+describe('QuizSession', () => {
+  it('renders countdown, info, close, and progress', () => {
+    const html = render(
+      <QuizSession
+        timeLeft='42s'
+        context='Natural notes'
+        count='5 of 12'
+        fluent={6}
+        total={14}
+      />,
+    );
+    assert.ok(html.includes('quiz-session'));
+    assert.ok(html.includes('quiz-countdown-row'));
+    assert.ok(html.includes('quiz-countdown-bar'));
+    assert.ok(html.includes('quiz-countdown-fill'));
+    assert.ok(html.includes('quiz-info-time'));
+    assert.ok(html.includes('42s'));
+    assert.ok(html.includes('quiz-session-info'));
+    assert.ok(html.includes('Natural notes'));
+    assert.ok(html.includes('5 of 12'));
+    assert.ok(html.includes('quiz-header-close'));
+    assert.ok(html.includes('progress-bar'));
+    assert.ok(html.includes('progress-fill'));
+    assert.ok(html.includes('6 / 14 fluent'));
+  });
+});
+
+describe('SessionInfo', () => {
+  it('renders context and count', () => {
+    const html = render(
+      <SessionInfo context='A string' count='3 of 8' />,
+    );
+    assert.ok(html.includes('quiz-session-info'));
+    assert.ok(html.includes('quiz-info-context'));
+    assert.ok(html.includes('A string'));
+    assert.ok(html.includes('quiz-info-count'));
+    assert.ok(html.includes('3 of 8'));
+  });
+});
+
+describe('QuizArea', () => {
+  it('renders prompt and children', () => {
+    const html = render(
+      <QuizArea prompt='C + 5 = ?'>
+        <div class='test-buttons'>buttons</div>
+      </QuizArea>,
+    );
+    assert.ok(html.includes('quiz-area'));
+    assert.ok(html.includes('quiz-prompt-row'));
+    assert.ok(html.includes('quiz-prompt'));
+    assert.ok(html.includes('C + 5 = ?'));
+    assert.ok(html.includes('quiz-last-question'));
+    assert.ok(html.includes('test-buttons'));
+  });
+
+  it('renders last question badge', () => {
+    const html = render(
+      <QuizArea prompt='test' lastQuestion='Last Q'>
+        <div />
+      </QuizArea>,
+    );
+    assert.ok(html.includes('Last Q'));
+  });
+});
+
+describe('RoundComplete', () => {
+  it('renders context, heading, stats, and actions', () => {
+    const html = render(
+      <RoundComplete
+        context='Round 1 complete'
+        heading='Great job!'
+        correct='8 correct (80%)'
+        median='Median: 425ms'
+      />,
+    );
+    assert.ok(html.includes('round-complete'));
+    assert.ok(html.includes('round-complete-context'));
+    assert.ok(html.includes('Round 1 complete'));
+    assert.ok(html.includes('round-complete-heading'));
+    assert.ok(html.includes('Great job!'));
+    assert.ok(html.includes('round-stat-correct'));
+    assert.ok(html.includes('8 correct (80%)'));
+    assert.ok(html.includes('round-stat-median'));
+    assert.ok(html.includes('Median: 425ms'));
+    assert.ok(html.includes('round-complete-continue'));
+    assert.ok(html.includes('Keep Going'));
+    assert.ok(html.includes('round-complete-stop'));
+    assert.ok(html.includes('Stop'));
   });
 });

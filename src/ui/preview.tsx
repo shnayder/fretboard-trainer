@@ -23,6 +23,18 @@ import {
   StringToggles,
 } from './scope.tsx';
 import { CountdownBar, FeedbackDisplay, TextPrompt } from './quiz-ui.tsx';
+import {
+  ModeScreen,
+  ModeTopBar,
+  PracticeCard,
+  QuizArea,
+  QuizSession,
+  Recommendation,
+  RoundComplete,
+  SessionInfo,
+  StartButton,
+  TabbedIdle,
+} from './mode-screen.tsx';
 
 // ---------------------------------------------------------------------------
 // Preview scaffold
@@ -189,6 +201,123 @@ function PreviewApp() {
       </Section>
       <Section title='Countdown Bar — Last Question'>
         <CountdownBar pct={50} lastQuestion />
+      </Section>
+
+      <h2>Structural Components</h2>
+      <Section title='ModeTopBar'>
+        <ModeTopBar title='Semitone Math' />
+      </Section>
+      <Section title='StartButton + Session Summary'>
+        <StartButton summary='8 questions in 60 seconds' />
+      </Section>
+      <Section title='Recommendation'>
+        <Recommendation
+          text='Suggestion: solidify +1 to +3 — 3 slow items'
+          onApply={() => {}}
+        />
+      </Section>
+      <Section title='SessionInfo'>
+        <SessionInfo context='Natural notes, A string' count='5 of 12' />
+      </Section>
+      <Section title='QuizSession (header)'>
+        <QuizSession
+          timeLeft='42s'
+          context='Natural notes'
+          count='5 of 12'
+          fluent={6}
+          total={14}
+          isWarning={false}
+        />
+      </Section>
+      <Section title='QuizArea'>
+        <QuizArea prompt='C + 5 = ?' lastQuestion=''>
+          <NoteButtons />
+          <FeedbackDisplay text='' className='feedback' />
+        </QuizArea>
+      </Section>
+      <Section title='RoundComplete'>
+        <RoundComplete
+          context='Round 1 complete'
+          heading='Great job!'
+          correct='8 correct (80%)'
+          median='Median: 425ms'
+        />
+      </Section>
+      <Section title='PracticeCard (no scope)'>
+        <PracticeCard
+          statusLabel='Overall: Strong'
+          statusDetail='12 of 14 fluent'
+          recommendation='Suggestion: start A string — 5 new items'
+          sessionSummary='8 questions in 60 seconds'
+          onApplyRecommendation={() => {}}
+        />
+      </Section>
+      <Section title='PracticeCard (with scope toggles)'>
+        <PracticeCard
+          statusLabel='Strings: E, A'
+          statusDetail='24 of 26 fluent'
+          recommendation='Suggestion: start D string'
+          sessionSummary='12 questions in 60 seconds'
+          onApplyRecommendation={() => {}}
+          scope={
+            <>
+              <StringToggles
+                stringNames={['E', 'A', 'D', 'G', 'B', 'e']}
+                active={new Set([0, 1])}
+                recommended={2}
+                onToggle={() => {}}
+              />
+              <NoteFilter mode='natural' onChange={() => {}} />
+            </>
+          }
+        />
+      </Section>
+      <Section title='TabbedIdle'>
+        <TabbedIdle
+          activeTab='practice'
+          onTabSwitch={() => {}}
+          practiceContent={
+            <PracticeCard
+              statusLabel='Ready to start'
+              sessionSummary='8 questions in 60 seconds'
+            />
+          }
+          progressContent={
+            <div>
+              <StatsToggle active='retention' onToggle={() => {}} />
+              <StatsGrid
+                selector={sel}
+                colLabels={['+1', '+2', '+3']}
+                getItemId={(name, ci) => `${name}+${ci + 1}`}
+                statsMode='retention'
+              />
+            </div>
+          }
+        />
+      </Section>
+      <Section title='ModeScreen (idle, composed)'>
+        <ModeScreen id='preview-demo' phase='idle'>
+          <ModeTopBar title='Demo Mode' />
+          <TabbedIdle
+            activeTab='practice'
+            onTabSwitch={() => {}}
+            practiceContent={
+              <PracticeCard
+                statusLabel='Overall: Good'
+                statusDetail='8 of 12 fluent'
+                sessionSummary='8 questions in 60 seconds'
+              />
+            }
+            progressContent={
+              <StatsGrid
+                selector={sel}
+                colLabels={['+1', '+2']}
+                getItemId={(name, ci) => `${name}+${ci + 1}`}
+                statsMode='retention'
+              />
+            }
+          />
+        </ModeScreen>
       </Section>
     </div>
   );

@@ -10,7 +10,7 @@ on:
       - main
 
 concurrency:
-  group: preview-deploy
+  group: gh-pages-deploy
   cancel-in-progress: false
 
 jobs:
@@ -57,19 +57,28 @@ jobs:
           mkdir -p /tmp/preview-build
           cp -r docs/* /tmp/preview-build/ 2>/dev/null || true
 
-      - name: Deploy to preview directory on main
+      - name: Deploy to preview directory on gh-pages
         run: |
           SAFE_NAME=$(echo "${GITHUB_REF_NAME}" | sed 's/[^a-zA-Z0-9-]/-/g')
 
-          git fetch origin main
-          git checkout -- .
-          git checkout main
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
 
-          mkdir -p "docs/preview/${SAFE_NAME}"
-          cp -r /tmp/preview-build/* "docs/preview/${SAFE_NAME}/"
+          # Switch to gh-pages (or create it)
+          git checkout -- .
+          if git fetch origin gh-pages 2>/dev/null; then
+            git checkout gh-pages
+          else
+            git checkout --orphan gh-pages
+            git rm -rf .
+            touch .nojekyll
+          fi
+
+          mkdir -p "preview/${SAFE_NAME}"
+          cp -r /tmp/preview-build/* "preview/${SAFE_NAME}/"
 
           # Generate preview index page listing all preview subdirectories
-          cd docs/preview
+          cd preview
           cat > index.html << 'INDEXEOF'
           <!DOCTYPE html>
           <html><head><meta charset="utf-8"><title>Preview Builds</title>
@@ -89,13 +98,11 @@ jobs:
             fi
           done
           echo "</ul></body></html>" >> index.html
-          cd ../..
+          cd ..
 
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add "docs/preview/"
+          git add preview/ .nojekyll
           git commit -m "Preview: ${GITHUB_REF_NAME}" || exit 0
-          git push origin main
+          git push origin gh-pages
 
       - name: Comment preview URL on PR
         uses: actions/github-script@v7

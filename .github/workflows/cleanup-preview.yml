@@ -6,7 +6,7 @@ on:
     types: [closed]
 
 concurrency:
-  group: preview-deploy
+  group: gh-pages-deploy
   cancel-in-progress: false
 
 jobs:
@@ -19,10 +19,10 @@ jobs:
       (github.event_name == 'delete' && startsWith(github.event.ref, 'claude/')) ||
       (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && startsWith(github.event.pull_request.head.ref, 'claude/'))
     steps:
-      - name: Checkout main
+      - name: Checkout gh-pages
         uses: actions/checkout@v4
         with:
-          ref: main
+          ref: gh-pages
 
       - name: Remove preview directory
         run: |
@@ -33,12 +33,12 @@ jobs:
           fi
           SAFE_NAME=$(echo "${BRANCH}" | sed 's/[^a-zA-Z0-9-]/-/g')
 
-          if [ -d "docs/preview/${SAFE_NAME}" ]; then
-            rm -rf "docs/preview/${SAFE_NAME}"
+          if [ -d "preview/${SAFE_NAME}" ]; then
+            rm -rf "preview/${SAFE_NAME}"
 
             # Regenerate or remove preview index
-            if ls docs/preview/*/index.html 1>/dev/null 2>&1; then
-              cd docs/preview
+            if ls preview/*/index.html 1>/dev/null 2>&1; then
+              cd preview
               cat > index.html << 'INDEXEOF'
               <!DOCTYPE html>
               <html><head><meta charset="utf-8"><title>Preview Builds</title>
@@ -52,17 +52,17 @@ jobs:
                 echo "<li><a href=\"${name}/\">${name}</a></li>" >> index.html
               done
               echo "</ul></body></html>" >> index.html
-              cd ../..
+              cd ..
             else
               # No previews left — remove the whole directory
-              rm -rf docs/preview
+              rm -rf preview
             fi
 
             git config user.name "github-actions[bot]"
             git config user.email "github-actions[bot]@users.noreply.github.com"
-            git add -A docs/preview
+            git add -A preview
             git commit -m "Cleanup preview: ${BRANCH}"
-            git push origin main
+            git push origin gh-pages
           else
             echo "No preview directory found for ${SAFE_NAME}, skipping."
           fi

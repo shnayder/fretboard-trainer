@@ -4,12 +4,10 @@ on:
   push:
     branches:
       - main
-    paths-ignore:
-      - 'docs/preview/**'
 
 concurrency:
-  group: production-deploy
-  cancel-in-progress: true
+  group: gh-pages-deploy
+  cancel-in-progress: false
 
 jobs:
   deploy:
@@ -48,15 +46,36 @@ jobs:
       - name: Build
         run: deno task build
 
-      - name: Commit and push if changed
+      - name: Deploy to gh-pages
         run: |
+          # Save build output
+          mkdir -p /tmp/build
+          cp docs/index.html /tmp/build/
+          [ -d docs/design ] && cp -r docs/design /tmp/build/
+
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add docs/index.html docs/design/
-          if git diff --cached --quiet; then
-            echo "No changes to docs/, skipping commit."
+
+          # Switch to gh-pages (or create it)
+          if git fetch origin gh-pages 2>/dev/null; then
+            git checkout gh-pages
           else
-            VERSION=$(grep -o 'v[0-9]\+\.[0-9]\+' docs/index.html | head -1)
+            git checkout --orphan gh-pages
+            git rm -rf .
+            touch .nojekyll
+          fi
+
+          # Copy production build to root (preserves preview/ directory)
+          cp /tmp/build/index.html .
+          [ -d /tmp/build/design ] && cp -r /tmp/build/design .
+
+          git add index.html .nojekyll
+          [ -d design ] && git add design/
+
+          if git diff --cached --quiet; then
+            echo "No changes to deploy."
+          else
+            VERSION=$(grep -o 'v[0-9]\+\.[0-9]\+' index.html | head -1)
             git commit -m "Build production: ${VERSION}"
-            git push origin main
+            git push origin gh-pages
           fi

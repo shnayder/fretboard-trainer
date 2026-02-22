@@ -7,76 +7,102 @@ declare global {
   }
 }
 
+import { h, render } from 'preact';
 import { GUITAR, UKULELE } from './music-data.ts';
-import { createModeController } from './mode-controller.ts';
-import { fretboardDefinition } from './modes/fretboard.ts';
-import { speedTapDefinition } from './modes/speed-tap.ts';
-import { noteSemitonesDefinition } from './modes/note-semitones.ts';
-import { intervalSemitonesDefinition } from './modes/interval-semitones.ts';
-import { semitoneMathDefinition } from './modes/semitone-math.ts';
-import { intervalMathDefinition } from './modes/interval-math.ts';
-import { keySignaturesDefinition } from './modes/key-signatures.ts';
-import { scaleDegreesDefinition } from './modes/scale-degrees.ts';
-import { diatonicChordsDefinition } from './modes/diatonic-chords.ts';
-import { chordSpellingDefinition } from './modes/chord-spelling.ts';
 import { createNavigation } from './navigation.ts';
 import { createSettingsModal } from './settings.ts';
 import { refreshNoteButtonLabels } from './quiz-engine.ts';
+import type { ModeHandle } from './modes/note-semitones/note-semitones-mode.tsx';
+import { NoteSemitonesMode } from './modes/note-semitones/note-semitones-mode.tsx';
+import { IntervalSemitonesMode } from './modes/interval-semitones/interval-semitones-mode.tsx';
+import { SemitoneMathMode } from './modes/semitone-math/semitone-math-mode.tsx';
+import { IntervalMathMode } from './modes/interval-math/interval-math-mode.tsx';
+import { KeySignaturesMode } from './modes/key-signatures/key-signatures-mode.tsx';
+import { ScaleDegreesMode } from './modes/scale-degrees/scale-degrees-mode.tsx';
+import { DiatonicChordsMode } from './modes/diatonic-chords/diatonic-chords-mode.tsx';
+import { ChordSpellingMode } from './modes/chord-spelling/chord-spelling-mode.tsx';
+import { FretboardMode } from './modes/fretboard/fretboard-mode.tsx';
+import { SpeedTapMode } from './modes/speed-tap/speed-tap-mode.tsx';
 
 const nav = createNavigation();
 
-// --- All mode controllers ---
+// --- Preact-based modes ---
 
-const allControllers = [
-  {
-    id: 'fretboard',
-    name: 'Guitar Fretboard',
-    def: fretboardDefinition(GUITAR),
-  },
-  {
-    id: 'ukulele',
-    name: 'Ukulele Fretboard',
-    def: fretboardDefinition(UKULELE),
-  },
-  { id: 'speedTap', name: 'Speed Tap', def: speedTapDefinition() },
-  {
-    id: 'noteSemitones',
-    name: 'Note \u2194 Semitones',
-    def: noteSemitonesDefinition(),
-  },
-  {
-    id: 'intervalSemitones',
-    name: 'Interval \u2194 Semitones',
-    def: intervalSemitonesDefinition(),
-  },
-  { id: 'semitoneMath', name: 'Semitone Math', def: semitoneMathDefinition() },
-  { id: 'intervalMath', name: 'Interval Math', def: intervalMathDefinition() },
-  {
-    id: 'keySignatures',
-    name: 'Key Signatures',
-    def: keySignaturesDefinition(),
-  },
-  { id: 'scaleDegrees', name: 'Scale Degrees', def: scaleDegreesDefinition() },
-  {
-    id: 'diatonicChords',
-    name: 'Diatonic Chords',
-    def: diatonicChordsDefinition(),
-  },
-  {
-    id: 'chordSpelling',
-    name: 'Chord Spelling',
-    def: chordSpellingDefinition(),
-  },
-].map(({ id, name, def }) => {
-  const ctrl = createModeController(def);
+// deno-lint-ignore no-explicit-any
+function registerPreactMode(id: string, name: string, Component: any) {
+  let handle: ModeHandle | null = null;
+  const container = document.getElementById('mode-' + id)!;
   nav.registerMode(id, {
     name,
-    init: ctrl.init,
-    activate: ctrl.activate,
-    deactivate: ctrl.deactivate,
+    init() {
+      render(
+        h(Component, {
+          container,
+          navigateHome: () => nav.navigateHome(),
+          onMount: (h: ModeHandle) => {
+            handle = h;
+          },
+        }),
+        container,
+      );
+    },
+    activate() {
+      handle?.activate();
+    },
+    deactivate() {
+      handle?.deactivate();
+    },
   });
-  return ctrl;
-});
+}
+
+// Fretboard modes need extra instrument prop
+function registerFretboardMode(
+  id: string,
+  name: string,
+  instrument: typeof GUITAR,
+) {
+  let handle: ModeHandle | null = null;
+  const cont = document.getElementById('mode-' + id)!;
+  nav.registerMode(id, {
+    name,
+    init() {
+      render(
+        h(FretboardMode, {
+          instrument,
+          container: cont,
+          navigateHome: () => nav.navigateHome(),
+          onMount: (h: ModeHandle) => {
+            handle = h;
+          },
+        }),
+        cont,
+      );
+    },
+    activate() {
+      handle?.activate();
+    },
+    deactivate() {
+      handle?.deactivate();
+    },
+  });
+}
+
+registerFretboardMode('fretboard', 'Guitar Fretboard', GUITAR);
+registerFretboardMode('ukulele', 'Ukulele Fretboard', UKULELE);
+
+registerPreactMode('noteSemitones', 'Note \u2194 Semitones', NoteSemitonesMode);
+registerPreactMode(
+  'intervalSemitones',
+  'Interval \u2194 Semitones',
+  IntervalSemitonesMode,
+);
+registerPreactMode('semitoneMath', 'Semitone Math', SemitoneMathMode);
+registerPreactMode('intervalMath', 'Interval Math', IntervalMathMode);
+registerPreactMode('keySignatures', 'Key Signatures', KeySignaturesMode);
+registerPreactMode('scaleDegrees', 'Scale Degrees', ScaleDegreesMode);
+registerPreactMode('diatonicChords', 'Diatonic Chords', DiatonicChordsMode);
+registerPreactMode('chordSpelling', 'Chord Spelling', ChordSpellingMode);
+registerPreactMode('speedTap', 'Speed Tap', SpeedTapMode);
 
 nav.init();
 
@@ -90,9 +116,6 @@ const settings = createSettingsModal({
         if (activeToggle) (activeToggle as HTMLElement).click();
       },
     );
-    for (const ctrl of allControllers) {
-      ctrl.onNotationChange?.();
-    }
   },
 });
 

@@ -212,79 +212,6 @@ export type CheckAnswerResult = {
   correctAnswer: string;
 };
 
-export type CalibrationTrialConfig = {
-  prompt: string;
-  targetButtons: HTMLElement[];
-};
-
-export type EngineEls = {
-  feedback: HTMLElement | null;
-  timeDisplay: HTMLElement | null;
-  hint: HTMLElement | null;
-  stats: HTMLElement | null;
-  quizArea: HTMLElement | null;
-  quizPrompt: HTMLElement | null;
-  masteryMessage: HTMLElement | null;
-  baselineInfo: HTMLElement | null;
-  quizHeaderClose: HTMLElement | null;
-  countdownFill: HTMLElement | null;
-  countdownBar: HTMLElement | null;
-  quizInfoContext: HTMLElement | null;
-  quizInfoTime: HTMLElement | null;
-  quizLastQuestion: HTMLElement | null;
-  quizInfoCount: HTMLElement | null;
-  progressFill: HTMLElement | null;
-  progressText: HTMLElement | null;
-  roundCompleteEl: HTMLElement | null;
-};
-
-export interface QuizMode {
-  id: string;
-  storageNamespace: string;
-  getEnabledItems(): string[];
-  presentQuestion(itemId: string): void;
-  checkAnswer(itemId: string, input: string): CheckAnswerResult;
-  onStart?(): void;
-  onStop?(): void;
-  handleKey?(
-    e: KeyboardEvent,
-    ctx: { submitAnswer: (input: string) => void },
-  ): boolean | void;
-  onAnswer?(
-    itemId: string,
-    result: CheckAnswerResult,
-    responseTime: number,
-  ): void;
-  getPracticingLabel?(): string;
-  getExpectedResponseCount?(itemId: string): number;
-  getCalibrationButtons?(): HTMLElement[];
-  getCalibrationTrialConfig?(
-    buttons: HTMLElement[],
-    prevBtn: HTMLElement | null,
-  ): CalibrationTrialConfig;
-  calibrationIntroHint?: string;
-  calibrationProvider?: string;
-}
-
-export interface QuizEngine {
-  start(): void;
-  stop(): void;
-  showCalibrationIfNeeded(): void;
-  submitAnswer(input: string): void;
-  nextQuestion(): void;
-  continueQuiz(): void;
-  attach(): void;
-  detach(): void;
-  updateIdleMessage(): void;
-  readonly isActive: boolean;
-  readonly isRunning: boolean;
-  readonly isAnswered: boolean;
-  readonly baseline: number | null;
-  selector: AdaptiveSelector;
-  storage: StorageAdapter;
-  els: EngineEls;
-}
-
 // ---------------------------------------------------------------------------
 // Key handler
 // ---------------------------------------------------------------------------
@@ -295,12 +222,10 @@ export type NoteKeyHandler = {
 };
 
 // ---------------------------------------------------------------------------
-// Mode definition — the complete specification of a quiz mode
+// Scope and mode configuration
 // ---------------------------------------------------------------------------
 
 export type NoteFilter = 'natural' | 'sharps-flats' | 'all';
-
-// --- Scope: what controls appear and what the user has selected ---
 
 export type GroupDef = {
   index: number;
@@ -345,44 +270,7 @@ export type ScopeState =
   }
   | { kind: 'note-filter'; noteFilter: NoteFilter };
 
-// --- Prompt: how questions appear ---
-
-/**
- * 'text': infrastructure sets .quiz-prompt textContent. Zero DOM in mode.
- * 'custom': mode gets a callback for full control (fretboard SVG, speed tap).
- */
-export type PromptSpec<TQuestion> =
-  | {
-    kind: 'text';
-    /** Pure: derive prompt string from question data. */
-    getText(question: TQuestion): string;
-  }
-  | {
-    kind: 'custom';
-    /** Render the question into the quiz area. */
-    render(question: TQuestion, els: QuizAreaEls): void;
-    /** Clear the previous question (before render and on stop). */
-    clear(els: QuizAreaEls): void;
-    /** Visual feedback after answer (e.g., green/red fretboard circle). */
-    onAnswer?(
-      question: TQuestion,
-      result: CheckAnswerResult,
-      els: QuizAreaEls,
-    ): void;
-  };
-
-// --- Response: how answers are collected ---
-
-export type AnswerGroup = {
-  id: string;
-  html: string;
-  getButtonAnswer(btn: HTMLElement): string | null;
-};
-
-export type KeyHandlerFactory = (
-  submitAnswer: (input: string) => void,
-  getScope: () => ScopeState,
-) => NoteKeyHandler;
+// --- Sequential response ---
 
 export type SequentialState = {
   expectedCount: number;
@@ -393,70 +281,7 @@ export type SequentialInputResult =
   | { status: 'continue'; state: SequentialState }
   | { status: 'complete'; correct: boolean; correctAnswer: string };
 
-export type ResponseSpec =
-  | {
-    kind: 'buttons';
-    /** Build-time HTML for the answer button area. */
-    answerButtonsHTML: string;
-    createKeyHandler: KeyHandlerFactory;
-    /** Extract the answer string from a clicked button. */
-    getButtonAnswer(btn: HTMLElement): string | null;
-  }
-  | {
-    kind: 'bidirectional';
-    /** Two or more button groups, shown/hidden per question. */
-    groups: AnswerGroup[];
-    /** Which group ID to show for a given question. */
-    getActiveGroup(question: unknown): string;
-    createKeyHandler: KeyHandlerFactory;
-  }
-  | {
-    kind: 'sequential';
-    answerButtonsHTML: string;
-    createKeyHandler: KeyHandlerFactory;
-    handleInput(
-      itemId: string,
-      input: string,
-      state: SequentialState,
-    ): SequentialInputResult;
-    initSequentialState(itemId: string): SequentialState;
-    renderProgress(state: SequentialState, els: QuizAreaEls): void;
-  }
-  | {
-    kind: 'spatial';
-    /** Handle a tap/click. Returns input string for engine.submitAnswer, or null if partial. */
-    handleTap(
-      target: HTMLElement,
-      itemId: string,
-    ): string | null;
-    createKeyHandler?: KeyHandlerFactory;
-  };
-
-// --- Stats visualization ---
-
-export type StatsSpec =
-  | {
-    kind: 'table';
-    getRows(): StatsTableRow[];
-    fwdHeader: string;
-    revHeader: string;
-  }
-  | {
-    kind: 'grid';
-    colLabels: string[];
-    getItemId(noteName: string, colIndex: number): string | string[];
-    notes?: { name: string; displayName: string }[];
-  }
-  | {
-    kind: 'custom';
-    render(
-      statsMode: string,
-      statsEl: HTMLElement,
-      selector: AdaptiveSelector,
-      baseline: number | null,
-      modeContainer: HTMLElement,
-    ): void;
-  };
+// --- Stats ---
 
 export type StatsTableRow = {
   label: string;
@@ -466,93 +291,7 @@ export type StatsTableRow = {
   revItemId: string;
 };
 
-// --- Calibration ---
-
-export type CalibrationSpec = {
-  introHint?: string;
-  getButtons?(container: HTMLElement): HTMLElement[];
-  getTrialConfig?(
-    buttons: HTMLElement[],
-    prevBtn: HTMLElement | null,
-  ): CalibrationTrialConfig;
-};
-
-// --- DOM references for mode callbacks ---
-
-export type QuizAreaEls = {
-  promptEl: HTMLElement;
-  quizArea: HTMLElement;
-  /** The mode-screen container element. */
-  container: HTMLElement;
-  /** Fretboard SVG wrapper (present only in fretboard modes). */
-  fretboardWrapper?: HTMLElement;
-  /** Fretboard SVG wrapper in progress tab (for heatmap). */
-  progressFretboardWrapper?: HTMLElement;
-};
-
-// --- ModeDefinition: the central interface ---
-
-/**
- * Complete specification of a quiz mode. Provides data and pure logic;
- * the shared ModeController handles DOM, lifecycle, and engine wiring.
- *
- * Generic TQuestion captures the mode's per-question data shape.
- */
-export interface ModeDefinition<TQuestion = unknown> {
-  id: string;
-  name: string;
-  storageNamespace: string;
-
-  /** All possible item IDs. Used for storage preload and "all items" stats. */
-  allItemIds: string[];
-
-  /** Which items are eligible given the current scope selection. */
-  getEnabledItems(scope: ScopeState): string[];
-
-  scopeSpec: ScopeSpec;
-
-  /** Derive question data from an item ID. Pure. */
-  getQuestion(itemId: string): TQuestion;
-
-  /** Check if user input is correct. Pure. */
-  checkAnswer(itemId: string, input: string): CheckAnswerResult;
-
-  prompt: PromptSpec<TQuestion>;
-  response: ResponseSpec;
-  stats: StatsSpec;
-
-  /** Human-readable label for what's being practiced. */
-  getPracticingLabel(scope: ScopeState): string;
-
-  /** Session summary line ("3 strings · natural notes · 60s"). */
-  getSessionSummary(scope: ScopeState): string;
-
-  /** Calibration provider key (shared across modes with same button layout). */
-  calibrationProvider?: string;
-
-  /** Custom calibration config. */
-  calibrationSpec?: CalibrationSpec;
-
-  /** For multi-entry modes: expected response count per item. */
-  getExpectedResponseCount?(itemId: string): number;
-
-  /**
-   * Optional: enriches recommendation with extra context.
-   * Returns extra text parts for the message, and optional note filter
-   * to apply when the user clicks "Use suggestion".
-   */
-  getRecommendationContext?(
-    rec: RecommendationResult,
-    selector: AdaptiveSelector,
-  ): { extraParts: string[]; noteFilter?: NoteFilter };
-
-  /** Called when quiz starts, after standard setup. */
-  onStart?(els: QuizAreaEls): void;
-  /** Called when quiz stops, after standard cleanup. */
-  onStop?(els: QuizAreaEls): void;
-}
-
-// --- ModeUIState: the mode-level state object for State+Render ---
+// --- Practice summary state ---
 
 export type PracticeSummaryState = {
   statusLabel: string;
@@ -564,21 +303,3 @@ export type PracticeSummaryState = {
   showMastery: boolean;
   enabledItemCount: number;
 };
-
-export type ModeUIState = {
-  activeTab: 'practice' | 'progress';
-  scope: ScopeState;
-  practice: PracticeSummaryState;
-  statsMode: 'retention' | 'speed' | null;
-  recommendation: RecommendationResult | null;
-};
-
-// --- ModeController: returned by createModeController ---
-
-export interface ModeController {
-  init(): void;
-  activate(): void;
-  deactivate(): void;
-  /** Handle notation changes (refresh labels, stats). */
-  onNotationChange?(): void;
-}

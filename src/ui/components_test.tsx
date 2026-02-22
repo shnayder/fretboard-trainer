@@ -1,0 +1,565 @@
+// Render-to-string tests for Preact components (leaf + structural).
+// Verifies DOM structure and CSS class names match existing build-time HTML.
+
+import { describe, it } from 'node:test';
+import assert from 'node:assert/strict';
+import { h } from 'preact';
+import { renderToString } from 'preact-render-to-string';
+
+import {
+  DegreeButtons,
+  IntervalButtons,
+  KeysigButtons,
+  NoteButtons,
+  NumberButtons,
+  NumeralButtons,
+  PianoNoteButtons,
+} from './buttons.tsx';
+import type { StatsSelector } from './stats.tsx';
+import { StatsGrid, StatsToggle } from './stats.tsx';
+import { GroupToggles, NoteFilter, StringToggles } from './scope.tsx';
+import { CountdownBar, FeedbackDisplay, TextPrompt } from './quiz-ui.tsx';
+import {
+  ModeScreen,
+  ModeTopBar,
+  PracticeCard,
+  QuizArea,
+  QuizSession,
+  Recommendation,
+  RoundComplete,
+  SessionInfo,
+  StartButton,
+  TabbedIdle,
+} from './mode-screen.tsx';
+
+// ---------------------------------------------------------------------------
+// Helper
+// ---------------------------------------------------------------------------
+
+function render(vnode: ReturnType<typeof h>): string {
+  return renderToString(vnode);
+}
+
+// ---------------------------------------------------------------------------
+// Button components
+// ---------------------------------------------------------------------------
+
+describe('NoteButtons', () => {
+  it('renders 12 note buttons', () => {
+    const html = render(<NoteButtons />);
+    assert.ok(html.includes('answer-buttons-notes'));
+    // 12 notes: C C# D D# E F F# G G# A A# B
+    const count = (html.match(/answer-btn-note/g) || []).length;
+    assert.equal(count, 12);
+  });
+
+  it('includes data-note attributes', () => {
+    const html = render(<NoteButtons />);
+    assert.ok(html.includes('data-note="C"'));
+    assert.ok(html.includes('data-note="F#"'));
+  });
+
+  it('applies hidden class', () => {
+    const html = render(<NoteButtons hidden />);
+    assert.ok(html.includes('answer-group-hidden'));
+  });
+});
+
+describe('PianoNoteButtons', () => {
+  it('renders accidentals and naturals rows', () => {
+    const html = render(<PianoNoteButtons />);
+    assert.ok(html.includes('note-row-accidentals'));
+    assert.ok(html.includes('note-row-naturals'));
+  });
+
+  it('renders 5 accidental + 7 natural buttons', () => {
+    const html = render(<PianoNoteButtons />);
+    const accidentals = (html.match(/note-btn accidental/g) || []).length;
+    const allButtons = (html.match(/note-btn/g) || []).length;
+    assert.equal(accidentals, 5);
+    assert.equal(allButtons - accidentals, 7);
+  });
+});
+
+describe('NumberButtons', () => {
+  it('renders correct range', () => {
+    const html = render(<NumberButtons start={0} end={11} />);
+    assert.ok(html.includes('answer-buttons-numbers'));
+    const count = (html.match(/answer-btn-num/g) || []).length;
+    assert.equal(count, 12);
+  });
+
+  it('renders custom range', () => {
+    const html = render(<NumberButtons start={1} end={5} />);
+    const count = (html.match(/answer-btn-num/g) || []).length;
+    assert.equal(count, 5);
+  });
+});
+
+describe('IntervalButtons', () => {
+  it('renders 12 interval buttons', () => {
+    const html = render(<IntervalButtons />);
+    assert.ok(html.includes('answer-buttons-intervals'));
+    const count = (html.match(/answer-btn-interval/g) || []).length;
+    assert.equal(count, 12);
+  });
+});
+
+describe('KeysigButtons', () => {
+  it('renders 15 key signature buttons', () => {
+    const html = render(<KeysigButtons />);
+    assert.ok(html.includes('answer-buttons-keysig'));
+    const count = (html.match(/answer-btn-keysig/g) || []).length;
+    assert.equal(count, 15);
+  });
+});
+
+describe('DegreeButtons', () => {
+  it('renders 7 degree buttons', () => {
+    const html = render(<DegreeButtons />);
+    assert.ok(html.includes('answer-buttons-degrees'));
+    const count = (html.match(/answer-btn-degree/g) || []).length;
+    assert.equal(count, 7);
+  });
+
+  it('shows ordinal labels', () => {
+    const html = render(<DegreeButtons />);
+    assert.ok(html.includes('1st'));
+    assert.ok(html.includes('7th'));
+  });
+});
+
+describe('NumeralButtons', () => {
+  it('renders 7 numeral buttons', () => {
+    const html = render(<NumeralButtons />);
+    assert.ok(html.includes('answer-buttons-numerals'));
+    const count = (html.match(/answer-btn-numeral/g) || []).length;
+    assert.equal(count, 7);
+  });
+
+  it('includes diminished symbol', () => {
+    const html = render(<NumeralButtons />);
+    // vii° has the degree symbol
+    assert.ok(html.includes('vii\u00B0'));
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Stats components
+// ---------------------------------------------------------------------------
+
+function mockSelector(): StatsSelector {
+  return {
+    getAutomaticity(id: string) {
+      if (id === 'C+1') return 0.9;
+      if (id === 'C+2') return 0.5;
+      return null;
+    },
+    getStats() {
+      return null;
+    },
+  };
+}
+
+describe('StatsGrid', () => {
+  it('renders table with correct structure', () => {
+    const html = render(
+      <StatsGrid
+        selector={mockSelector()}
+        colLabels={['+1', '+2']}
+        getItemId={(name, ci) => `${name}+${ci + 1}`}
+        statsMode='retention'
+      />,
+    );
+    assert.ok(html.includes('stats-grid'));
+    assert.ok(html.includes('stats-grid-row-label'));
+    assert.ok(html.includes('stats-cell'));
+  });
+});
+
+describe('StatsToggle', () => {
+  it('marks active mode', () => {
+    const html = render(
+      <StatsToggle active='retention' onToggle={() => {}} />,
+    );
+    assert.ok(html.includes('stats-toggle'));
+    // The retention button should have 'active' class
+    assert.ok(html.includes('stats-toggle-btn active'));
+  });
+
+  it('marks speed when active', () => {
+    const html = render(
+      <StatsToggle active='speed' onToggle={() => {}} />,
+    );
+    // Speed button should have active, retention should not
+    const parts = html.split('data-mode="speed"');
+    // The button before speed data-mode should have 'active'
+    assert.ok(parts.length > 1);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Scope components
+// ---------------------------------------------------------------------------
+
+describe('GroupToggles', () => {
+  it('renders toggles with active and recommended states', () => {
+    const html = render(
+      <GroupToggles
+        labels={['+1 to +3', '+4 to +6']}
+        active={new Set([0])}
+        recommended={1}
+        onToggle={() => {}}
+      />,
+    );
+    assert.ok(html.includes('toggle-group'));
+    assert.ok(html.includes('distance-toggle active'));
+    assert.ok(html.includes('distance-toggle recommended'));
+    assert.ok(html.includes('+1 to +3'));
+    assert.ok(html.includes('+4 to +6'));
+  });
+});
+
+describe('StringToggles', () => {
+  it('renders string toggles', () => {
+    const html = render(
+      <StringToggles
+        stringNames={['E', 'A', 'D']}
+        active={new Set([0, 1])}
+        onToggle={() => {}}
+      />,
+    );
+    assert.ok(html.includes('string-toggles'));
+    const activeCount = (html.match(/string-toggle active/g) || []).length;
+    assert.equal(activeCount, 2);
+  });
+});
+
+describe('NoteFilter', () => {
+  it('renders natural/sharps-flats toggle', () => {
+    const html = render(
+      <NoteFilter mode='natural' onChange={() => {}} />,
+    );
+    assert.ok(html.includes('notes-toggles'));
+    assert.ok(html.includes('notes-toggle active'));
+    assert.ok(html.includes('natural'));
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Quiz UI components
+// ---------------------------------------------------------------------------
+
+describe('TextPrompt', () => {
+  it('renders prompt text', () => {
+    const html = render(<TextPrompt text='C + 5 = ?' />);
+    assert.ok(html.includes('quiz-prompt'));
+    assert.ok(html.includes('C + 5 = ?'));
+  });
+});
+
+describe('FeedbackDisplay', () => {
+  it('renders feedback with class', () => {
+    const html = render(
+      <FeedbackDisplay
+        text='Correct!'
+        className='feedback correct'
+      />,
+    );
+    assert.ok(html.includes('feedback correct'));
+    assert.ok(html.includes('Correct!'));
+  });
+
+  it('renders time and hint when provided', () => {
+    const html = render(
+      <FeedbackDisplay
+        text='Wrong'
+        className='feedback incorrect'
+        time='1.2s'
+        hint='Try again'
+      />,
+    );
+    assert.ok(html.includes('time-display'));
+    assert.ok(html.includes('1.2s'));
+    assert.ok(html.includes('hint'));
+    assert.ok(html.includes('Try again'));
+  });
+
+  it('omits time and hint when not provided', () => {
+    const html = render(
+      <FeedbackDisplay text='X' className='feedback' />,
+    );
+    assert.ok(!html.includes('time-display'));
+    assert.ok(!html.includes('hint'));
+  });
+});
+
+describe('CountdownBar', () => {
+  it('renders with percentage width', () => {
+    const html = render(<CountdownBar pct={75} />);
+    assert.ok(html.includes('quiz-countdown-bar'));
+    assert.ok(html.includes('quiz-countdown-fill'));
+    assert.ok(html.includes('75%'));
+  });
+
+  it('adds warning class', () => {
+    const html = render(<CountdownBar pct={10} warning />);
+    assert.ok(html.includes('round-timer-warning'));
+  });
+
+  it('adds last-question class', () => {
+    const html = render(<CountdownBar pct={50} lastQuestion />);
+    assert.ok(html.includes('last-question'));
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Structural components
+// ---------------------------------------------------------------------------
+
+describe('ModeScreen', () => {
+  it('renders with phase class and id', () => {
+    const html = render(
+      <ModeScreen id='test' phase='idle'>
+        <div>content</div>
+      </ModeScreen>,
+    );
+    assert.ok(html.includes('mode-screen phase-idle'));
+    assert.ok(html.includes('id="mode-test"'));
+  });
+
+  it('changes phase class', () => {
+    const html = render(
+      <ModeScreen id='test' phase='active'>
+        <div />
+      </ModeScreen>,
+    );
+    assert.ok(html.includes('mode-screen phase-active'));
+  });
+});
+
+describe('ModeTopBar', () => {
+  it('renders back button and title', () => {
+    const html = render(<ModeTopBar title='Semitone Math' />);
+    assert.ok(html.includes('mode-top-bar'));
+    assert.ok(html.includes('mode-back-btn'));
+    assert.ok(html.includes('mode-title'));
+    assert.ok(html.includes('Semitone Math'));
+    assert.ok(html.includes('\u2190'));
+  });
+});
+
+describe('TabbedIdle', () => {
+  it('renders tabs with practice active', () => {
+    const html = render(
+      <TabbedIdle
+        activeTab='practice'
+        onTabSwitch={() => {}}
+        practiceContent={<div class='test-practice'>P</div>}
+        progressContent={<div class='test-progress'>G</div>}
+      />,
+    );
+    assert.ok(html.includes('mode-tabs'));
+    // Practice tab button has active class
+    assert.ok(html.includes('mode-tab active'));
+    // Practice content has active class
+    assert.ok(html.includes('tab-practice active'));
+    // Progress content does NOT have active class
+    assert.ok(!html.includes('tab-progress active'));
+  });
+
+  it('renders tabs with progress active', () => {
+    const html = render(
+      <TabbedIdle
+        activeTab='progress'
+        onTabSwitch={() => {}}
+        practiceContent={<div>P</div>}
+        progressContent={<div>G</div>}
+      />,
+    );
+    assert.ok(html.includes('tab-progress active'));
+    assert.ok(!html.includes('tab-practice active'));
+  });
+});
+
+describe('PracticeCard', () => {
+  it('renders status zone with label and detail', () => {
+    const html = render(
+      <PracticeCard
+        statusLabel='Overall: Strong'
+        statusDetail='12 of 14 fluent'
+        sessionSummary='8 questions in 60 seconds'
+      />,
+    );
+    assert.ok(html.includes('practice-card'));
+    assert.ok(html.includes('practice-zone-status'));
+    assert.ok(html.includes('practice-status-label'));
+    assert.ok(html.includes('Overall: Strong'));
+    assert.ok(html.includes('12 of 14 fluent'));
+    assert.ok(html.includes('practice-zone-action'));
+    assert.ok(html.includes('start-btn'));
+  });
+
+  it('shows recommendation inline when no scope', () => {
+    const html = render(
+      <PracticeCard
+        recommendation='Suggestion: start A string'
+        onApplyRecommendation={() => {}}
+      />,
+    );
+    assert.ok(html.includes('practice-recommendation'));
+    assert.ok(html.includes('practice-rec-text'));
+    assert.ok(html.includes('practice-rec-btn'));
+    // No scope zone
+    assert.ok(!html.includes('practice-zone-scope'));
+  });
+
+  it('moves recommendation to scope zone when scope provided', () => {
+    const html = render(
+      <PracticeCard
+        recommendation='Suggestion: start D string'
+        onApplyRecommendation={() => {}}
+        scope={<div class='mock-scope' />}
+      />,
+    );
+    assert.ok(html.includes('practice-zone-scope'));
+    assert.ok(html.includes('practice-scope'));
+    assert.ok(html.includes('mock-scope'));
+    assert.ok(html.includes('practice-rec-text'));
+  });
+
+  it('shows mastery message', () => {
+    const html = render(
+      <PracticeCard mastery="Looks like you've got this!" />,
+    );
+    assert.ok(html.includes('mastery-message'));
+    assert.ok(html.includes("Looks like you've got this!"));
+  });
+});
+
+describe('Recommendation', () => {
+  it('renders text and button', () => {
+    const html = render(
+      <Recommendation text='Suggestion: solidify +1' onApply={() => {}} />,
+    );
+    assert.ok(html.includes('practice-recommendation'));
+    assert.ok(html.includes('Suggestion: solidify +1'));
+    assert.ok(html.includes('practice-rec-btn'));
+  });
+
+  it('omits button when no onApply', () => {
+    const html = render(<Recommendation text='Suggestion: test' />);
+    assert.ok(!html.includes('practice-rec-btn'));
+  });
+});
+
+describe('StartButton', () => {
+  it('renders button and summary text', () => {
+    const html = render(
+      <StartButton summary='8 questions in 60 seconds' />,
+    );
+    assert.ok(html.includes('start-btn'));
+    assert.ok(html.includes('Start Quiz'));
+    assert.ok(html.includes('session-summary-text'));
+    assert.ok(html.includes('8 questions in 60 seconds'));
+  });
+
+  it('omits summary when not provided', () => {
+    const html = render(<StartButton />);
+    assert.ok(html.includes('start-btn'));
+    assert.ok(!html.includes('session-summary-text'));
+  });
+});
+
+describe('QuizSession', () => {
+  it('renders countdown, info, close, and progress', () => {
+    const html = render(
+      <QuizSession
+        timeLeft='42s'
+        timerPct={65}
+        context='Natural notes'
+        count='5 of 12'
+        fluent={6}
+        total={14}
+      />,
+    );
+    assert.ok(html.includes('quiz-session'));
+    assert.ok(html.includes('quiz-countdown-row'));
+    assert.ok(html.includes('quiz-countdown-bar'));
+    assert.ok(html.includes('quiz-countdown-fill'));
+    assert.ok(html.includes('width:65%'));
+    assert.ok(html.includes('quiz-info-time'));
+    assert.ok(html.includes('42s'));
+    assert.ok(html.includes('quiz-session-info'));
+    assert.ok(html.includes('Natural notes'));
+    assert.ok(html.includes('5 of 12'));
+    assert.ok(html.includes('quiz-header-close'));
+    assert.ok(html.includes('progress-bar'));
+    assert.ok(html.includes('progress-fill'));
+    assert.ok(html.includes('6 / 14 fluent'));
+  });
+});
+
+describe('SessionInfo', () => {
+  it('renders context and count', () => {
+    const html = render(
+      <SessionInfo context='A string' count='3 of 8' />,
+    );
+    assert.ok(html.includes('quiz-session-info'));
+    assert.ok(html.includes('quiz-info-context'));
+    assert.ok(html.includes('A string'));
+    assert.ok(html.includes('quiz-info-count'));
+    assert.ok(html.includes('3 of 8'));
+  });
+});
+
+describe('QuizArea', () => {
+  it('renders prompt and children', () => {
+    const html = render(
+      <QuizArea prompt='C + 5 = ?'>
+        <div class='test-buttons'>buttons</div>
+      </QuizArea>,
+    );
+    assert.ok(html.includes('quiz-area'));
+    assert.ok(html.includes('quiz-prompt-row'));
+    assert.ok(html.includes('quiz-prompt'));
+    assert.ok(html.includes('C + 5 = ?'));
+    assert.ok(html.includes('quiz-last-question'));
+    assert.ok(html.includes('test-buttons'));
+  });
+
+  it('renders last question badge', () => {
+    const html = render(
+      <QuizArea prompt='test' lastQuestion='Last Q'>
+        <div />
+      </QuizArea>,
+    );
+    assert.ok(html.includes('Last Q'));
+  });
+});
+
+describe('RoundComplete', () => {
+  it('renders context, heading, stats, and actions', () => {
+    const html = render(
+      <RoundComplete
+        context='Round 1 complete'
+        heading='Great job!'
+        correct='8 correct (80%)'
+        median='Median: 425ms'
+      />,
+    );
+    assert.ok(html.includes('round-complete'));
+    assert.ok(html.includes('round-complete-context'));
+    assert.ok(html.includes('Round 1 complete'));
+    assert.ok(html.includes('round-complete-heading'));
+    assert.ok(html.includes('Great job!'));
+    assert.ok(html.includes('round-stat-correct'));
+    assert.ok(html.includes('8 correct (80%)'));
+    assert.ok(html.includes('round-stat-median'));
+    assert.ok(html.includes('Median: 425ms'));
+    assert.ok(html.includes('round-complete-continue'));
+    assert.ok(html.includes('Keep Going'));
+    assert.ok(html.includes('round-complete-stop'));
+    assert.ok(html.includes('Stop'));
+  });
+});

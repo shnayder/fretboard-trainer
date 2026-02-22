@@ -258,6 +258,7 @@ export function IntervalSemitonesMode(
       />
       <QuizSession
         timeLeft={engine.timerText}
+        timerPct={engine.timerPct}
         context='all items'
         count={round.countText}
         fluent={engine.state.masteredCount}

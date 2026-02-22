@@ -225,6 +225,7 @@ export function StartButton(
 export function QuizSession(
   {
     timeLeft,
+    timerPct,
     context,
     count,
     fluent,
@@ -234,6 +235,7 @@ export function QuizSession(
     onClose,
   }: {
     timeLeft?: string;
+    timerPct?: number;
     context?: string;
     count?: string;
     fluent?: number;
@@ -252,7 +254,10 @@ export function QuizSession(
             (isWarning ? ' round-timer-warning' : '') +
             (isLastQuestion ? ' last-question' : '')}
         >
-          <div class='quiz-countdown-fill' />
+          <div
+            class='quiz-countdown-fill'
+            style={{ width: `${timerPct ?? 100}%` }}
+          />
         </div>
         <span class='quiz-info-time'>{timeLeft || ''}</span>
       </div>

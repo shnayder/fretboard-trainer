@@ -476,6 +476,7 @@ describe('QuizSession', () => {
     const html = render(
       <QuizSession
         timeLeft='42s'
+        timerPct={65}
         context='Natural notes'
         count='5 of 12'
         fluent={6}
@@ -486,6 +487,7 @@ describe('QuizSession', () => {
     assert.ok(html.includes('quiz-countdown-row'));
     assert.ok(html.includes('quiz-countdown-bar'));
     assert.ok(html.includes('quiz-countdown-fill'));
+    assert.ok(html.includes('width:65%'));
     assert.ok(html.includes('quiz-info-time'));
     assert.ok(html.includes('42s'));
     assert.ok(html.includes('quiz-session-info'));

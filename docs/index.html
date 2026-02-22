@@ -1635,7 +1635,7 @@ button {
     </div>
     <div class="home-footer">
       <button class="home-settings-btn" type="button">Settings</button>
-      <span class="version">v8.6</span>
+      <span class="version">v8.7</span>
     </div>
   </div>
 
@@ -5757,6 +5757,7 @@ button {
   }
   function QuizSession({
     timeLeft,
+    timerPct,
     context,
     count,
     fluent,
@@ -5772,7 +5773,13 @@ button {
           "div",
           {
             class: "quiz-countdown-bar" + (isWarning ? " round-timer-warning" : "") + (isLastQuestion ? " last-question" : ""),
-            children: /* @__PURE__ */ u3("div", { class: "quiz-countdown-fill" })
+            children: /* @__PURE__ */ u3(
+              "div",
+              {
+                class: "quiz-countdown-fill",
+                style: { width: `${timerPct ?? 100}%` }
+              }
+            )
           }
         ),
         /* @__PURE__ */ u3("span", { class: "quiz-info-time", children: timeLeft || "" })
@@ -6483,6 +6490,7 @@ button {
         QuizSession,
         {
           timeLeft: engine.timerText,
+          timerPct: engine.timerPct,
           context: "all items",
           count: round.countText,
           fluent: engine.state.masteredCount,
@@ -6742,6 +6750,7 @@ button {
         QuizSession,
         {
           timeLeft: engine.timerText,
+          timerPct: engine.timerPct,
           context: "all items",
           count: round.countText,
           fluent: engine.state.masteredCount,
@@ -7368,6 +7377,7 @@ button {
         QuizSession,
         {
           timeLeft: engine.timerText,
+          timerPct: engine.timerPct,
           context: practicingLabel,
           count: round.countText,
           fluent: engine.state.masteredCount,
@@ -7690,6 +7700,7 @@ button {
         QuizSession,
         {
           timeLeft: engine.timerText,
+          timerPct: engine.timerPct,
           context: practicingLabel,
           count: round.countText,
           fluent: engine.state.masteredCount,
@@ -8047,6 +8058,7 @@ button {
         QuizSession,
         {
           timeLeft: engine.timerText,
+          timerPct: engine.timerPct,
           context: practicingLabel,
           count: round.countText,
           fluent: engine.state.masteredCount,
@@ -8381,6 +8393,7 @@ button {
         QuizSession,
         {
           timeLeft: engine.timerText,
+          timerPct: engine.timerPct,
           context: practicingLabel,
           count: round.countText,
           fluent: engine.state.masteredCount,
@@ -8716,6 +8729,7 @@ button {
         QuizSession,
         {
           timeLeft: engine.timerText,
+          timerPct: engine.timerPct,
           context: practicingLabel,
           count: round.countText,
           fluent: engine.state.masteredCount,
@@ -9116,6 +9130,7 @@ button {
         QuizSession,
         {
           timeLeft: engine.timerText,
+          timerPct: engine.timerPct,
           context: practicingLabel,
           count: round.countText,
           fluent: engine.state.masteredCount,
@@ -9764,6 +9779,7 @@ button {
         QuizSession,
         {
           timeLeft: engine.timerText,
+          timerPct: engine.timerPct,
           context: practicingLabel,
           count: round.countText,
           fluent: engine.state.masteredCount,
@@ -10130,6 +10146,7 @@ button {
         QuizSession,
         {
           timeLeft: engine.timerText,
+          timerPct: engine.timerPct,
           context: practicingLabel,
           count: round.countText,
           fluent: engine.state.masteredCount,

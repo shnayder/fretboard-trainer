@@ -2606,6 +2606,7 @@ button {
   }
   function QuizSession({
     timeLeft,
+    timerPct,
     context,
     count,
     fluent,
@@ -2621,7 +2622,13 @@ button {
           "div",
           {
             class: "quiz-countdown-bar" + (isWarning ? " round-timer-warning" : "") + (isLastQuestion ? " last-question" : ""),
-            children: /* @__PURE__ */ u2("div", { class: "quiz-countdown-fill" })
+            children: /* @__PURE__ */ u2(
+              "div",
+              {
+                class: "quiz-countdown-fill",
+                style: { width: `${timerPct ?? 100}%` }
+              }
+            )
           }
         ),
         /* @__PURE__ */ u2("span", { class: "quiz-info-time", children: timeLeft || "" })

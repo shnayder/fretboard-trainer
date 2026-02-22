@@ -379,6 +379,7 @@ export function ChordSpellingMode(
       />
       <QuizSession
         timeLeft={engine.timerText}
+        timerPct={engine.timerPct}
         context={practicingLabel}
         count={round.countText}
         fluent={engine.state.masteredCount}

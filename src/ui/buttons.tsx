@@ -66,15 +66,18 @@ const NUMERALS = ['I', 'ii', 'iii', 'IV', 'V', 'vi', 'vii\u00B0']; // \u00B0 = Â
 // ---------------------------------------------------------------------------
 
 export function NoteButtons(
-  { onAnswer, hidden, useFlats }: {
+  { onAnswer, hidden, useFlats, calibrationActive }: {
     onAnswer?: (note: string) => void;
     hidden?: boolean;
     /** When set, accidental buttons show flats (true) or sharps (false). */
     useFlats?: boolean;
+    /** Add .calibration-active class (keeps buttons visible during calibration). */
+    calibrationActive?: boolean;
   },
 ) {
   const cls = 'answer-buttons answer-buttons-notes' +
-    (hidden ? ' answer-group-hidden' : '');
+    (hidden ? ' answer-group-hidden' : '') +
+    (calibrationActive ? ' calibration-active' : '');
   return (
     <div class={cls}>
       {ALL_NOTES.map((n) => {

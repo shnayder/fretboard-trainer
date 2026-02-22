@@ -32,6 +32,11 @@ import {
 } from '../../ui/mode-screen.tsx';
 import { StatsTable, StatsToggle } from '../../ui/stats.tsx';
 import { FeedbackDisplay } from '../../ui/quiz-ui.tsx';
+import {
+  BaselineInfo,
+  BUTTON_PROVIDER,
+  SpeedCheck,
+} from '../../ui/speed-check.tsx';
 
 import {
   ALL_ITEMS,
@@ -153,9 +158,12 @@ export function NoteSemitonesMode(
   const engine = useQuizEngine(engineConfig, learner.selector);
   engineSubmitRef.current = engine.submitAnswer;
 
+  // --- Calibration state ---
+  const [calibrating, setCalibrating] = useState(false);
+
   // --- Shared hooks ---
-  usePhaseClass(container, engine.state.phase);
-  const round = useRoundSummary(engine, learner, 'all items');
+  usePhaseClass(container, calibrating ? 'calibration' : engine.state.phase);
+  const round = useRoundSummary(engine, 'all items');
 
   // --- Tab state ---
   const [activeTab, setActiveTab] = useState<'practice' | 'progress'>(
@@ -194,6 +202,7 @@ export function NoteSemitonesMode(
       deactivate() {
         if (engine.state.phase !== 'idle') engine.stop();
         noteHandler.reset();
+        setCalibrating(false);
       },
     });
   }, [engine, learner, noteHandler]);
@@ -241,7 +250,10 @@ export function NoteSemitonesMode(
         }
         progressContent={
           <div>
-            <div class='baseline-info'>{round.baselineText}</div>
+            <BaselineInfo
+              baseline={learner.motorBaseline}
+              onRun={() => setCalibrating(true)}
+            />
             <div class='stats-controls'>
               <StatsToggle active={statsMode} onToggle={setStatsMode} />
             </div>
@@ -269,30 +281,50 @@ export function NoteSemitonesMode(
         onClose={engine.stop}
       />
       <QuizArea
-        prompt={promptText}
-        lastQuestion={engine.state.roundTimerExpired ? 'Last question' : ''}
+        prompt={calibrating ? '' : promptText}
+        lastQuestion={calibrating
+          ? ''
+          : (engine.state.roundTimerExpired ? 'Last question' : '')}
       >
-        <NoteButtons hidden={dir === 'fwd'} onAnswer={handleNoteAnswer} />
-        <NumberButtons
-          start={0}
-          end={11}
-          hidden={dir === 'rev'}
-          onAnswer={handleNumAnswer}
-        />
-        <FeedbackDisplay
-          text={engine.state.feedbackText}
-          className={engine.state.feedbackClass}
-          time={engine.state.timeDisplayText || undefined}
-          hint={engine.state.hintText || undefined}
-        />
-        <RoundComplete
-          context={round.roundContext}
-          heading='Round complete'
-          correct={round.roundCorrect}
-          median={round.roundMedian}
-          onContinue={engine.continueQuiz}
-          onStop={engine.stop}
-        />
+        {calibrating
+          ? (
+            <SpeedCheck
+              provider={BUTTON_PROVIDER}
+              onComplete={(baseline) => {
+                learner.applyBaseline(baseline);
+                setCalibrating(false);
+              }}
+              onCancel={() => setCalibrating(false)}
+            />
+          )
+          : (
+            <>
+              <NoteButtons
+                hidden={dir === 'fwd'}
+                onAnswer={handleNoteAnswer}
+              />
+              <NumberButtons
+                start={0}
+                end={11}
+                hidden={dir === 'rev'}
+                onAnswer={handleNumAnswer}
+              />
+              <FeedbackDisplay
+                text={engine.state.feedbackText}
+                className={engine.state.feedbackClass}
+                time={engine.state.timeDisplayText || undefined}
+                hint={engine.state.hintText || undefined}
+              />
+              <RoundComplete
+                context={round.roundContext}
+                heading='Round complete'
+                correct={round.roundCorrect}
+                median={round.roundMedian}
+                onContinue={engine.continueQuiz}
+                onStop={engine.stop}
+              />
+            </>
+          )}
       </QuizArea>
     </>
   );

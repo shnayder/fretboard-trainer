@@ -4,7 +4,6 @@
 import { useMemo } from 'preact/hooks';
 import type { AdaptiveSelector, ItemStats } from '../types.ts';
 import type { QuizEngineHandle } from './use-quiz-engine.ts';
-import type { LearnerModel } from './use-learner-model.ts';
 import { computeMedian } from '../adaptive.ts';
 
 // ---------------------------------------------------------------------------
@@ -43,24 +42,20 @@ export type RoundSummary = {
   roundCorrect: string;
   /** Median line: "1.2s median response time" or empty. */
   roundMedian: string;
-  /** Baseline info: "Response time baseline: 1.3s". */
-  baselineText: string;
   /** Answer count: "5 answers". */
   countText: string;
 };
 
 /**
  * Compute derived display strings for the quiz session header and
- * round-complete screen. Pure computation from engine state + learner.
+ * round-complete screen. Pure computation from engine state.
  *
  * @param engine     Quiz engine handle (for round stats, mastery counts).
- * @param learner    Learner model (for motor baseline).
  * @param practicingLabel  What the user is currently practicing, e.g.
  *   "±1–2, ±3–4 semitones" or "all items". Shown in the round context line.
  */
 export function useRoundSummary(
   engine: QuizEngineHandle,
-  learner: LearnerModel,
   practicingLabel: string,
 ): RoundSummary {
   const roundContext = useMemo(() => {
@@ -92,14 +87,9 @@ export function useRoundSummary(
       : '';
   }, [engine.state.roundResponseTimes]);
 
-  const baselineText = learner.motorBaseline
-    ? 'Response time baseline: ' +
-      (learner.motorBaseline / 1000).toFixed(1) + 's'
-    : 'Response time baseline: 1s (default)';
-
   const answerCount = engine.state.roundAnswered;
   const countText = answerCount +
     (answerCount === 1 ? ' answer' : ' answers');
 
-  return { roundContext, roundCorrect, roundMedian, baselineText, countText };
+  return { roundContext, roundCorrect, roundMedian, countText };
 }

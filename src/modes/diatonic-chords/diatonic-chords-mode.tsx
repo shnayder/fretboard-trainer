@@ -40,6 +40,11 @@ import {
 } from '../../ui/mode-screen.tsx';
 import { StatsGrid, StatsToggle } from '../../ui/stats.tsx';
 import { FeedbackDisplay } from '../../ui/quiz-ui.tsx';
+import {
+  BaselineInfo,
+  BUTTON_PROVIDER,
+  SpeedCheck,
+} from '../../ui/speed-check.tsx';
 
 import {
   ALL_GROUP_INDICES,
@@ -206,7 +211,10 @@ export function DiatonicChordsMode(
   const engine = useQuizEngine(engineConfig, learner.selector);
   engineSubmitRef.current = engine.submitAnswer;
 
-  usePhaseClass(container, engine.state.phase);
+  // --- Calibration state ---
+  const [calibrating, setCalibrating] = useState(false);
+
+  usePhaseClass(container, calibrating ? 'calibration' : engine.state.phase);
 
   const [activeTab, setActiveTab] = useState<'practice' | 'progress'>(
     'practice',
@@ -246,6 +254,7 @@ export function DiatonicChordsMode(
       deactivate() {
         if (engine.state.phase !== 'idle') engine.stop();
         noteHandler.reset();
+        setCalibrating(false);
       },
     });
   }, [engine, learner, noteHandler]);
@@ -268,7 +277,7 @@ export function DiatonicChordsMode(
     [engine.submitAnswer],
   );
 
-  const round = useRoundSummary(engine, learner, practicingLabel);
+  const round = useRoundSummary(engine, practicingLabel);
   const statsSel = useStatsSelector(
     learner.selector,
     engine.state.phase,
@@ -304,7 +313,10 @@ export function DiatonicChordsMode(
         }
         progressContent={
           <div>
-            <div class='baseline-info'>{round.baselineText}</div>
+            <BaselineInfo
+              baseline={learner.motorBaseline}
+              onRun={() => setCalibrating(true)}
+            />
             <div class='stats-controls'>
               <StatsToggle active={statsMode} onToggle={setStatsMode} />
             </div>
@@ -332,28 +344,48 @@ export function DiatonicChordsMode(
         onClose={engine.stop}
       />
       <QuizArea
-        prompt={promptText}
-        lastQuestion={engine.state.roundTimerExpired ? 'Last question' : ''}
+        prompt={calibrating ? '' : promptText}
+        lastQuestion={calibrating
+          ? ''
+          : (engine.state.roundTimerExpired ? 'Last question' : '')}
       >
-        <NoteButtons hidden={dir === 'rev'} onAnswer={handleNoteAnswer} />
-        <NumeralButtons
-          hidden={dir === 'fwd'}
-          onAnswer={handleNumeralAnswer}
-        />
-        <FeedbackDisplay
-          text={engine.state.feedbackText}
-          className={engine.state.feedbackClass}
-          time={engine.state.timeDisplayText || undefined}
-          hint={engine.state.hintText || undefined}
-        />
-        <RoundComplete
-          context={round.roundContext}
-          heading='Round complete'
-          correct={round.roundCorrect}
-          median={round.roundMedian}
-          onContinue={engine.continueQuiz}
-          onStop={engine.stop}
-        />
+        {calibrating
+          ? (
+            <SpeedCheck
+              provider={BUTTON_PROVIDER}
+              onComplete={(baseline) => {
+                learner.applyBaseline(baseline);
+                setCalibrating(false);
+              }}
+              onCancel={() => setCalibrating(false)}
+            />
+          )
+          : (
+            <>
+              <NoteButtons
+                hidden={dir === 'rev'}
+                onAnswer={handleNoteAnswer}
+              />
+              <NumeralButtons
+                hidden={dir === 'fwd'}
+                onAnswer={handleNumeralAnswer}
+              />
+              <FeedbackDisplay
+                text={engine.state.feedbackText}
+                className={engine.state.feedbackClass}
+                time={engine.state.timeDisplayText || undefined}
+                hint={engine.state.hintText || undefined}
+              />
+              <RoundComplete
+                context={round.roundContext}
+                heading='Round complete'
+                correct={round.roundCorrect}
+                median={round.roundMedian}
+                onContinue={engine.continueQuiz}
+                onStop={engine.stop}
+              />
+            </>
+          )}
       </QuizArea>
     </>
   );

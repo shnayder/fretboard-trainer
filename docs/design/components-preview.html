@@ -2024,8 +2024,8 @@ button {
     ["7", "7th"]
   ];
   var NUMERALS = ["I", "ii", "iii", "IV", "V", "vi", "vii\xB0"];
-  function NoteButtons({ onAnswer, hidden, useFlats }) {
-    const cls = "answer-buttons answer-buttons-notes" + (hidden ? " answer-group-hidden" : "");
+  function NoteButtons({ onAnswer, hidden, useFlats, calibrationActive }) {
+    const cls = "answer-buttons answer-buttons-notes" + (hidden ? " answer-group-hidden" : "") + (calibrationActive ? " calibration-active" : "");
     return /* @__PURE__ */ u2("div", { class: cls, children: ALL_NOTES.map((n2) => {
       let label;
       if (useFlats !== void 0) {
